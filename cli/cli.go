@@ -14,7 +14,7 @@ var (
 )
 
 func main() {
-	app := kingpin.New("dotfile", "Better version control for configuration files")
+	app := kingpin.New("dotfile", "version control optimized for single files")
 	commands.AddCommandsToApplication(app)
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 }
