@@ -17,6 +17,6 @@ func (pc *pullCommand) run(ctx *kingpin.ParseContext) error {
 
 func addPullSubCommandToApplication(app *kingpin.Application) {
 	pc := &pullCommand{}
-	p := app.Command("pull", "push changes from central service").Action(pc.run)
+	p := app.Command("pull", "pull changes from central service").Action(pc.run)
 	p.Arg("file-name", "the file to pull").Required().StringVar(&pc.fileName)
 }
