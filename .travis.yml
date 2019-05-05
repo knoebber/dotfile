@@ -4,7 +4,7 @@ go:
   - 1.12.x
 
 script:
-  - make
+  - env GO111MODULE=on make
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
