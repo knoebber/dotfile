@@ -53,7 +53,7 @@ dot push i3
 
 Pull a file:
 
-``
+```
 dot pull i3 # Installs as ~/.config/i3/config
 ```
 
