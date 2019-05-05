@@ -1,5 +1,4 @@
+.PHONY: cli
 cli:
 	make -C cli binary
-	cp cli/bin/* ./bin/
-
-.PHONY: cli
+	cp cli/bin/dotfile ./bin/
