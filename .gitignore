@@ -10,3 +10,6 @@
 
 # Vim temp files
 *.swp
+
+bin/*
+*/bin/*
