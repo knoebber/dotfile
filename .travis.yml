@@ -3,8 +3,11 @@ language: go
 go:
   - 1.12.x
 
+env:
+  - GO11MODULE=on
+
 script:
-  - env GO111MODULE=on make
+  - make
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
