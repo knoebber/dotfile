@@ -20,21 +20,27 @@ dot init ~/.config/i3/config i3
 dot init ~/.emacs.d/init.el emacs
 ```
 
+Open a tracked file in `$EDITOR` without having to type its path:
+
+```
+dot edit bashrc
+```
+
 Check the diff after making changes:
 
 ```
-dot diff i3
+dot diff bashrc
 ```
 
-Reverting changes is easy:
+Reverting a file is easy:
 
 ```
-dot checkout i3 # reverts to the last commit
+dot checkout bashrc # reverts to the last commit
 
-dot log i3
+dot log bashrc
 <commit hash> | <commit message - timestamp>
 
-dot checkout i3 <commit hash> 
+dot checkout bashrc <commit hash> 
 ```
 
 
