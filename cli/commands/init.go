@@ -1,8 +1,7 @@
 package commands
 
 import (
-	"fmt"
-
+	"github.com/knoebber/dotfile"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -12,8 +11,7 @@ type initCommand struct {
 }
 
 func (ic *initCommand) run(ctx *kingpin.ParseContext) error {
-	fmt.Printf("TODO: Init %#v (altName: %#v)\n", ic.fileName, ic.altName)
-	return nil
+	return dotfile.Init(ic.fileName, ic.altName)
 }
 
 func addInitSubCommandToApplication(app *kingpin.Application) {
