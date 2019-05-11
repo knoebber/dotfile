@@ -19,6 +19,6 @@ func (c *checkoutCommand) run(ctx *kingpin.ParseContext) error {
 func addCheckoutSubCommandToApplication(app *kingpin.Application) {
 	cc := &checkoutCommand{}
 	c := app.Command("checkout", "revert a file to a previously committed state").Action(cc.run)
-	c.Arg("file-name", "file to check changes in").Required().StringVar(&cc.fileName)
+	c.Arg("file-name", "file to revert changes in").Required().StringVar(&cc.fileName)
 	c.Arg("commit-hash", "the revision to revert to").StringVar(&cc.commitHash)
 }
