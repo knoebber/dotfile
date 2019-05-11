@@ -1,4 +1,4 @@
-## Dotfile
+## Dotfile [![Build Status](https://travis-ci.org/knoebber/dotfile.svg?branch=master)](https://travis-ci.org/knoebber/dotfile)
 
 Dotfile is a simple version control system designed for single files.
 It is currently under development and not usable.
