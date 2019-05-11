@@ -1,7 +1,7 @@
 language: go
 
 script:
-  - make
+  - env GO111MODULE=on make ci_test
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
