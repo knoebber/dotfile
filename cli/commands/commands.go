@@ -6,6 +6,7 @@ import (
 
 func AddCommandsToApplication(app *kingpin.Application) {
 	addInitSubCommandToApplication(app)
+	addEditSubCommandToApplication(app)
 	addCommitSubCommandToApplication(app)
 	addPushSubCommandToApplication(app)
 	addPullSubCommandToApplication(app)
