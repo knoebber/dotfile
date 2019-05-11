@@ -42,6 +42,17 @@ func TestEditCommandLaunchesEditor(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestErrorIfEditorNotSet(t *testing.T) {
+	defer os.Setenv("EDITOR", os.Getenv("EDITOR"))
+	os.Unsetenv("EDITOR")
+
+	command := &editCommand{
+		fileName: arbitraryPath,
+	}
+	err := command.run(nil)
+	assert.Equal(t, ErrEditorEnvVarNotSet, err)
+}
+
 func TestEditHelperProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
 		return

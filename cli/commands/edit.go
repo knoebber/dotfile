@@ -12,12 +12,16 @@ type editCommand struct {
 	fileName string
 }
 
-var execCommand = exec.Command
+var (
+	execCommand = exec.Command
+
+	ErrEditorEnvVarNotSet = errors.New("EDITOR environment variable must be set")
+)
 
 func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 	editor := os.Getenv("EDITOR")
 	if editor == "" {
-		return errors.New("EDITOR environment variable must be set")
+		return ErrEditorEnvVarNotSet
 	}
 	cmd := execCommand(editor, e.fileName)
 	cmd.Stdout = os.Stdout
