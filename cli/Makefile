@@ -13,7 +13,7 @@ deep_test:
 ci_test: deep_test
 
 binary:
-	env GO111MODULE=on go build -o bin/$(BINARY_NAME) .
+	go build -o bin/$(BINARY_NAME) .
 
 clean:
 	rm -f bin/*
