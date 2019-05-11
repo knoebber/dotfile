@@ -23,6 +23,8 @@ func addCommitSubCommandToApplication(app *kingpin.Application) {
 	cc := &commitCommand{}
 	c := app.Command("commit", "commit file to working tree").Action(cc.run)
 	c.Arg("file-name", "the file to track").Required().StringVar(&cc.fileName)
-	c.Arg("commit-message", "a memo to remind yourself what's in this version; defaults to local timestamp").Default(time.Now().Format(defaultMessageTimestampDisplayFormat)).StringVar(&cc.commitMessage)
-
+	c.Arg("commit-message",
+		"a memo to remind yourself what's in this version; defaults to local timestamp").
+		Default(time.Now().Format(defaultMessageTimestampDisplayFormat)).
+		StringVar(&cc.commitMessage)
 }
