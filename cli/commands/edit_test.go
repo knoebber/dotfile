@@ -10,7 +10,7 @@ import (
 
 const (
 	arbitraryEditor = "nano"
-	arbitraryPath   = "/dev/null"
+	arbitraryPath   = "edit_test.go"
 )
 
 // Based on https://npf.io/2015/06/testing-exec-command/
@@ -35,10 +35,19 @@ func TestEditCommandLaunchesEditor(t *testing.T) {
 	defer os.Setenv("EDITOR", os.Getenv("EDITOR"))
 	os.Setenv("EDITOR", arbitraryEditor)
 
-	command := &editCommand{
+  initCommand := &initCommand {
+    fileName: arbitraryPath,
+  }
+	editCommand := &editCommand{
 		fileName: arbitraryPath,
 	}
-	err := command.run(nil)
+
+  var err error
+
+  err = initCommand.run(nil)
+  assert.NoError(t, err)
+
+	err = editCommand.run(nil)
 	assert.NoError(t, err)
 }
 
