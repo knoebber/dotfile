@@ -35,17 +35,17 @@ func TestEditCommandLaunchesEditor(t *testing.T) {
 	defer os.Setenv("EDITOR", os.Getenv("EDITOR"))
 	os.Setenv("EDITOR", arbitraryEditor)
 
-  initCommand := &initCommand {
-    fileName: arbitraryPath,
-  }
+	initCommand := &initCommand{
+		fileName: arbitraryPath,
+	}
 	editCommand := &editCommand{
 		fileName: arbitraryPath,
 	}
 
-  var err error
+	var err error
 
-  err = initCommand.run(nil)
-  assert.NoError(t, err)
+	err = initCommand.run(nil)
+	assert.NoError(t, err)
 
 	err = editCommand.run(nil)
 	assert.NoError(t, err)
