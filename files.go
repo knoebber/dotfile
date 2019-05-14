@@ -21,20 +21,18 @@ type trackedFile struct {
 
 // Init sets up a file for dotfile to track.
 func Init(path string, fileName string) error {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return fmt.Errorf("%s not found", path)
-	}
-	path, err := filepath.Abs(path)
+	path, err := getAbsolutePath(path)
 	if err != nil {
 		return err
 	}
 
+	// If the user doesn't name the file, create a name.
 	if fileName == "" {
-		var err error
-		fileName, err = pathToName(path)
+		name, err := pathToName(path)
 		if err != nil {
 			return err
 		}
+		fileName = name
 	}
 
 	// Replace the full path with a relative path
@@ -132,6 +130,13 @@ func getData(home string) (map[string]trackedFile, error) {
 	return d, nil
 }
 
+func getAbsolutePath(path string) (string, error) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return "", fmt.Errorf("%#v not found", path)
+	}
+	return filepath.Abs(path)
+}
+
 func writeData(d map[string]trackedFile, home string) error {
 	path := fmt.Sprintf("%s/%s/%s", home, dotfileDir, dotfile)
 	json, err := json.MarshalIndent(d, "", " ")
@@ -145,11 +150,12 @@ func writeData(d map[string]trackedFile, home string) error {
 	return nil
 }
 
+// Creates a name from the path of the file.
+// Does this by stripping leading dots and file extensions.
+// Examples: ~/.vimrc: vimrc
+//           ~/.config/i3/config: config
+//           ~/.config/alacritty/alacritty.yml: alacritty
 func pathToName(path string) (string, error) {
-	// Create a name from the path of the file.
-	// Examples: ~/.vimrc: vimrc
-	//           ~/.config/i3/config: config
-	//           ~/.config/alacritty/alacritty.yml: alacritty
 	re := regexp.MustCompile(`(\w+)(\.\w+)?$`)
 	matches := re.FindStringSubmatch(path)
 	if len(matches) < 1 {
