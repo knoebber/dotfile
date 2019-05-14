@@ -27,7 +27,7 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 
 	path, err := dotfile.GetPath(e.fileName)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "error getting path for filename: %#v", e.fileName)
 	}
 
 	cmd := execCommand(editor, path)
