@@ -26,6 +26,14 @@ func fakeExecCommand(command string, args ...string) *exec.Cmd {
 	return cmd
 }
 
+func initTestFile() {
+	initCommand := &initCommand{
+		fileName: arbitraryPath,
+	}
+	err := initCommand.run(nil)
+	assert.NoError(sneakyTestingReference, err)
+}
+
 func TestEditCommandLaunchesEditor(t *testing.T) {
 	sneakyTestingReference = t
 
@@ -35,10 +43,13 @@ func TestEditCommandLaunchesEditor(t *testing.T) {
 	defer os.Setenv("EDITOR", os.Getenv("EDITOR"))
 	os.Setenv("EDITOR", arbitraryEditor)
 
-	command := &editCommand{
+	initTestFile()
+
+	editCommand := &editCommand{
 		fileName: arbitraryPath,
 	}
-	err := command.run(nil)
+
+	err := editCommand.run(nil)
 	assert.NoError(t, err)
 }
 

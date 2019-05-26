@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/knoebber/dotfile"
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -23,7 +24,13 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 	if editor == "" {
 		return ErrEditorEnvVarNotSet
 	}
-	cmd := execCommand(editor, e.fileName)
+
+	path, err := dotfile.GetPath(e.fileName)
+	if err != nil {
+		return errors.Wrapf(err, "error getting path for filename: %#v", e.fileName)
+	}
+
+	cmd := execCommand(editor, path)
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
