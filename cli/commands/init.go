@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"fmt"
-
+	"github.com/knoebber/dotfile"
+	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -12,7 +12,9 @@ type initCommand struct {
 }
 
 func (ic *initCommand) run(ctx *kingpin.ParseContext) error {
-	fmt.Printf("TODO: Init %#v (altName: %#v)\n", ic.fileName, ic.altName)
+	if err := dotfile.Init(ic.fileName, ic.altName); err != nil {
+		return errors.Wrapf(err, "error initializing: %#v", ic.fileName)
+	}
 	return nil
 }
 
