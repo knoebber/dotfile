@@ -13,7 +13,7 @@ type initCommand struct {
 
 func (ic *initCommand) run(ctx *kingpin.ParseContext) error {
 	if err := dotfile.Init(ic.fileName, ic.altName); err != nil {
-		return errors.Wrapf(err, "error initializing: %#v", ic.fileName)
+		return errors.Wrapf(err, "failed to initialize %#v", ic.fileName)
 	}
 	return nil
 }
