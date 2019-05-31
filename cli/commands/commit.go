@@ -1,10 +1,10 @@
 package commands
 
 import (
-	"fmt"
-	"time"
-
+	"github.com/knoebber/dotfile"
+	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"time"
 )
 
 const defaultMessageTimestampDisplayFormat = "January 02, 2006 3:04 PM -0700"
@@ -15,7 +15,9 @@ type commitCommand struct {
 }
 
 func (c *commitCommand) run(ctx *kingpin.ParseContext) error {
-	fmt.Printf("TODO: Commit %#v with message %#v\n", c.fileName, c.commitMessage)
+	if err := dotfile.Commit(c.fileName, c.commitMessage); err != nil {
+		return errors.Wrapf(err, "failed to commit %#v", c.fileName)
+	}
 	return nil
 }
 
