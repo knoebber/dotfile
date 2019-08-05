@@ -1,4 +1,4 @@
-package commands
+package cli
 
 import (
 	"os"
@@ -43,14 +43,20 @@ func TestEditCommandLaunchesEditor(t *testing.T) {
 	defer os.Setenv("EDITOR", os.Getenv("EDITOR"))
 	os.Setenv("EDITOR", arbitraryEditor)
 
-	initTestFile()
-
 	editCommand := &editCommand{
 		fileName: arbitraryPath,
 	}
 
-	err := editCommand.run(nil)
-	assert.NoError(t, err)
+	t.Run("error before init", func(t *testing.T) {
+		err := editCommand.run(nil)
+		assert.Error(t, err)
+	})
+	t.Run("no error after init", func(t *testing.T) {
+		initTestFile()
+		err := editCommand.run(nil)
+		assert.NoError(t, err)
+
+	})
 }
 
 func TestErrorIfEditorNotSet(t *testing.T) {
