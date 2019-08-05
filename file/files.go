@@ -1,4 +1,4 @@
-package dotfile
+package file
 
 import (
 	"crypto/sha1"
@@ -20,7 +20,7 @@ func Init(path string, fileName string) error {
 
 	// Get the full path to the file. Return an error if it doesn't exist.
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		fmt.Errorf("%#v not found", path)
+		return fmt.Errorf("%#v not found", path)
 	}
 	fullPath, err := filepath.Abs(path)
 	if err != nil {

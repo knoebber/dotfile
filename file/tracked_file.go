@@ -1,4 +1,4 @@
-package dotfile
+package file
 
 import (
 	"regexp"

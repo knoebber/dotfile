@@ -1,15 +1,16 @@
-package commands
+package cli
 
 import (
 	"os"
 	"os/exec"
 
-	"github.com/knoebber/dotfile"
+	"github.com/knoebber/dotfile/file"
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type editCommand struct {
+	commonFlags
 	fileName string
 }
 
@@ -25,7 +26,7 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 		return ErrEditorEnvVarNotSet
 	}
 
-	path, err := dotfile.GetPath(e.fileName)
+	path, err := file.GetPath(e.fileName)
 	if err != nil {
 		return errors.Wrapf(err, "error getting path for filename: %#v", e.fileName)
 	}
