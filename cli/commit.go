@@ -1,8 +1,8 @@
-package commands
+package cli
 
 import (
-	"github.com/knoebber/dotfile"
 	"github.com/pkg/errors"
+	"github.com/knoebber/dotfile/file"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"time"
 )
@@ -15,7 +15,7 @@ type commitCommand struct {
 }
 
 func (c *commitCommand) run(ctx *kingpin.ParseContext) error {
-	if err := dotfile.Commit(c.fileName, c.commitMessage); err != nil {
+	if err := file.Commit(c.fileName, c.commitMessage); err != nil {
 		return errors.Wrapf(err, "failed to commit %#v", c.fileName)
 	}
 	return nil

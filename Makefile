@@ -1,10 +1,22 @@
+BINARY_NAME := dot
+
+GO_TEST_FLAGS := -v -cover -count=1
+GO_DEEP_TEST_FLAGS := $(GO_TEST_FLAGS) -race
+CI_GO_TEST_FLAGS := $(GO_DEEP_TEST_FLAGS) -coverprofile=coverage.txt -covermode=atomic
+GO_TEST_TARGET := ./...
+
 test:
-	make -C cli test
+	go test $(GO_TEST_FLAGS) $(GO_TEST_TARGET)
+
+deep_test:
+	go test $(GO_DEEP_TEST_FLAGS) $(GO_TEST_TARGET)
 
 ci_test:
-	make -C cli ci_test
-cli:
-	make -C cli binary
-	cp cli/bin/* ./bin/
+	go test $(CI_GO_TEST_FLAGS) $(GO_TEST_TARGET)
 
-.PHONY: cli
+binary:
+	go build -o bin/$(BINARY_NAME) .
+
+clean:
+	rm -f bin/*
+

@@ -1,4 +1,4 @@
-package dotfile
+package file
 
 import (
 	"encoding/json"
@@ -18,7 +18,7 @@ const (
 // Example generated json:
 // {
 //   "bashrc": {
-//     "path": "/home/nicolas/.bashrc"
+//     "path": "~/.bashrc"
 //     "current": "451de414632e08c0ca3adf7a473b15f37c1b2e60"
 //     "commits": [{
 //       "hash":"451de414632e08c0ca3adf7a473b15f37c1b2e60",
@@ -27,7 +27,7 @@ const (
 //    }],
 //  },
 //   "emacs": {
-//     "path": "/home/nicolas/.emacs.d/init.el",
+//     "path": "~/.emacs.d/init.el",
 //     "commits": [{
 //       "hash":"8f94c7720a648af9cf9dab33e7f297d28b8bf7cd",
 //       "timestamp":"1558896290",
