@@ -12,3 +12,6 @@ coverage.txt
 
 # Vim temp files
 *.swp
+
+testdata/
+cli/testdata/

@@ -1,112 +1,112 @@
 package file
 
 import (
+	"bytes"
+	"compress/zlib"
 	"crypto/sha1"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
-)
-
-var (
-	notTrackedErr = errors.New("file not tracked, use 'dot init <file>' first")
+	"time"
 )
 
 // Init sets up a file for dotfile to track.
-func Init(path string, fileName string) error {
-	d := &data{}
+// Returns the alias for the newly tracked file.
+func Init(d *Data, filePath, altName string) (string, error) {
+	var (
+		alias string
+		err   error
+	)
 
-	// Get the full path to the file. Return an error if it doesn't exist.
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return fmt.Errorf("%#v not found", path)
+	if _, err = os.Stat(filePath); os.IsNotExist(err) {
+		return "", fmt.Errorf("\"%#v\" not found", filePath)
 	}
-	fullPath, err := filepath.Abs(path)
+
+	// Get the full path so that it can later turn it into a relative path.
+	fullPath, err := filepath.Abs(filePath)
 	if err != nil {
-		return err
-	}
-
-	// If the user didn't supply a name to init, then generate a name.
-	if fileName == "" {
-		name, err := pathToName(fullPath)
-		if err != nil {
-			return err
-		}
-		fileName = name
-	}
-
-	if err := d.setup(); err != nil {
-		return err
-	}
-	if err := d.get(); err != nil {
-		return err
-	}
-
-	// Replace the full path with a relative path.
-	re := regexp.MustCompile(d.home)
-	path = re.ReplaceAllString(fullPath, "~")
-
-	d.files[fileName] = trackedFile{
-		Path: path,
-	}
-
-	if err := d.save(); err != nil {
-		return err
-	}
-	fmt.Printf("Initialized %s as %s\n", path, fileName)
-	return nil
-}
-
-// Commit hashes and saves the current state of a tracked file.
-func Commit(fileName string, message string) error {
-	d := &data{}
-
-	if err := d.get(); err != nil {
-		return err
-	}
-	file, ok := d.files[fileName]
-	if !ok {
-		return notTrackedErr
-	}
-
-	f, err := os.Open(file.getFullPath(d.home))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	bytes, err := ioutil.ReadAll(f)
-	if err != nil {
-		return err
-	}
-
-	hash := fmt.Sprintf("%x", sha1.Sum(bytes))
-	fmt.Println(hash)
-
-	return nil
-}
-
-// GetPath gets the full path for a tracked file.
-func GetPath(fileName string) (string, error) {
-	d := &data{}
-	if err := d.get(); err != nil {
 		return "", err
 	}
 
-	file, ok := d.files[fileName]
-	if !ok {
-		return "", notTrackedErr
+	alias = altName
+	if altName == "" {
+		alias, err = pathToAlias(fullPath)
+		if err != nil {
+			return "", err
+		}
 	}
-	return file.getFullPath(d.home), nil
+
+	if err = d.setup(); err != nil {
+		return "", err
+	}
+
+	// Replace the full path with a relative path.
+	re := regexp.MustCompile(d.Home)
+	relativePath := re.ReplaceAllString(fullPath, "~")
+
+	if err = d.save(alias, &trackedFile{
+		Path: relativePath,
+	}); err != nil {
+		return "", err
+	}
+	return alias, nil
 }
 
-// Creates a name from the path of the file.
+// Commit hashes and saves the current state of a tracked file.
+func Commit(d *Data, alias, message string) (string, error) {
+	file, err := d.getTrackedFile(alias)
+	if err != nil {
+		return "", err
+	}
+
+	f, err := os.Open(file.getFullPath(d.Home))
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	fileBytes, err := ioutil.ReadAll(f)
+	if err != nil {
+		return "", err
+	}
+
+	hash := fmt.Sprintf("%x", sha1.Sum(fileBytes))
+
+	var compressed bytes.Buffer
+	w := zlib.NewWriter(&compressed)
+	w.Write(fileBytes)
+	w.Close()
+
+	file.Current = hash
+	c := &commit{
+		Hash:      hash,
+		Message:   message,
+		Timestamp: time.Now().Unix(),
+	}
+
+	file.Commits = append(file.Commits, c)
+
+	return hash, d.saveCommit(c, alias, file, compressed.Bytes())
+}
+
+// GetPath gets the full path for a tracked file.
+func GetPath(d *Data, alias string) (string, error) {
+	file, err := d.getTrackedFile(alias)
+	if err != nil {
+		return "", err
+	}
+
+	return file.getFullPath(d.Home), nil
+}
+
+// Creates a alias from the path of the file.
 // Does this by stripping leading dots and file extensions.
 // Examples: ~/.vimrc: vimrc
 //           ~/.config/i3/config: config
 //           ~/.config/alacritty/alacritty.yml: alacritty
-func pathToName(path string) (string, error) {
+func pathToAlias(path string) (string, error) {
 	re := regexp.MustCompile(`(\w+)(\.\w+)?$`)
 	matches := re.FindStringSubmatch(path)
 	if len(matches) < 1 {

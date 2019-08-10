@@ -10,7 +10,7 @@ import (
 )
 
 type editCommand struct {
-	commonFlags
+	data     *file.Data
 	fileName string
 }
 
@@ -26,7 +26,7 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 		return ErrEditorEnvVarNotSet
 	}
 
-	path, err := file.GetPath(e.fileName)
+	path, err := file.GetPath(e.data, e.fileName)
 	if err != nil {
 		return errors.Wrapf(err, "error getting path for filename: %#v", e.fileName)
 	}
@@ -38,8 +38,10 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 	return cmd.Run()
 }
 
-func addEditSubCommandToApplication(app *kingpin.Application) {
-	ec := &editCommand{}
+func addEditSubCommandToApplication(app *kingpin.Application, data *file.Data) {
+	ec := &editCommand{
+		data: data,
+	}
 	c := app.Command("edit", "open a tracked file in $EDITOR").Action(ec.run)
 	c.Arg("file-name", "the file to edit").Required().StringVar(&ec.fileName)
 }

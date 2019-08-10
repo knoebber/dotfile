@@ -1,36 +1,45 @@
 package cli
 
 import (
+	"github.com/knoebber/dotfile/file"
 	"gopkg.in/alecthomas/kingpin.v2"
+
+	"fmt"
+	"os"
 )
 
 const (
-	defaultConfigDir  string = ".dotfile"
-	defaultConfigName string = "files.json"
+	defaultDataDir  string = ".dotfile/"
+	defaultDataName string = "files.json"
 )
 
-type commonFlags struct {
-	configDir  string
-	configName string
+// Dotfile depends on the system having the concept of a home directory.
+func getHome() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+	return home
 }
 
 func AddCommandsToApplication(app *kingpin.Application) {
-	addInitSubCommandToApplication(app)
-	addEditSubCommandToApplication(app)
-	addDiffSubCommandToApplication(app)
-	addLogSubCommandToApplication(app)
-	addCheckoutSubCommandToApplication(app)
-	addCommitSubCommandToApplication(app)
-	addPushSubCommandToApplication(app)
-	addPullSubCommandToApplication(app)
-}
+	data := &file.Data{
+		Home: getHome(),
+	}
 
-// Flags that all dotfile commands share
-func addCommonFlags(app *kingpin.Application, configDir *string, configName *string) {
-	app.Flag("config-dir", "The directory where version control data is stored").
-		Default(defaultConfigDir).
-		StringVar(configDir)
-	app.Flag("config-name", "The main json file that tracks checked in files").
-		Default(defaultConfigName).
-		StringVar(configName)
+	app.Flag("data-dir", "The directory where version control data is stored").
+		Default(fmt.Sprintf("%s/%s", data.Home, defaultDataDir)).
+		StringVar(&data.Dir)
+	app.Flag("data-name", "The main json file that tracks checked in files").
+		Default(defaultDataName).
+		StringVar(&data.Name)
+
+	addInitSubCommandToApplication(app, data)
+	addEditSubCommandToApplication(app, data)
+	addDiffSubCommandToApplication(app, data)
+	addLogSubCommandToApplication(app, data)
+	addCheckoutSubCommandToApplication(app, data)
+	addCommitSubCommandToApplication(app, data)
+	addPushSubCommandToApplication(app, data)
+	addPullSubCommandToApplication(app, data)
 }

@@ -1,17 +1,5 @@
 package file
 
-import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"os"
-)
-
-const (
-	dotfileDir string = ".dotfile"
-	dotfile    string = "files.json"
-)
-
 // Dotfile tracks files by writing to a json file in the users home direcory.
 // This file provides functions for saving and retreiving json data.
 //
@@ -35,22 +23,73 @@ const (
 //  }]
 // }
 
-type data struct {
-	files map[string]trackedFile
-	home  string
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"os"
+)
+
+// Data provides methods for reading and writing to a data json file.
+// All exported fields should be set.
+type Data struct {
+	Home string // The path to the users home directory.
+	Dir  string // The path to the folder where data will be stored.
+	Name string // The name of the json file.
+
+	path  string
+	files map[string]*trackedFile
 }
 
-// Gets the current data.
-func (d *data) get() error {
-	if d.home == "" {
-		if err := d.getHome(); err != nil {
-			return err
-		}
+func (d *Data) saveCommit(c *commit, alias string, t *trackedFile, bytes []byte) error {
+	// Create the directory for the files commits if it doesn't exist
+	commitDir := fmt.Sprintf("%s%s", d.Dir, alias)
+	_, err := os.Stat(commitDir)
+
+	//
+	// TODO these blocks are similar to setup(); pull logic out into a function.
+	//
+
+	if os.IsNotExist(err) {
+		os.Mkdir(commitDir, 0755)
+		fmt.Printf("Created %s\n", commitDir)
+	} else if err != nil {
+		return err
 	}
 
-	d.files = make(map[string]trackedFile)
+	// The name of the file will be the hash
+	commitPath := fmt.Sprintf("%s/%s", commitDir, c.Hash)
+	_, err = os.Stat(commitPath)
+	if os.IsNotExist(err) {
+		f, createErr := os.Create(commitPath)
+		f.Close()
 
-	f, err := os.Open(d.filePath())
+		if createErr != nil {
+			fmt.Printf("create err, %s\n", createErr)
+			return createErr
+		}
+		fmt.Printf("Created %s\n", commitPath)
+
+		if err := ioutil.WriteFile(commitPath, bytes, 0644); err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+
+	return d.save(alias, t)
+}
+
+// Reads the json and makes the tracked file map.
+func (d *Data) get() error {
+	if err := d.setPath(); err != nil {
+		return err
+	}
+
+	d.files = make(map[string]*trackedFile)
+
+	f, err := os.Open(d.path)
 	if err != nil {
 		return err
 	}
@@ -61,6 +100,7 @@ func (d *data) get() error {
 	if err != nil {
 		return err
 	}
+
 	if len(bytes) == 0 {
 		return nil
 	}
@@ -71,59 +111,83 @@ func (d *data) get() error {
 	return nil
 }
 
-func (d *data) save() error {
-	path := d.filePath()
+// Gets a tracked file by its alias.
+func (d *Data) getTrackedFile(alias string) (*trackedFile, error) {
+	if err := d.get(); err != nil {
+		return nil, err
+	}
+
+	t, ok := d.files[alias]
+	if !ok {
+		errors.New("file not tracked, use 'dot init <file>' first")
+	}
+	return t, nil
+}
+
+// Saves the trackedFile map to json.
+func (d *Data) save(alias string, t *trackedFile) error {
+	d.files[alias] = t
+
 	json, err := json.MarshalIndent(d.files, "", " ")
 	if err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(path, json, 0644)
-}
-
-// Sets up the dotfile directory if it hasn't been done yet.
-func (d *data) setup() error {
-	if err := d.getHome(); err != nil {
+	if err := d.setPath(); err != nil {
 		return err
 	}
 
+	return ioutil.WriteFile(d.path, json, 0644)
+}
+
+// Sets up the dotfile directory if it hasn't been done yet.
+func (d *Data) setup() error {
 	// Create the directory if it doesn't exist.
-	dir := d.dirPath()
-	_, err := os.Stat(dir)
+	_, err := os.Stat(d.Dir)
 	if os.IsNotExist(err) {
-		os.Mkdir(dir, 0755)
-		fmt.Printf("Created %#v\n", dir)
+		os.Mkdir(d.Dir, 0755)
+		fmt.Printf("Created %#v\n", d.Dir)
 	} else if err != nil {
+		return err
+	}
+
+	if err := d.setPath(); err != nil {
 		return err
 	}
 
 	// Create the data file if it doesn't exist.
-	path := d.filePath()
-	_, err = os.Stat(path)
+	_, err = os.Stat(d.path)
 	if os.IsNotExist(err) {
-		f, createErr := os.Create(path)
+		f, createErr := os.Create(d.path)
 		f.Close()
+
 		if createErr != nil {
 			fmt.Printf("create err, %s\n", createErr)
 			return createErr
 		}
-		fmt.Printf("Created %#v\n", path)
+		fmt.Printf("Created %#v\n", d.path)
 	} else if err != nil {
 		return err
 	}
+	return d.get()
+}
+
+// Gets the path to the data file.
+func (d *Data) setPath() error {
+	if d.Home == "" {
+		return errors.New("home not set")
+	}
+	if d.Dir == "" {
+		return errors.New("dir not set")
+	}
+	if d.Name == "" {
+		return errors.New("name not set")
+	}
+
+	if d.Dir[len(d.Dir)-1] != '/' {
+		d.Dir += "/"
+	}
+
+	d.path = fmt.Sprintf("%s%s", d.Dir, d.Name)
 	return nil
-}
-
-func (d *data) dirPath() string {
-	return fmt.Sprintf("%s/%s/", d.home, dotfileDir)
-}
-
-func (d *data) filePath() string {
-	return fmt.Sprintf("%s%s", d.dirPath(), dotfile)
-}
-
-// Gets the users home directory
-func (d *data) getHome() (err error) {
-	d.home, err = os.UserHomeDir()
-	return
 }
