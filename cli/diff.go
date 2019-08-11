@@ -8,7 +8,7 @@ import (
 )
 
 type diffCommand struct {
-	data     *file.Data
+	storage  *file.Storage
 	fileName string
 }
 
@@ -17,9 +17,9 @@ func (d *diffCommand) run(ctx *kingpin.ParseContext) error {
 	return nil
 }
 
-func addDiffSubCommandToApplication(app *kingpin.Application, data *file.Data) {
+func addDiffSubCommandToApplication(app *kingpin.Application, storage *file.Storage) {
 	dc := &diffCommand{
-		data: data,
+		storage: storage,
 	}
 	c := app.Command("diff", "check changes to tracked file").Action(dc.run)
 	c.Arg("file-name", "file to check changes in").Required().StringVar(&dc.fileName)

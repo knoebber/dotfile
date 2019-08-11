@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	defaultDataDir  string = ".dotfile/"
-	defaultDataName string = "files.json"
+	defaultStorageDir  string = ".dotfile/"
+	defaultStorageName string = "files.json"
 )
 
 // Dotfile depends on the system having the concept of a home directory.
@@ -23,23 +23,23 @@ func getHome() string {
 }
 
 func AddCommandsToApplication(app *kingpin.Application) {
-	data := &file.Data{
+	storage := &file.Storage{
 		Home: getHome(),
 	}
 
-	app.Flag("data-dir", "The directory where version control data is stored").
-		Default(fmt.Sprintf("%s/%s", data.Home, defaultDataDir)).
-		StringVar(&data.Dir)
-	app.Flag("data-name", "The main json file that tracks checked in files").
-		Default(defaultDataName).
-		StringVar(&data.Name)
+	app.Flag("storage-dir", "The directory where version control storage is stored").
+		Default(fmt.Sprintf("%s/%s", storage.Home, defaultStorageDir)).
+		StringVar(&storage.Dir)
+	app.Flag("storage-name", "The main json file that tracks checked in files").
+		Default(defaultStorageName).
+		StringVar(&storage.Name)
 
-	addInitSubCommandToApplication(app, data)
-	addEditSubCommandToApplication(app, data)
-	addDiffSubCommandToApplication(app, data)
-	addLogSubCommandToApplication(app, data)
-	addCheckoutSubCommandToApplication(app, data)
-	addCommitSubCommandToApplication(app, data)
-	addPushSubCommandToApplication(app, data)
-	addPullSubCommandToApplication(app, data)
+	addInitSubCommandToApplication(app, storage)
+	addEditSubCommandToApplication(app, storage)
+	addDiffSubCommandToApplication(app, storage)
+	addLogSubCommandToApplication(app, storage)
+	addCheckoutSubCommandToApplication(app, storage)
+	addCommitSubCommandToApplication(app, storage)
+	addPushSubCommandToApplication(app, storage)
+	addPullSubCommandToApplication(app, storage)
 }

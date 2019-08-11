@@ -9,10 +9,10 @@ import (
 const nonExistantFile = "this does not exist"
 
 func TestInit(t *testing.T) {
-	clearTestData()
+	clearTestStorage()
 
 	initCommand := &initCommand{
-		data: getTestData(),
+		storage: getTestStorage(),
 	}
 
 	t.Run("returns error when file does not exist", func(t *testing.T) {
