@@ -2,6 +2,7 @@ package cli
 
 import (
 	"github.com/knoebber/dotfile/file"
+	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"fmt"
@@ -13,18 +14,23 @@ const (
 	defaultStorageName string = "files.json"
 )
 
-// Dotfile depends on the system having the concept of a home directory.
-func getHome() string {
+// Dotfile depends on the operating system having the concept of a home directory.
+func getHome() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		panic(err)
+		return "", errors.Wrap(err, "failed to get user home directory")
 	}
-	return home
+	return home, nil
 }
 
-func AddCommandsToApplication(app *kingpin.Application) {
+// AddCommandsToApplication initializes the cli.
+func AddCommandsToApplication(app *kingpin.Application) error {
+	home, err := getHome()
+	if err != nil {
+		return err
+	}
 	storage := &file.Storage{
-		Home: getHome(),
+		Home: home,
 	}
 
 	app.Flag("storage-dir", "The directory where version control storage is stored").
@@ -42,4 +48,5 @@ func AddCommandsToApplication(app *kingpin.Application) {
 	addCommitSubCommandToApplication(app, storage)
 	addPushSubCommandToApplication(app, storage)
 	addPullSubCommandToApplication(app, storage)
+	return nil
 }
