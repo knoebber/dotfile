@@ -9,8 +9,13 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
+
+var pathToAliasRegex = regexp.MustCompile(`(\w+)(\.\w+)?$`)
 
 // Init sets up a file for dotfile to track.
 // Returns the alias for the newly tracked file.
@@ -43,8 +48,7 @@ func Init(d *Storage, filePath, altName string) (string, error) {
 	}
 
 	// Replace the full path with a relative path.
-	re := regexp.MustCompile(d.Home)
-	relativePath := re.ReplaceAllString(fullPath, "~")
+	relativePath := strings.Replace(fullPath, d.Home, "~", 1)
 
 	if err = d.save(alias, &trackedFile{
 		Path: relativePath,
@@ -61,15 +65,16 @@ func Commit(d *Storage, alias, message string) (string, error) {
 		return "", err
 	}
 
-	f, err := os.Open(file.getFullPath(d.Home))
+	path := file.getFullPath(d.Home)
+	f, err := os.Open(path)
 	if err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "failed to open %s", path)
 	}
 	defer f.Close()
 
 	fileBytes, err := ioutil.ReadAll(f)
 	if err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "failed to read %s", path)
 	}
 
 	hash := fmt.Sprintf("%x", sha1.Sum(fileBytes))
@@ -107,9 +112,8 @@ func GetPath(d *Storage, alias string) (string, error) {
 //           ~/.config/i3/config: config
 //           ~/.config/alacritty/alacritty.yml: alacritty
 func pathToAlias(path string) (string, error) {
-	re := regexp.MustCompile(`(\w+)(\.\w+)?$`)
-	matches := re.FindStringSubmatch(path)
-	if len(matches) < 1 {
+	matches := pathToAliasRegex.FindStringSubmatch(path)
+	if len(matches) < 2 {
 		return "", fmt.Errorf("failed to get name from %#v", path)
 	}
 	return matches[1], nil
