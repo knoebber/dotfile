@@ -1,7 +1,7 @@
 package file
 
 // Dotfile tracks files by writing to a json file in the users home direcory.
-// This file provides functions for saving and retreiving json data.
+// This file provides functions for reading and writing data to the file system.
 //
 // Example generated json:
 // {
@@ -31,9 +31,9 @@ import (
 	"os"
 )
 
-// Data provides methods for reading and writing to a data json file.
+// Storage provides methods for reading and writing json data and compressed commit bytes.
 // All exported fields should be set.
-type Data struct {
+type Storage struct {
 	Home string // The path to the users home directory.
 	Dir  string // The path to the folder where data will be stored.
 	Name string // The name of the json file.
@@ -42,7 +42,7 @@ type Data struct {
 	files map[string]*trackedFile
 }
 
-func (d *Data) saveCommit(c *commit, alias string, t *trackedFile, bytes []byte) error {
+func (d *Storage) saveCommit(c *commit, alias string, t *trackedFile, bytes []byte) error {
 	// Create the directory for the files commits if it doesn't exist
 	commitDir := fmt.Sprintf("%s%s", d.Dir, alias)
 	_, err := os.Stat(commitDir)
@@ -82,7 +82,7 @@ func (d *Data) saveCommit(c *commit, alias string, t *trackedFile, bytes []byte)
 }
 
 // Reads the json and makes the tracked file map.
-func (d *Data) get() error {
+func (d *Storage) get() error {
 	if err := d.setPath(); err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func (d *Data) get() error {
 }
 
 // Gets a tracked file by its alias.
-func (d *Data) getTrackedFile(alias string) (*trackedFile, error) {
+func (d *Storage) getTrackedFile(alias string) (*trackedFile, error) {
 	if err := d.get(); err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (d *Data) getTrackedFile(alias string) (*trackedFile, error) {
 }
 
 // Saves the trackedFile map to json.
-func (d *Data) save(alias string, t *trackedFile) error {
+func (d *Storage) save(alias string, t *trackedFile) error {
 	d.files[alias] = t
 
 	json, err := json.MarshalIndent(d.files, "", " ")
@@ -141,7 +141,7 @@ func (d *Data) save(alias string, t *trackedFile) error {
 }
 
 // Sets up the dotfile directory if it hasn't been done yet.
-func (d *Data) setup() error {
+func (d *Storage) setup() error {
 	// Create the directory if it doesn't exist.
 	_, err := os.Stat(d.Dir)
 	if os.IsNotExist(err) {
@@ -172,8 +172,7 @@ func (d *Data) setup() error {
 	return d.get()
 }
 
-// Gets the path to the data file.
-func (d *Data) setPath() error {
+func (d *Storage) setPath() error {
 	if d.Home == "" {
 		return errors.New("home not set")
 	}

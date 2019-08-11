@@ -34,10 +34,10 @@ func TestEditCommandLaunchesEditor(t *testing.T) {
 
 	editCommand := &editCommand{
 		fileName: testAlias,
-		data:     getTestData(),
+		storage:  getTestStorage(),
 	}
 
-	clearTestData()
+	clearTestStorage()
 
 	t.Run("error before init", func(t *testing.T) {
 		err := editCommand.run(nil)

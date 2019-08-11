@@ -9,7 +9,7 @@ import (
 )
 
 type pullCommand struct {
-	data     *file.Data
+	storage  *file.Storage
 	fileName string
 	pullAll  bool
 }
@@ -25,9 +25,9 @@ func (pc *pullCommand) run(ctx *kingpin.ParseContext) error {
 	return nil
 }
 
-func addPullSubCommandToApplication(app *kingpin.Application, data *file.Data) {
+func addPullSubCommandToApplication(app *kingpin.Application, storage *file.Storage) {
 	pc := &pullCommand{
-		data: data,
+		storage: storage,
 	}
 	p := app.Command("pull", "pull changes from central service").Action(pc.run)
 	p.Arg("file-name", "the file to pull").StringVar(&pc.fileName)
