@@ -4,6 +4,8 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+coverage.txt
+
 # Emacs temp files
 *~
 \#*\#
@@ -11,3 +13,6 @@
 # Vim temp files
 *.swp
 
+testdata/
+cli/testdata/
+cli/bin/
