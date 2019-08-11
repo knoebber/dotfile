@@ -1,7 +1,7 @@
 package file
 
 import (
-	"regexp"
+	"strings"
 )
 
 type trackedFile struct {
@@ -19,6 +19,5 @@ type commit struct {
 // Paths are stored as relative paths so that dotfile can work with different home directories.
 // getFullPath returns the full path to a tracked file.
 func (tf *trackedFile) getFullPath(home string) string {
-	re := regexp.MustCompile("~")
-	return re.ReplaceAllString(tf.Path, home)
+	return strings.Replace(tf.Path, "~", home, 1)
 }
