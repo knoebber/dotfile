@@ -8,7 +8,7 @@ import (
 )
 
 type pushCommand struct {
-	data     *file.Data
+	storage  *file.Storage
 	fileName string
 }
 
@@ -17,9 +17,9 @@ func (pc *pushCommand) run(ctx *kingpin.ParseContext) error {
 	return nil
 }
 
-func addPushSubCommandToApplication(app *kingpin.Application, data *file.Data) {
+func addPushSubCommandToApplication(app *kingpin.Application, storage *file.Storage) {
 	pc := &pushCommand{
-		data: data,
+		storage: storage,
 	}
 	p := app.Command("push", "push committed changes to central service").Action(pc.run)
 	p.Arg("file-name", "the file to push").Required().StringVar(&pc.fileName)

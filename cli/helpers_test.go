@@ -15,23 +15,23 @@ const (
 	testDir       = "testdata/"
 )
 
-func getTestData() *file.Data {
-	return &file.Data{
+func getTestStorage() *file.Storage {
+	return &file.Storage{
 		Home: getHome(),
 		Dir:  testDir,
-		Name: defaultDataName,
+		Name: defaultStorageName,
 	}
 }
 
 func initTestFile(t *testing.T) {
 	initCommand := &initCommand{
 		fileName: arbitraryFile,
-		data:     getTestData(),
+		storage:  getTestStorage(),
 	}
 	err := initCommand.run(nil)
 	assert.NoError(t, err)
 }
 
-func clearTestData() {
-	os.Remove(fmt.Sprintf("%s%s", testDir, defaultDataName))
+func clearTestStorage() {
+	os.Remove(fmt.Sprintf("%s%s", testDir, defaultStorageName))
 }

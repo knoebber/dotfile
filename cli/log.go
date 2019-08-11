@@ -8,7 +8,7 @@ import (
 )
 
 type logCommand struct {
-	data     *file.Data
+	storage  *file.Storage
 	fileName string
 }
 
@@ -17,9 +17,9 @@ func (l *logCommand) run(ctx *kingpin.ParseContext) error {
 	return nil
 }
 
-func addLogSubCommandToApplication(app *kingpin.Application, data *file.Data) {
+func addLogSubCommandToApplication(app *kingpin.Application, storage *file.Storage) {
 	lc := &logCommand{
-		data: data,
+		storage: storage,
 	}
 	c := app.Command("log", "shows revision history with commit hashes for a tracked file").Action(lc.run)
 	c.Arg("file-name", "tracked file to show history for").Required().StringVar(&lc.fileName)

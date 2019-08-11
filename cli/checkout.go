@@ -8,7 +8,7 @@ import (
 )
 
 type checkoutCommand struct {
-	data       *file.Data
+	storage    *file.Storage
 	fileName   string
 	commitHash string
 }
@@ -18,9 +18,9 @@ func (c *checkoutCommand) run(ctx *kingpin.ParseContext) error {
 	return nil
 }
 
-func addCheckoutSubCommandToApplication(app *kingpin.Application, data *file.Data) {
+func addCheckoutSubCommandToApplication(app *kingpin.Application, storage *file.Storage) {
 	cc := &checkoutCommand{
-		data: data,
+		storage: storage,
 	}
 	c := app.Command("checkout", "revert a file to a previously committed state").Action(cc.run)
 	c.Arg("file-name", "file to revert changes in").Required().StringVar(&cc.fileName)

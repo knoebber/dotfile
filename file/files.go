@@ -14,7 +14,7 @@ import (
 
 // Init sets up a file for dotfile to track.
 // Returns the alias for the newly tracked file.
-func Init(d *Data, filePath, altName string) (string, error) {
+func Init(d *Storage, filePath, altName string) (string, error) {
 	var (
 		alias string
 		err   error
@@ -55,7 +55,7 @@ func Init(d *Data, filePath, altName string) (string, error) {
 }
 
 // Commit hashes and saves the current state of a tracked file.
-func Commit(d *Data, alias, message string) (string, error) {
+func Commit(d *Storage, alias, message string) (string, error) {
 	file, err := d.getTrackedFile(alias)
 	if err != nil {
 		return "", err
@@ -92,7 +92,7 @@ func Commit(d *Data, alias, message string) (string, error) {
 }
 
 // GetPath gets the full path for a tracked file.
-func GetPath(d *Data, alias string) (string, error) {
+func GetPath(d *Storage, alias string) (string, error) {
 	file, err := d.getTrackedFile(alias)
 	if err != nil {
 		return "", err
