@@ -25,10 +25,11 @@ package file
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	"github.com/pkg/errors"
 )
 
 // Storage provides methods for reading and writing json data and compressed commit bytes.
@@ -70,7 +71,7 @@ func (s *Storage) get() error {
 
 	f, err := os.Open(s.path)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to open %s", s.path)
 	}
 	defer f.Close()
 
@@ -85,7 +86,7 @@ func (s *Storage) get() error {
 	}
 
 	if err := json.Unmarshal(bytes, &s.files); err != nil {
-		return err
+		return errors.Wrapf(err, "failed to unmarshal %s", s.path)
 	}
 	return nil
 }
@@ -109,7 +110,7 @@ func (s *Storage) save(alias string, t *trackedFile) error {
 
 	json, err := json.MarshalIndent(s.files, "", " ")
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to marshal %s", s.path)
 	}
 
 	if err := s.setPath(); err != nil {
@@ -157,21 +158,20 @@ func createIfNotExist(dir, fileName string) error {
 	_, err := os.Stat(dir)
 	if os.IsNotExist(err) {
 		os.Mkdir(dir, 0755)
-		fmt.Printf("Created %#v\n", dir)
+		fmt.Printf("Created %s\n", dir)
 	} else if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to create directory %s", dir)
 	}
 
 	_, err = os.Stat(fileName)
 	if os.IsNotExist(err) {
 		f, createErr := os.Create(fileName)
 		if createErr != nil {
-			fmt.Printf("create err, %s\n", createErr)
-			return createErr
+			return errors.Wrapf(err, "failed to create file %s", dir)
 		}
 		defer f.Close()
 
-		fmt.Printf("Created %#v\n", fileName)
+		fmt.Printf("Created %s\n", fileName)
 	} else if err != nil {
 		return err
 	}
