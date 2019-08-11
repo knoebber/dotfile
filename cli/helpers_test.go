@@ -16,8 +16,9 @@ const (
 )
 
 func getTestStorage() *file.Storage {
+	home, _ := getHome()
 	return &file.Storage{
-		Home: getHome(),
+		Home: home,
 		Dir:  testDir,
 		Name: defaultStorageName,
 	}
