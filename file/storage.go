@@ -42,54 +42,33 @@ type Storage struct {
 	files map[string]*trackedFile
 }
 
-func (d *Storage) saveCommit(c *commit, alias string, t *trackedFile, bytes []byte) error {
+func (s *Storage) saveCommit(c *commit, alias string, t *trackedFile, bytes []byte) error {
 	// Create the directory for the files commits if it doesn't exist
-	commitDir := fmt.Sprintf("%s%s", d.Dir, alias)
-	_, err := os.Stat(commitDir)
-
-	//
-	// TODO these blocks are similar to setup(); pull logic out into a function.
-	//
-
-	if os.IsNotExist(err) {
-		os.Mkdir(commitDir, 0755)
-		fmt.Printf("Created %s\n", commitDir)
-	} else if err != nil {
-		return err
-	}
+	commitDir := fmt.Sprintf("%s%s", s.Dir, alias)
 
 	// The name of the file will be the hash
 	commitPath := fmt.Sprintf("%s/%s", commitDir, c.Hash)
-	_, err = os.Stat(commitPath)
-	if os.IsNotExist(err) {
-		f, createErr := os.Create(commitPath)
-		f.Close()
 
-		if createErr != nil {
-			fmt.Printf("create err, %s\n", createErr)
-			return createErr
-		}
-		fmt.Printf("Created %s\n", commitPath)
-
-		if err := ioutil.WriteFile(commitPath, bytes, 0644); err != nil {
-			return err
-		}
-	} else if err != nil {
+	if err := createIfNotExist(commitDir, commitPath); err != nil {
 		return err
 	}
 
-	return d.save(alias, t)
+	if err := ioutil.WriteFile(commitPath, bytes, 0644); err != nil {
+		return err
+	}
+
+	return s.save(alias, t)
 }
 
 // Reads the json and makes the tracked file map.
-func (d *Storage) get() error {
-	if err := d.setPath(); err != nil {
+func (s *Storage) get() error {
+	if err := s.setPath(); err != nil {
 		return err
 	}
 
-	d.files = make(map[string]*trackedFile)
+	s.files = make(map[string]*trackedFile)
 
-	f, err := os.Open(d.path)
+	f, err := os.Open(s.path)
 	if err != nil {
 		return err
 	}
@@ -105,19 +84,19 @@ func (d *Storage) get() error {
 		return nil
 	}
 
-	if err := json.Unmarshal(bytes, &d.files); err != nil {
+	if err := json.Unmarshal(bytes, &s.files); err != nil {
 		return err
 	}
 	return nil
 }
 
 // Gets a tracked file by its alias.
-func (d *Storage) getTrackedFile(alias string) (*trackedFile, error) {
-	if err := d.get(); err != nil {
+func (s *Storage) getTrackedFile(alias string) (*trackedFile, error) {
+	if err := s.get(); err != nil {
 		return nil, err
 	}
 
-	t, ok := d.files[alias]
+	t, ok := s.files[alias]
 	if !ok {
 		errors.New("file not tracked, use 'dot init <file>' first")
 	}
@@ -125,68 +104,76 @@ func (d *Storage) getTrackedFile(alias string) (*trackedFile, error) {
 }
 
 // Saves the trackedFile map to json.
-func (d *Storage) save(alias string, t *trackedFile) error {
-	d.files[alias] = t
+func (s *Storage) save(alias string, t *trackedFile) error {
+	s.files[alias] = t
 
-	json, err := json.MarshalIndent(d.files, "", " ")
+	json, err := json.MarshalIndent(s.files, "", " ")
 	if err != nil {
 		return err
 	}
 
-	if err := d.setPath(); err != nil {
+	if err := s.setPath(); err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(d.path, json, 0644)
+	return ioutil.WriteFile(s.path, json, 0644)
 }
 
-// Sets up the dotfile directory if it hasn't been done yet.
-func (d *Storage) setup() error {
-	// Create the directory if it doesn't exist.
-	_, err := os.Stat(d.Dir)
+// Sets up the storage directory if it hasn't been done yet and pulls its data.
+func (s *Storage) setup() error {
+	if err := s.setPath(); err != nil {
+		return err
+	}
+
+	if err := createIfNotExist(s.Dir, s.path); err != nil {
+		return err
+	}
+
+	return s.get()
+}
+
+func (s *Storage) setPath() error {
+	if s.Home == "" {
+		return errors.New("home not set")
+	}
+	if s.Dir == "" {
+		return errors.New("dir not set")
+	}
+	if s.Name == "" {
+		return errors.New("name not set")
+	}
+
+	if s.Dir[len(s.Dir)-1] != '/' {
+		s.Dir += "/"
+	}
+
+	s.path = fmt.Sprintf("%s%s", s.Dir, s.Name)
+	return nil
+}
+
+// Creates a directory and a file.
+// If the file already exists nothing happens.
+func createIfNotExist(dir, fileName string) error {
+	_, err := os.Stat(dir)
 	if os.IsNotExist(err) {
-		os.Mkdir(d.Dir, 0755)
-		fmt.Printf("Created %#v\n", d.Dir)
+		os.Mkdir(dir, 0755)
+		fmt.Printf("Created %#v\n", dir)
 	} else if err != nil {
 		return err
 	}
 
-	if err := d.setPath(); err != nil {
-		return err
-	}
-
-	// Create the data file if it doesn't exist.
-	_, err = os.Stat(d.path)
+	_, err = os.Stat(fileName)
 	if os.IsNotExist(err) {
-		f, createErr := os.Create(d.path)
-		f.Close()
-
+		f, createErr := os.Create(fileName)
 		if createErr != nil {
 			fmt.Printf("create err, %s\n", createErr)
 			return createErr
 		}
-		fmt.Printf("Created %#v\n", d.path)
+		defer f.Close()
+
+		fmt.Printf("Created %#v\n", fileName)
 	} else if err != nil {
 		return err
 	}
-	return d.get()
-}
-
-func (d *Storage) setPath() error {
-	if d.Home == "" {
-		return errors.New("home not set")
-	}
-	if d.Dir == "" {
-		return errors.New("dir not set")
-	}
-	if d.Name == "" {
-		return errors.New("name not set")
-	}
-
-	if d.Dir[len(d.Dir)-1] != '/' {
-		d.Dir += "/"
-	}
-
-	d.path = fmt.Sprintf("%s%s", d.Dir, d.Name)
 	return nil
 }
