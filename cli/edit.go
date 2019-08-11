@@ -1,15 +1,16 @@
-package commands
+package cli
 
 import (
 	"os"
 	"os/exec"
 
-	"github.com/knoebber/dotfile"
+	"github.com/knoebber/dotfile/file"
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type editCommand struct {
+	storage  *file.Storage
 	fileName string
 }
 
@@ -25,7 +26,7 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 		return ErrEditorEnvVarNotSet
 	}
 
-	path, err := dotfile.GetPath(e.fileName)
+	path, err := file.GetPath(e.storage, e.fileName)
 	if err != nil {
 		return errors.Wrapf(err, "error getting path for filename: %#v", e.fileName)
 	}
@@ -37,8 +38,10 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 	return cmd.Run()
 }
 
-func addEditSubCommandToApplication(app *kingpin.Application) {
-	ec := &editCommand{}
+func addEditSubCommandToApplication(app *kingpin.Application, storage *file.Storage) {
+	ec := &editCommand{
+		storage: storage,
+	}
 	c := app.Command("edit", "open a tracked file in $EDITOR").Action(ec.run)
 	c.Arg("file-name", "the file to edit").Required().StringVar(&ec.fileName)
 }

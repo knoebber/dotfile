@@ -1,4 +1,4 @@
-package commands
+package cli
 
 import (
 	"os"
@@ -8,10 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const (
-	arbitraryEditor = "nano"
-	arbitraryPath   = "/dev/null"
-)
+const arbitraryEditor = "nano"
 
 // Based on https://npf.io/2015/06/testing-exec-command/
 
@@ -26,14 +23,6 @@ func fakeExecCommand(command string, args ...string) *exec.Cmd {
 	return cmd
 }
 
-func initTestFile() {
-	initCommand := &initCommand{
-		fileName: arbitraryPath,
-	}
-	err := initCommand.run(nil)
-	assert.NoError(sneakyTestingReference, err)
-}
-
 func TestEditCommandLaunchesEditor(t *testing.T) {
 	sneakyTestingReference = t
 
@@ -43,14 +32,23 @@ func TestEditCommandLaunchesEditor(t *testing.T) {
 	defer os.Setenv("EDITOR", os.Getenv("EDITOR"))
 	os.Setenv("EDITOR", arbitraryEditor)
 
-	initTestFile()
-
 	editCommand := &editCommand{
-		fileName: arbitraryPath,
+		fileName: testAlias,
+		storage:  getTestStorage(),
 	}
 
-	err := editCommand.run(nil)
-	assert.NoError(t, err)
+	clearTestStorage()
+
+	t.Run("error before init", func(t *testing.T) {
+		err := editCommand.run(nil)
+		assert.Error(t, err)
+	})
+
+	t.Run("no error after init", func(t *testing.T) {
+		initTestFile(t)
+		err := editCommand.run(nil)
+		assert.NoError(t, err)
+	})
 }
 
 func TestErrorIfEditorNotSet(t *testing.T) {
@@ -58,7 +56,7 @@ func TestErrorIfEditorNotSet(t *testing.T) {
 	os.Unsetenv("EDITOR")
 
 	command := &editCommand{
-		fileName: arbitraryPath,
+		fileName: testAlias,
 	}
 	err := command.run(nil)
 	assert.Equal(t, ErrEditorEnvVarNotSet, err)
@@ -68,6 +66,6 @@ func TestEditHelperProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
 		return
 	}
-	assert.Equal(t, arbitraryPath, os.Args[1])
+	assert.Equal(t, testAlias, os.Args[1])
 	os.Exit(0)
 }
