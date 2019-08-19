@@ -8,18 +8,23 @@ import (
 )
 
 type pushCommand struct {
-	storage  *file.Storage
-	fileName string
+	getStorage func() (*file.Storage, error)
+	fileName   string
 }
 
 func (pc *pushCommand) run(ctx *kingpin.ParseContext) error {
+	_, err := pc.getStorage()
+	if err != nil {
+		return err
+	}
+
 	fmt.Printf("TODO: Push %#v", pc.fileName)
 	return nil
 }
 
-func addPushSubCommandToApplication(app *kingpin.Application, storage *file.Storage) {
+func addPushSubCommandToApplication(app *kingpin.Application, gs func() (*file.Storage, error)) {
 	pc := &pushCommand{
-		storage: storage,
+		getStorage: gs,
 	}
 	p := app.Command("push", "push committed changes to central service").Action(pc.run)
 	p.Arg("file-name", "the file to push").Required().StringVar(&pc.fileName)

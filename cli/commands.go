@@ -23,30 +23,49 @@ func getHome() (string, error) {
 	return home, nil
 }
 
+// Returns a function that initializes dotfile storage.
+// The result function must be ran at the time of a command being run so that
+// the user can override default storage configuration with --storage-dir or --storage-name.
+func getStorageClosure(home string, dir, name *string) func() (*file.Storage, error) {
+	return func() (*file.Storage, error) {
+		storage := &file.Storage{}
+
+		if err := storage.Setup(home, *dir, *name); err != nil {
+			return nil, errors.Wrap(err, "failed to setup dotfile storage")
+		}
+		return storage, nil
+	}
+}
+
 // AddCommandsToApplication initializes the cli.
 func AddCommandsToApplication(app *kingpin.Application) error {
+	var (
+		storageDirectory string
+		storageName      string
+	)
+
 	home, err := getHome()
 	if err != nil {
 		return err
 	}
-	storage := &file.Storage{
-		Home: home,
-	}
+
+	gs := getStorageClosure(home, &storageDirectory, &storageName)
 
 	app.Flag("storage-dir", "The directory where version control storage is stored").
-		Default(fmt.Sprintf("%s/%s", storage.Home, defaultStorageDir)).
-		StringVar(&storage.Dir)
+		Default(fmt.Sprintf("%s/%s", home, defaultStorageDir)).
+		StringVar(&storageDirectory)
 	app.Flag("storage-name", "The main json file that tracks checked in files").
 		Default(defaultStorageName).
-		StringVar(&storage.Name)
+		StringVar(&storageName)
 
-	addInitSubCommandToApplication(app, storage)
-	addEditSubCommandToApplication(app, storage)
-	addDiffSubCommandToApplication(app, storage)
-	addLogSubCommandToApplication(app, storage)
-	addCheckoutSubCommandToApplication(app, storage)
-	addCommitSubCommandToApplication(app, storage)
-	addPushSubCommandToApplication(app, storage)
-	addPullSubCommandToApplication(app, storage)
+	addInitSubCommandToApplication(app, gs)
+	addEditSubCommandToApplication(app, gs)
+	addDiffSubCommandToApplication(app, gs)
+	addLogSubCommandToApplication(app, gs)
+	addCheckoutSubCommandToApplication(app, gs)
+	addCommitSubCommandToApplication(app, gs)
+	addPushSubCommandToApplication(app, gs)
+	addPullSubCommandToApplication(app, gs)
+
 	return nil
 }
