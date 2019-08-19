@@ -9,12 +9,17 @@ import (
 )
 
 type pullCommand struct {
-	storage  *file.Storage
-	fileName string
-	pullAll  bool
+	getStorage func() (*file.Storage, error)
+	fileName   string
+	pullAll    bool
 }
 
 func (pc *pullCommand) run(ctx *kingpin.ParseContext) error {
+	_, err := pc.getStorage()
+	if err != nil {
+		return err
+	}
+
 	if pc.pullAll {
 		fmt.Println("TODO: Pull all")
 	} else if pc.fileName != "" {
@@ -25,9 +30,9 @@ func (pc *pullCommand) run(ctx *kingpin.ParseContext) error {
 	return nil
 }
 
-func addPullSubCommandToApplication(app *kingpin.Application, storage *file.Storage) {
+func addPullSubCommandToApplication(app *kingpin.Application, gs func() (*file.Storage, error)) {
 	pc := &pullCommand{
-		storage: storage,
+		getStorage: gs,
 	}
 	p := app.Command("pull", "pull changes from central service").Action(pc.run)
 	p.Arg("file-name", "the file to pull").StringVar(&pc.fileName)

@@ -19,14 +19,14 @@ var pathToAliasRegex = regexp.MustCompile(`(\w+)(\.\w+)?$`)
 
 // Init sets up a file for dotfile to track.
 // Returns the alias for the newly tracked file.
-func Init(d *Storage, filePath, altName string) (string, error) {
+func Init(s *Storage, filePath, altName string) (string, error) {
 	var (
 		alias string
 		err   error
 	)
 
 	if _, err = os.Stat(filePath); os.IsNotExist(err) {
-		return "", fmt.Errorf("\"%#v\" not found", filePath)
+		return "", fmt.Errorf("%#v not found", filePath)
 	}
 
 	// Get the full path so that it can later turn it into a relative path.
@@ -43,14 +43,10 @@ func Init(d *Storage, filePath, altName string) (string, error) {
 		}
 	}
 
-	if err = d.setup(); err != nil {
-		return "", err
-	}
-
 	// Replace the full path with a relative path.
-	relativePath := strings.Replace(fullPath, d.Home, "~", 1)
+	relativePath := strings.Replace(fullPath, s.GetHome(), "~", 1)
 
-	if err = d.save(alias, &trackedFile{
+	if err = s.save(alias, &trackedFile{
 		Path: relativePath,
 	}); err != nil {
 		return "", err
@@ -59,13 +55,13 @@ func Init(d *Storage, filePath, altName string) (string, error) {
 }
 
 // Commit hashes and saves the current state of a tracked file.
-func Commit(d *Storage, alias, message string) (string, error) {
-	file, err := d.getTrackedFile(alias)
+func Commit(s *Storage, alias, message string) (string, error) {
+	file, err := s.getTrackedFile(alias)
 	if err != nil {
 		return "", err
 	}
 
-	path := file.getFullPath(d.Home)
+	path := file.getFullPath(s.GetHome())
 	f, err := os.Open(path)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to open %s", path)
@@ -93,17 +89,17 @@ func Commit(d *Storage, alias, message string) (string, error) {
 
 	file.Commits = append(file.Commits, c)
 
-	return hash, d.saveCommit(c, alias, file, compressed.Bytes())
+	return hash, s.saveCommit(c, alias, file, compressed.Bytes())
 }
 
 // GetPath gets the full path for a tracked file.
-func GetPath(d *Storage, alias string) (string, error) {
-	file, err := d.getTrackedFile(alias)
+func GetPath(s *Storage, alias string) (string, error) {
+	file, err := s.getTrackedFile(alias)
 	if err != nil {
 		return "", err
 	}
 
-	return file.getFullPath(d.Home), nil
+	return file.getFullPath(s.GetHome()), nil
 }
 
 // Creates a alias from the path of the file.

@@ -6,13 +6,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const nonExistantFile = "this does not exist"
-
 func TestInit(t *testing.T) {
 	clearTestStorage()
 
 	initCommand := &initCommand{
-		storage: getTestStorage(),
+		getStorage: getTestStorageClosure(),
 	}
 
 	t.Run("returns error when file does not exist", func(t *testing.T) {
@@ -21,7 +19,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("no error when file exists", func(t *testing.T) {
-		initCommand.fileName = arbitraryFile
+		initCommand.fileName = trackedFile
 		assert.NoError(t, initCommand.run(nil))
 	})
 }

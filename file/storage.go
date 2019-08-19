@@ -35,22 +35,55 @@ import (
 // Storage provides methods for reading and writing json data and compressed commit bytes.
 // All exported fields should be set.
 type Storage struct {
-	Home string // The path to the users home directory.
-	Dir  string // The path to the folder where data will be stored.
-	Name string // The name of the json file.
+	home string // The path to the users home directory.
+	dir  string // The path to the folder where data will be stored.
+	name string // The name of the json file.
 
 	path  string
 	files map[string]*trackedFile
 }
 
+// Sets up the storage directory if it hasn't been done yet and pulls its data.
+func (s *Storage) Setup(home, dir, name string) error {
+	if home == "" {
+		return errors.New("home cannot be empty  ")
+	}
+	if dir == "" {
+		return errors.New("dir cannot be empty")
+	}
+	if name == "" {
+		return errors.New("name cannot be empty")
+	}
+
+	s.home = home
+	s.dir = dir
+	s.name = name
+
+	if s.dir[len(s.dir)-1] != '/' {
+		s.dir += "/"
+	}
+
+	s.path = fmt.Sprintf("%s%s", s.dir, s.name)
+
+	if err := createIfNotExist(s.dir, s.path); err != nil {
+		return err
+	}
+
+	return s.get()
+}
+
+func (s *Storage) GetHome() string {
+	return s.home
+}
+
 func (s *Storage) saveCommit(c *commit, alias string, t *trackedFile, bytes []byte) error {
 	// Create the directory for the files commits if it doesn't exist
-	commitDir := fmt.Sprintf("%s%s", s.Dir, alias)
+	commitdir := fmt.Sprintf("%s%s", s.dir, alias)
 
 	// The name of the file will be the hash
-	commitPath := fmt.Sprintf("%s/%s", commitDir, c.Hash)
+	commitPath := fmt.Sprintf("%s/%s", commitdir, c.Hash)
 
-	if err := createIfNotExist(commitDir, commitPath); err != nil {
+	if err := createIfNotExist(commitdir, commitPath); err != nil {
 		return err
 	}
 
@@ -63,10 +96,6 @@ func (s *Storage) saveCommit(c *commit, alias string, t *trackedFile, bytes []by
 
 // Reads the json and makes the tracked file map.
 func (s *Storage) get() error {
-	if err := s.setPath(); err != nil {
-		return err
-	}
-
 	s.files = make(map[string]*trackedFile)
 
 	f, err := os.Open(s.path)
@@ -99,7 +128,7 @@ func (s *Storage) getTrackedFile(alias string) (*trackedFile, error) {
 
 	t, ok := s.files[alias]
 	if !ok {
-		errors.New("file not tracked, use 'dot init <file>' first")
+		return nil, fmt.Errorf("%#v not tracked, use 'dot init <file>' first", alias)
 	}
 	return t, nil
 }
@@ -113,43 +142,7 @@ func (s *Storage) save(alias string, t *trackedFile) error {
 		return errors.Wrapf(err, "failed to marshal %s", s.path)
 	}
 
-	if err := s.setPath(); err != nil {
-		return err
-	}
-
 	return ioutil.WriteFile(s.path, json, 0644)
-}
-
-// Sets up the storage directory if it hasn't been done yet and pulls its data.
-func (s *Storage) setup() error {
-	if err := s.setPath(); err != nil {
-		return err
-	}
-
-	if err := createIfNotExist(s.Dir, s.path); err != nil {
-		return err
-	}
-
-	return s.get()
-}
-
-func (s *Storage) setPath() error {
-	if s.Home == "" {
-		return errors.New("home not set")
-	}
-	if s.Dir == "" {
-		return errors.New("dir not set")
-	}
-	if s.Name == "" {
-		return errors.New("name not set")
-	}
-
-	if s.Dir[len(s.Dir)-1] != '/' {
-		s.Dir += "/"
-	}
-
-	s.path = fmt.Sprintf("%s%s", s.Dir, s.Name)
-	return nil
 }
 
 // Creates a directory and a file.
