@@ -9,13 +9,18 @@ import (
 )
 
 type initCommand struct {
-	storage  *file.Storage
-	fileName string
-	altName  string
+	getStorage func() (*file.Storage, error)
+	fileName   string
+	altName    string
 }
 
 func (ic *initCommand) run(ctx *kingpin.ParseContext) error {
-	alias, err := file.Init(ic.storage, ic.fileName, ic.altName)
+	s, err := ic.getStorage()
+	if err != nil {
+		return err
+	}
+
+	alias, err := file.Init(s, ic.fileName, ic.altName)
 	if err != nil {
 		return errors.Wrapf(err, "failed to initialize %#v", ic.fileName)
 	}
@@ -24,9 +29,9 @@ func (ic *initCommand) run(ctx *kingpin.ParseContext) error {
 	return nil
 }
 
-func addInitSubCommandToApplication(app *kingpin.Application, storage *file.Storage) {
+func addInitSubCommandToApplication(app *kingpin.Application, gs func() (*file.Storage, error)) {
 	ic := &initCommand{
-		storage: storage,
+		getStorage: gs,
 	}
 	p := app.Command("init", "begin tracking a file").Action(ic.run)
 	p.Arg("file-name", "the file to track").Required().StringVar(&ic.fileName)

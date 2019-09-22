@@ -10,24 +10,24 @@ import (
 )
 
 const (
-	arbitraryFile = "helpers_test.go"
-	testAlias     = "helpers_test"
-	testDir       = "testdata/"
+	nonExistantFile  = "file_does_not_exist"
+	notTrackedFile   = "/dev/null"
+	trackedFile      = "helpers_test.go"
+	trackedFileAlias = "helpers_test"
+	testDir          = "testdata/"
 )
 
-func getTestStorage() *file.Storage {
+func getTestStorageClosure() func() (*file.Storage, error) {
 	home, _ := getHome()
-	return &file.Storage{
-		Home: home,
-		Dir:  testDir,
-		Name: defaultStorageName,
-	}
+	dir := testDir
+	name := defaultStorageName
+	return getStorageClosure(home, &dir, &name)
 }
 
 func initTestFile(t *testing.T) {
 	initCommand := &initCommand{
-		fileName: arbitraryFile,
-		storage:  getTestStorage(),
+		fileName:   trackedFile,
+		getStorage: getTestStorageClosure(),
 	}
 	err := initCommand.run(nil)
 	assert.NoError(t, err)

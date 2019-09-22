@@ -10,8 +10,8 @@ import (
 )
 
 type editCommand struct {
-	storage  *file.Storage
-	fileName string
+	getStorage func() (*file.Storage, error)
+	fileName   string
 }
 
 var (
@@ -26,7 +26,12 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 		return ErrEditorEnvVarNotSet
 	}
 
-	path, err := file.GetPath(e.storage, e.fileName)
+	s, err := e.getStorage()
+	if err != nil {
+		return err
+	}
+
+	path, err := file.GetPath(s, e.fileName)
 	if err != nil {
 		return errors.Wrapf(err, "error getting path for filename: %#v", e.fileName)
 	}
@@ -38,9 +43,9 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 	return cmd.Run()
 }
 
-func addEditSubCommandToApplication(app *kingpin.Application, storage *file.Storage) {
+func addEditSubCommandToApplication(app *kingpin.Application, gs func() (*file.Storage, error)) {
 	ec := &editCommand{
-		storage: storage,
+		getStorage: gs,
 	}
 	c := app.Command("edit", "open a tracked file in $EDITOR").Action(ec.run)
 	c.Arg("file-name", "the file to edit").Required().StringVar(&ec.fileName)

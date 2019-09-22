@@ -33,8 +33,8 @@ func TestEditCommandLaunchesEditor(t *testing.T) {
 	os.Setenv("EDITOR", arbitraryEditor)
 
 	editCommand := &editCommand{
-		fileName: testAlias,
-		storage:  getTestStorage(),
+		fileName:   trackedFileAlias,
+		getStorage: getTestStorageClosure(),
 	}
 
 	clearTestStorage()
@@ -56,7 +56,7 @@ func TestErrorIfEditorNotSet(t *testing.T) {
 	os.Unsetenv("EDITOR")
 
 	command := &editCommand{
-		fileName: testAlias,
+		fileName: trackedFileAlias,
 	}
 	err := command.run(nil)
 	assert.Equal(t, ErrEditorEnvVarNotSet, err)
@@ -66,6 +66,6 @@ func TestEditHelperProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
 		return
 	}
-	assert.Equal(t, testAlias, os.Args[1])
+	assert.Equal(t, trackedFileAlias, os.Args[1])
 	os.Exit(0)
 }
