@@ -11,23 +11,27 @@ import (
 const defaultMessageTimestampDisplayFormat = "January 02, 2006 3:04 PM -0700"
 
 type commitCommand struct {
-	storage       *file.Storage
+	getStorage    func() (*file.Storage, error)
 	fileName      string
 	commitMessage string
 }
 
 func (c *commitCommand) run(ctx *kingpin.ParseContext) error {
-	_, err := file.Commit(c.storage, c.fileName, c.commitMessage)
+	s, err := c.getStorage()
 	if err != nil {
+		return err
+	}
+
+	if _, err := file.Commit(s, c.fileName, c.commitMessage); err != nil {
 		return errors.Wrapf(err, "failed to commit %#v", c.fileName)
 	}
 
 	return nil
 }
 
-func addCommitSubCommandToApplication(app *kingpin.Application, storage *file.Storage) {
+func addCommitSubCommandToApplication(app *kingpin.Application, gs func() (*file.Storage, error)) {
 	cc := &commitCommand{
-		storage: storage,
+		getStorage: gs,
 	}
 	c := app.Command("commit", "commit file to working tree").Action(cc.run)
 	c.Arg("file-name", "the file to track").Required().StringVar(&cc.fileName)
