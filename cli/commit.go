@@ -22,7 +22,7 @@ func (c *commitCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
-	if _, err := file.Commit(s, c.fileName, c.commitMessage); err != nil {
+	if err := file.Commit(s, c.fileName, c.commitMessage); err != nil {
 		return errors.Wrapf(err, "failed to commit %#v", c.fileName)
 	}
 
