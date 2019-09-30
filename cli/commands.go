@@ -51,7 +51,7 @@ func AddCommandsToApplication(app *kingpin.Application) error {
 
 	gs := getStorageClosure(home, &storageDirectory, &storageName)
 
-	app.Flag("storage-dir", "The directory where version control storage is stored").
+	app.Flag("storage-dir", "The directory where version control data is stored").
 		Default(fmt.Sprintf("%s/%s", home, defaultStorageDir)).
 		StringVar(&storageDirectory)
 	app.Flag("storage-name", "The main json file that tracks checked in files").
