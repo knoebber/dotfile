@@ -65,7 +65,7 @@ func (s *Storage) Setup(home, dir, name string) error {
 
 	s.path = fmt.Sprintf("%s%s", s.dir, s.name)
 
-	if err := createIfNotExist(s.dir, s.path); err != nil {
+	if _, err := createIfNotExist(s.dir, s.path); err != nil {
 		return err
 	}
 
@@ -76,22 +76,22 @@ func (s *Storage) GetHome() string {
 	return s.home
 }
 
-func (s *Storage) saveCommit(c *commit, alias string, t *trackedFile, bytes []byte) error {
+func (s *Storage) saveCommit(c *commit, alias string, t *trackedFile, bytes []byte) (created bool, err error) {
 	// Create the directory for the files commits if it doesn't exist
 	commitdir := fmt.Sprintf("%s%s", s.dir, alias)
 
 	// The name of the file will be the hash
 	commitPath := fmt.Sprintf("%s/%s", commitdir, c.Hash)
 
-	if err := createIfNotExist(commitdir, commitPath); err != nil {
-		return err
+	if created, err = createIfNotExist(commitdir, commitPath); err != nil {
+		return false, err
 	}
 
 	if err := ioutil.WriteFile(commitPath, bytes, 0644); err != nil {
-		return err
+		return created, err
 	}
 
-	return s.save(alias, t)
+	return created, s.save(alias, t)
 }
 
 // Reads the json and makes the tracked file map.
@@ -146,27 +146,29 @@ func (s *Storage) save(alias string, t *trackedFile) error {
 }
 
 // Creates a directory and a file.
-// If the file already exists nothing happens.
-func createIfNotExist(dir, fileName string) error {
-	_, err := os.Stat(dir)
+// Returns true if any files were created.
+func createIfNotExist(dir, fileName string) (created bool, err error) {
+	_, err = os.Stat(dir)
 	if os.IsNotExist(err) {
 		os.Mkdir(dir, 0755)
+		created = true
 		fmt.Printf("Created %s\n", dir)
 	} else if err != nil {
-		return errors.Wrapf(err, "failed to create directory %s", dir)
+		return created, errors.Wrapf(err, "failed to create directory %s", dir)
 	}
 
 	_, err = os.Stat(fileName)
 	if os.IsNotExist(err) {
 		f, createErr := os.Create(fileName)
 		if createErr != nil {
-			return errors.Wrapf(err, "failed to create file %s", dir)
+			return created, errors.Wrapf(err, "failed to create file %s", dir)
 		}
 		defer f.Close()
 
+		created = true
 		fmt.Printf("Created %s\n", fileName)
 	} else if err != nil {
-		return err
+		return created, err
 	}
-	return nil
+	return created, nil
 }

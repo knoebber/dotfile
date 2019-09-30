@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"fmt"
-
 	"github.com/knoebber/dotfile/file"
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -20,12 +18,10 @@ func (ic *initCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
-	alias, err := file.Init(s, ic.fileName, ic.altName)
-	if err != nil {
+	if err := file.Init(s, ic.fileName, ic.altName); err != nil {
 		return errors.Wrapf(err, "failed to initialize %#v", ic.fileName)
 	}
 
-	fmt.Printf("Initialized %s as %#v\n", ic.fileName, alias)
 	return nil
 }
 

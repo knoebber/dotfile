@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInit(t *testing.T) {
+func TestSetup(t *testing.T) {
 	s := &Storage{}
 
 	t.Run("error when home is empty", func(t *testing.T) {

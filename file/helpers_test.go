@@ -27,6 +27,5 @@ func getTestStorage() *Storage {
 }
 
 func initTestFile(t *testing.T, s *Storage) {
-	_, err := Init(s, testFile, testAlias)
-	assert.NoError(t, err)
+	assert.NoError(t, Init(s, testFile, testAlias))
 }
