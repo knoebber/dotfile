@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/local"
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 
@@ -26,13 +26,14 @@ func getHome() (string, error) {
 // Returns a function that initializes dotfile storage.
 // The result function must be ran at the time of a command being run so that
 // the user can override default storage configuration with --storage-dir or --storage-name.
-func getStorageClosure(home string, dir, name *string) func() (*file.Storage, error) {
-	return func() (*file.Storage, error) {
-		storage := &file.Storage{}
+func getStorageClosure(home string, dir, name *string) func() (*local.Storage, error) {
+	return func() (*local.Storage, error) {
+		storage, err := local.NewStorage(home, *dir, *name)
 
-		if err := storage.Setup(home, *dir, *name); err != nil {
-			return nil, errors.Wrap(err, "failed to setup dotfile storage")
+		if err != nil {
+			return nil, errors.Wrap(err, "getting local storage")
 		}
+
 		return storage, nil
 	}
 }
