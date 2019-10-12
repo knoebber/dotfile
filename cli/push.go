@@ -3,12 +3,12 @@ package cli
 import (
 	"fmt"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/local"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type pushCommand struct {
-	getStorage func() (*file.Storage, error)
+	getStorage func() (*local.Storage, error)
 	fileName   string
 }
 
@@ -22,7 +22,7 @@ func (pc *pushCommand) run(ctx *kingpin.ParseContext) error {
 	return nil
 }
 
-func addPushSubCommandToApplication(app *kingpin.Application, gs func() (*file.Storage, error)) {
+func addPushSubCommandToApplication(app *kingpin.Application, gs func() (*local.Storage, error)) {
 	pc := &pushCommand{
 		getStorage: gs,
 	}
