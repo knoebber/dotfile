@@ -3,12 +3,12 @@ package cli
 import (
 	"fmt"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/local"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type diffCommand struct {
-	getStorage func() (*file.Storage, error)
+	getStorage func() (*local.Storage, error)
 	fileName   string
 }
 
@@ -22,7 +22,7 @@ func (d *diffCommand) run(ctx *kingpin.ParseContext) error {
 	return nil
 }
 
-func addDiffSubCommandToApplication(app *kingpin.Application, gs func() (*file.Storage, error)) {
+func addDiffSubCommandToApplication(app *kingpin.Application, gs func() (*local.Storage, error)) {
 	dc := &diffCommand{
 		getStorage: gs,
 	}

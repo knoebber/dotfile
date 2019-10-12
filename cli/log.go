@@ -1,28 +1,30 @@
 package cli
 
 import (
-	"fmt"
-
 	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/local"
+	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type logCommand struct {
-	getStorage func() (*file.Storage, error)
+	getStorage func() (*local.Storage, error)
 	fileName   string
 }
 
 func (l *logCommand) run(ctx *kingpin.ParseContext) error {
-	_, err := l.getStorage()
+	s, err := l.getStorage()
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("TODO: Log %#v\n", l.fileName)
+	if err := file.Log(s, l.fileName); err != nil {
+		return errors.Wrapf(err, "failed to get log for %#v", l.fileName)
+	}
 	return nil
 }
 
-func addLogSubCommandToApplication(app *kingpin.Application, gs func() (*file.Storage, error)) {
+func addLogSubCommandToApplication(app *kingpin.Application, gs func() (*local.Storage, error)) {
 	lc := &logCommand{
 		getStorage: gs,
 	}

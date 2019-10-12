@@ -1,17 +1,13 @@
 package cli
 
 import (
-	"time"
-
 	"github.com/knoebber/dotfile/file"
-	"github.com/pkg/errors"
+	"github.com/knoebber/dotfile/local"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-const defaultMessageTimestampDisplayFormat = "January 02, 2006 3:04 PM -0700"
-
 type commitCommand struct {
-	getStorage    func() (*file.Storage, error)
+	getStorage    func() (*local.Storage, error)
 	fileName      string
 	commitMessage string
 }
@@ -22,21 +18,20 @@ func (c *commitCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
-	if err := file.Commit(s, c.fileName, c.commitMessage); err != nil {
-		return errors.Wrapf(err, "failed to commit %#v", c.fileName)
+	if err := file.NewCommit(s, c.fileName, c.commitMessage); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func addCommitSubCommandToApplication(app *kingpin.Application, gs func() (*file.Storage, error)) {
+func addCommitSubCommandToApplication(app *kingpin.Application, gs func() (*local.Storage, error)) {
 	cc := &commitCommand{
 		getStorage: gs,
 	}
 	c := app.Command("commit", "commit file to working tree").Action(cc.run)
-	c.Arg("file-name", "the file to track").Required().StringVar(&cc.fileName)
+	c.Arg("file-name", "name of file to save new revision of").Required().StringVar(&cc.fileName)
 	c.Arg("commit-message",
-		"a memo to remind yourself what's in this version; defaults to local timestamp").
-		Default(time.Now().Format(defaultMessageTimestampDisplayFormat)).
+		"a memo to remind yourself what's in this version").
 		StringVar(&cc.commitMessage)
 }
