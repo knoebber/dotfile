@@ -19,6 +19,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("no error when file exists", func(t *testing.T) {
+		writeTestFile(t, []byte(initialTestFileContents))
 		initCommand.fileName = trackedFile
 		assert.NoError(t, initCommand.run(nil))
 	})

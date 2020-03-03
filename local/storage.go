@@ -186,5 +186,9 @@ func (s *Storage) GetPath(alias string) (string, error) {
 		return "", err
 	}
 
+	if tf == nil {
+		return "", fmt.Errorf("%#v is not tracked", alias)
+	}
+
 	return fullPath(tf.RelativePath, s.Home), nil
 }

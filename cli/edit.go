@@ -33,7 +33,7 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 
 	path, err := s.GetPath(e.fileName)
 	if err != nil {
-		return errors.Wrapf(err, "error getting path for filename: %#v", e.fileName)
+		return errors.Wrap(err, "getting path")
 	}
 
 	cmd := execCommand(editor, path)

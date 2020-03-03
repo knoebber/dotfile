@@ -21,6 +21,7 @@ func TestCommit(t *testing.T) {
 	})
 
 	t.Run("ok", func(t *testing.T) {
+		updateTestFile(t)
 		commitCommand.fileName = trackedFileAlias
 		assert.NoError(t, commitCommand.run(nil))
 	})
