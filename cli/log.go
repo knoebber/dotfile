@@ -1,11 +1,15 @@
 package cli
 
 import (
+	"fmt"
 	"github.com/knoebber/dotfile/file"
 	"github.com/knoebber/dotfile/local"
-	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"strings"
+	"time"
 )
+
+const timestampDisplayFormat = "January 02, 2006 3:04 PM -0700"
 
 type logCommand struct {
 	getStorage func() (*local.Storage, error)
@@ -18,8 +22,22 @@ func (l *logCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
-	if err := file.Log(s, l.fileName); err != nil {
-		return errors.Wrapf(err, "failed to get log for %#v", l.fileName)
+	tf, err := file.MustGetTracked(s, l.fileName)
+	if err != nil {
+		return err
+	}
+
+	delim := strings.Repeat("=", len(tf.Revision))
+
+	for _, commit := range tf.Commits {
+		timeStamp := time.Unix(commit.Timestamp, 0).Format(timestampDisplayFormat)
+		fmt.Printf("\n%s\n", delim)
+		fmt.Print(timeStamp + "\n")
+		if commit.Message != "" {
+			fmt.Print(commit.Message + "\n")
+		}
+		fmt.Print(commit.Hash)
+		fmt.Printf("\n%s\n", delim)
 	}
 	return nil
 }
