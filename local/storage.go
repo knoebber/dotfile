@@ -181,13 +181,9 @@ func (s *Storage) Revert(contents []byte, relativePath string) error {
 
 // GetPath gets the full path to a file from its alias.
 func (s *Storage) GetPath(alias string) (string, error) {
-	tf, err := s.GetTracked(alias)
+	tf, err := file.MustGetTracked(s, alias)
 	if err != nil {
 		return "", err
-	}
-
-	if tf == nil {
-		return "", fmt.Errorf("%#v is not tracked", alias)
 	}
 
 	return fullPath(tf.RelativePath, s.Home), nil

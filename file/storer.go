@@ -4,14 +4,9 @@ import (
 	"fmt"
 	"log"
 	"regexp"
-	"strings"
-	"time"
 )
 
-const (
-	timestampDisplayFormat = "January 02, 2006 3:04 PM -0700"
-	initialCommitMessage   = "Initial commit"
-)
+const initialCommitMessage = "Initial commit"
 
 // TODO GetTracked: return an error or not? make consistent, see checkout vs init.
 
@@ -25,6 +20,21 @@ type Storer interface {
 	GetRevision(string, string) ([]byte, error)
 	SaveRevision(*Tracked, *Commit) error
 	Revert([]byte, string) error
+}
+
+// MustGetTracked attempts to find alias.
+// Returns an error when it doesn't exist.
+func MustGetTracked(s Storer, alias string) (*Tracked, error) {
+	tf, err := s.GetTracked(alias)
+	if err != nil {
+		return nil, err
+	}
+
+	if tf == nil {
+		return nil, fmt.Errorf("%#v is not tracked", alias)
+	}
+
+	return tf, nil
 }
 
 // Init initializes a file for dotfile to track.
@@ -73,13 +83,9 @@ func Init(s Storer, relativePath, alias string) (err error) {
 }
 
 func NewCommit(s Storer, alias, message string) error {
-	tf, err := s.GetTracked(alias)
+	tf, err := MustGetTracked(s, alias)
 	if err != nil {
 		return err
-	}
-
-	if tf == nil {
-		return fmt.Errorf("%#v is not tracked", alias)
 	}
 
 	contents, err := s.GetContents(tf.RelativePath)
@@ -97,13 +103,9 @@ func NewCommit(s Storer, alias, message string) error {
 }
 
 func Checkout(s Storer, alias, hash string) error {
-	tf, err := s.GetTracked(alias)
+	tf, err := MustGetTracked(s, alias)
 	if err != nil {
 		return err
-	}
-
-	if tf == nil {
-		return fmt.Errorf("%#v is not tracked", alias)
 	}
 
 	found := false
@@ -134,29 +136,6 @@ func Checkout(s Storer, alias, hash string) error {
 	tf.Revision = hash
 
 	return s.SaveTracked(tf)
-}
-
-func Log(s Storer, alias string) error {
-	tf, err := s.GetTracked(alias)
-	if err != nil {
-		return err
-	}
-
-	delim := strings.Repeat("=", len(tf.Revision))
-
-	for _, commit := range tf.Commits {
-		timeStamp := time.Unix(commit.Timestamp, 0).Format(timestampDisplayFormat)
-		log.Printf("\n%s", delim)
-		log.Print(timeStamp)
-
-		if commit.Message != "" {
-			log.Print(commit.Message)
-		}
-
-		log.Print(commit.Hash)
-		log.Print(delim)
-	}
-	return nil
 }
 
 // Creates an alias from the path of the file.
