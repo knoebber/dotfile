@@ -2,7 +2,6 @@ package local
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,7 +38,6 @@ func createIfNotExist(dir, fileName string) (created bool, err error) {
 	if os.IsNotExist(err) {
 		os.Mkdir(dir, 0755)
 		created = true
-		log.Printf("Created directory %s", dir)
 	} else if err != nil {
 		return false, err
 	}
@@ -53,7 +51,6 @@ func createIfNotExist(dir, fileName string) (created bool, err error) {
 		defer f.Close()
 
 		created = true
-		log.Printf("Created file %s", fileName)
 	} else if err != nil {
 		return
 	}
