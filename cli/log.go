@@ -2,14 +2,18 @@ package cli
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/knoebber/dotfile/file"
 	"github.com/knoebber/dotfile/local"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"strings"
-	"time"
 )
 
-const timestampDisplayFormat = "January 02, 2006 3:04 PM -0700"
+const (
+	delimChar              = "="
+	timestampDisplayFormat = "January 02, 2006 3:04 PM -0700"
+)
 
 type logCommand struct {
 	getStorage func() (*local.Storage, error)
@@ -27,11 +31,19 @@ func (l *logCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
-	delim := strings.Repeat("=", len(tf.Revision))
+	delim := strings.Repeat(delimChar, len(tf.Revision))
 
+	halfHeaderDelim := strings.Repeat(delimChar, (len(tf.Revision)-9)/2)
+	currentDelim := halfHeaderDelim + " CURRENT " + halfHeaderDelim + delimChar
 	for _, commit := range tf.Commits {
 		timeStamp := time.Unix(commit.Timestamp, 0).Format(timestampDisplayFormat)
-		fmt.Printf("\n%s\n", delim)
+
+		if commit.Hash == tf.Revision {
+			fmt.Printf("\n%s\n", currentDelim)
+		} else {
+			fmt.Printf("\n%s\n", delim)
+		}
+
 		fmt.Print(timeStamp + "\n")
 		if commit.Message != "" {
 			fmt.Print(commit.Message + "\n")
