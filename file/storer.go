@@ -2,7 +2,6 @@ package file
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 )
 
@@ -39,17 +38,24 @@ func MustGetTracked(s Storer, alias string) (*Tracked, error) {
 
 // Init initializes a file for dotfile to track.
 // It creates a tracked file with an initial commit.
-func Init(s Storer, relativePath, alias string) (err error) {
-	if alias == "" {
+func Init(s Storer, relativePath, fileName string) (alias string, err error) {
+	var (
+		tf     *Tracked
+		commit *Commit
+	)
+
+	if fileName == "" {
 		alias, err = pathToAlias(relativePath)
 		if err != nil {
-			return err
+			return
 		}
+	} else {
+		alias = fileName
 	}
 
-	tf, err := s.GetTracked(alias)
+	tf, err = s.GetTracked(alias)
 	if err != nil {
-		return err
+		return
 	}
 
 	if tf != nil {
@@ -62,9 +68,9 @@ func Init(s Storer, relativePath, alias string) (err error) {
 		return
 	}
 
-	commit, err := newCommit(contents, initialCommitMessage)
+	commit, err = newCommit(contents, initialCommitMessage)
 	if err != nil {
-		return err
+		return
 	}
 
 	tf = &Tracked{
@@ -75,11 +81,10 @@ func Init(s Storer, relativePath, alias string) (err error) {
 	}
 
 	if err = s.SaveRevision(tf, commit); err != nil {
-		return err
+		return
 	}
 
-	log.Printf("Initialized %s as %#v", relativePath, alias)
-	return nil
+	return
 }
 
 func NewCommit(s Storer, alias, message string) error {
