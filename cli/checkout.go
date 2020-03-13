@@ -3,7 +3,6 @@ package cli
 import (
 	"github.com/knoebber/dotfile/file"
 	"github.com/knoebber/dotfile/local"
-	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -20,7 +19,7 @@ func (c *checkoutCommand) run(ctx *kingpin.ParseContext) error {
 	}
 
 	if err := file.Checkout(s, c.fileName, c.commitHash); err != nil {
-		return errors.Wrapf(err, "failed to checkout %#v", c.fileName)
+		return err
 	}
 
 	return nil
