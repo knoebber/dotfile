@@ -38,10 +38,11 @@ func (l *logCommand) run(ctx *kingpin.ParseContext) error {
 	for _, commit := range tf.Commits {
 		timeStamp := time.Unix(commit.Timestamp, 0).Format(timestampDisplayFormat)
 
+		fmt.Println("")
 		if commit.Hash == tf.Revision {
-			fmt.Printf("\n%s\n", currentDelim)
+			fmt.Println(currentDelim)
 		} else {
-			fmt.Printf("\n%s\n", delim)
+			fmt.Println(delim)
 		}
 
 		fmt.Print(timeStamp + "\n")
