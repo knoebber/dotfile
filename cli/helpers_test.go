@@ -19,6 +19,10 @@ const (
 	updatedTestFileContents = initialTestFileContents + "Some new content!\n"
 )
 
+// Based on https://npf.io/2015/06/testing-exec-command/
+
+var sneakyTestingReference *testing.T
+
 func getTestStorageClosure() func() (*local.Storage, error) {
 	home, _ := getHome()
 	dir := testDir

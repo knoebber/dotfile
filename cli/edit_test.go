@@ -10,11 +10,7 @@ import (
 
 const arbitraryEditor = "nano"
 
-// Based on https://npf.io/2015/06/testing-exec-command/
-
-var sneakyTestingReference *testing.T
-
-func fakeExecCommand(command string, args ...string) *exec.Cmd {
+func fakeEditCommand(command string, args ...string) *exec.Cmd {
 	assert.Equal(sneakyTestingReference, arbitraryEditor, command)
 	cs := []string{"-test.run=TestEditHelperProcess", "--", command}
 	cs = append(cs, args...)
@@ -26,7 +22,7 @@ func fakeExecCommand(command string, args ...string) *exec.Cmd {
 func TestEditCommandLaunchesEditor(t *testing.T) {
 	sneakyTestingReference = t
 
-	execCommand = fakeExecCommand
+	execCommand = fakeEditCommand
 	defer func() { execCommand = exec.Command }()
 
 	defer os.Setenv("EDITOR", os.Getenv("EDITOR"))
@@ -59,7 +55,7 @@ func TestErrorIfEditorNotSet(t *testing.T) {
 		fileName: trackedFileAlias,
 	}
 	err := command.run(nil)
-	assert.Equal(t, ErrEditorEnvVarNotSet, err)
+	assert.Equal(t, errEditorEnvVarNotSet, err)
 }
 
 func TestEditHelperProcess(t *testing.T) {
