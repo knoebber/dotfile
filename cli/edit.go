@@ -2,7 +2,6 @@ package cli
 
 import (
 	"os"
-	"os/exec"
 
 	"github.com/knoebber/dotfile/local"
 	"github.com/pkg/errors"
@@ -14,16 +13,12 @@ type editCommand struct {
 	fileName   string
 }
 
-var (
-	execCommand = exec.Command
-
-	ErrEditorEnvVarNotSet = errors.New("EDITOR environment variable must be set")
-)
+var errEditorEnvVarNotSet = errors.New("EDITOR environment variable must be set")
 
 func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 	editor := os.Getenv("EDITOR")
 	if editor == "" {
-		return ErrEditorEnvVarNotSet
+		return errEditorEnvVarNotSet
 	}
 
 	s, err := e.getStorage()
@@ -33,7 +28,7 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 
 	path, err := s.GetPath(e.fileName)
 	if err != nil {
-		return errors.Wrap(err, "getting path")
+		return err
 	}
 
 	cmd := execCommand(editor, path)
