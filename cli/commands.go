@@ -1,13 +1,18 @@
 package cli
 
 import (
+	"fmt"
+	"os"
+	"os/exec"
+
 	"github.com/knoebber/dotfile/local"
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
-
-	"fmt"
-	"os"
 )
+
+// Used for edit and diff.
+// Allows for easy unit tests.
+var execCommand = exec.Command
 
 const (
 	defaultStorageDir  string = ".dotfile/"
@@ -18,7 +23,7 @@ const (
 func getHome() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get user home directory")
+		return "", errors.Wrap(err, "getting user home directory")
 	}
 	return home, nil
 }
