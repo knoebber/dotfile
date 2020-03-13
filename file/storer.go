@@ -1,13 +1,12 @@
 package file
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
 )
 
 const initialCommitMessage = "Initial commit"
-
-// TODO GetTracked: return an error or not? make consistent, see checkout vs init.
 
 var pathToAliasRegex = regexp.MustCompile(`(\w+)(\.\w+)?$`)
 
@@ -34,6 +33,20 @@ func MustGetTracked(s Storer, alias string) (*Tracked, error) {
 	}
 
 	return tf, nil
+}
+
+func UncompressRevision(s Storer, alias, hash string) (*bytes.Buffer, error) {
+	contents, err := s.GetRevision(alias, hash)
+	if err != nil {
+		return nil, err
+	}
+
+	uncompressed, err := uncompress(contents)
+	if err != nil {
+		return nil, err
+	}
+
+	return uncompressed, nil
 }
 
 // Init initializes a file for dotfile to track.
@@ -104,6 +117,8 @@ func NewCommit(s Storer, alias, message string) error {
 	}
 
 	tf.Commits = append(tf.Commits, *commit)
+	tf.Revision = commit.Hash
+
 	return s.SaveRevision(tf, commit)
 }
 
@@ -111,6 +126,11 @@ func Checkout(s Storer, alias, hash string) error {
 	tf, err := MustGetTracked(s, alias)
 	if err != nil {
 		return err
+	}
+
+	// Checkout to latest version by default.
+	if hash == "" {
+		hash = tf.Revision
 	}
 
 	found := false
@@ -124,15 +144,7 @@ func Checkout(s Storer, alias, hash string) error {
 		return fmt.Errorf("revision %#v not found", hash)
 	}
 
-	contents, err := s.GetRevision(alias, hash)
-	if err != nil {
-		return err
-	}
-
-	uncompressed, err := uncompress(contents)
-	if err != nil {
-		return err
-	}
+	uncompressed, err := UncompressRevision(s, alias, hash)
 
 	if err := s.Revert(uncompressed.Bytes(), tf.RelativePath); err != nil {
 		return err
