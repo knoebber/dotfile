@@ -7,24 +7,26 @@ import (
 	"strings"
 )
 
-// RelativePath converts a file path into a path relative to the users home directory.
-func RelativePath(path, home string) (relativePath string, err error) {
-	var fullPath string
-
+// RelativePath converts path into a relative path.
+// Returns an error when path does not exist.
+func RelativePath(path, home string) (string, error) {
 	_, fileErr := os.Stat(path)
 	if os.IsNotExist(fileErr) {
-		err = fmt.Errorf("%#v not found", path)
-		return
+		return "", fmt.Errorf("%#v not found", path)
 	}
 
-	fullPath, err = filepath.Abs(path)
+	fullPath, err := filepath.Abs(path)
 	if err != nil {
-		return
+		return "", err
 	}
 
-	relativePath = strings.Replace(fullPath, home, "~", 1)
+	relativePath := strings.Replace(fullPath, home, "~", 1)
 
-	return
+	if !strings.Contains(relativePath, "~") {
+		return "", fmt.Errorf("%#v is not in home directory", path)
+	}
+
+	return relativePath, nil
 }
 
 func fullPath(relativePath, home string) string {
@@ -33,27 +35,34 @@ func fullPath(relativePath, home string) string {
 
 // Creates a directory and a file.
 // Returns true if any files were created.
-func createIfNotExist(dir, fileName string) (created bool, err error) {
-	_, err = os.Stat(dir)
-	if os.IsNotExist(err) {
-		os.Mkdir(dir, 0755)
-		created = true
-	} else if err != nil {
-		return false, err
-	}
-
-	_, err = os.Stat(fileName)
-	if os.IsNotExist(err) {
-		f, createErr := os.Create(fileName)
-		if createErr != nil {
+func createIfNotExist(dir, fileName string) (bool, error) {
+	if !exists(dir) {
+		if createErr := os.Mkdir(dir, 0755); createErr != nil {
 			return false, createErr
 		}
-		defer f.Close()
-
-		created = true
-	} else if err != nil {
-		return
 	}
-	err = nil
-	return
+
+	if exists(fileName) {
+		return false, nil
+	}
+
+	f, createErr := os.Create(fileName)
+
+	if createErr != nil {
+		return false, createErr
+	}
+
+	if err := f.Close(); err != nil {
+		return false, fmt.Errorf("closing %#v: %w", fileName, err)
+	}
+
+	return true, nil
+}
+
+func exists(path string) bool {
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
 }

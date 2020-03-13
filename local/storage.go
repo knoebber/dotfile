@@ -23,8 +23,8 @@ package local
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
+	"path/filepath"
 
 	"github.com/knoebber/dotfile/file"
 	"github.com/pkg/errors"
@@ -58,11 +58,7 @@ func NewStorage(home, dir, name string) (*Storage, error) {
 	s.dir = dir
 	s.name = name
 
-	if s.dir[len(s.dir)-1] != '/' {
-		s.dir += "/"
-	}
-
-	s.path = fmt.Sprintf("%s%s", s.dir, s.name)
+	s.path = filepath.Join(s.dir, s.name)
 
 	if _, err := createIfNotExist(s.dir, s.path); err != nil {
 		return nil, err
@@ -89,7 +85,7 @@ func (s *Storage) get() error {
 	}
 
 	if err := json.Unmarshal(bytes, &s.files); err != nil {
-		return errors.Wrapf(err, "unmarshalling %#v", s.path)
+		return errors.Wrapf(err, "unmarshaling %#v to json", s.path)
 	}
 	return nil
 }
@@ -108,9 +104,9 @@ func (s *Storage) save() error {
 	return nil
 }
 
-// GetRevision implements file.Storer
+// GetRevision returns the bytes from a stored revision.
 func (s *Storage) GetRevision(alias, hash string) ([]byte, error) {
-	revisionPath := fmt.Sprintf("%s%s/%s", s.dir, alias, hash)
+	revisionPath := filepath.Join(s.dir, alias, hash)
 
 	bytes, err := ioutil.ReadFile(revisionPath)
 	if err != nil {
@@ -120,20 +116,21 @@ func (s *Storage) GetRevision(alias, hash string) ([]byte, error) {
 	return bytes, nil
 }
 
-// GetContents implements file.Storer.
+// GetContents wraps ioutil.Readfile to implement a file.Storer requirement.
 func (s *Storage) GetContents(relativePath string) ([]byte, error) {
 	return ioutil.ReadFile(fullPath(relativePath, s.Home))
 }
 
-// SaveRevision implements file.Storer
+// SaveRevision saves a commit to the file system.
+// Creates a new directory when its the first commit.
 func (s *Storage) SaveRevision(tf *file.Tracked, c *file.Commit) (err error) {
 	var created bool
 
 	// Create the directory for the files commits if it doesn't exist
-	commitDir := fmt.Sprintf("%s%s", s.dir, tf.Alias)
+	commitDir := filepath.Join(s.dir, tf.Alias)
 
 	// The name of the file will be the hash
-	commitPath := fmt.Sprintf("%s/%s", commitDir, c.Hash)
+	commitPath := filepath.Join(commitDir, c.Hash)
 
 	if created, err = createIfNotExist(commitDir, commitPath); err != nil {
 		return errors.Wrap(err, "creating directory for commits")
@@ -151,7 +148,9 @@ func (s *Storage) SaveRevision(tf *file.Tracked, c *file.Commit) (err error) {
 	return s.save()
 }
 
-// GetTracked implements file.Storer
+// GetTracked returns a tracked file from an alias.
+// Returns nil when alias isn't tracked.
+// This never returns an error - it is present to satisfy file.Storer.
 func (s *Storage) GetTracked(alias string) (*file.Tracked, error) {
 	t, ok := s.files[alias]
 	if !ok {
@@ -162,13 +161,14 @@ func (s *Storage) GetTracked(alias string) (*file.Tracked, error) {
 	return t, nil
 }
 
-// SaveTracked implements file.Storer
+// SaveTracked saves a tracked file to JSON.
+// Overwrites the old entry.
 func (s *Storage) SaveTracked(tf *file.Tracked) error {
 	s.files[tf.Alias] = tf
 	return s.save()
 }
 
-// Revert implements file.Storer
+// Revert overwrites a file at path with contents.
 func (s *Storage) Revert(contents []byte, relativePath string) error {
 	path := fullPath(relativePath, s.Home)
 
