@@ -1,9 +1,9 @@
 package cli
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/knoebber/dotfile/local"
 	"github.com/pkg/errors"
@@ -58,7 +58,7 @@ func AddCommandsToApplication(app *kingpin.Application) error {
 	gs := getStorageClosure(home, &storageDirectory, &storageName)
 
 	app.Flag("storage-dir", "The directory where version control data is stored").
-		Default(fmt.Sprintf("%s/%s", home, defaultStorageDir)).
+		Default(filepath.Join(home, defaultStorageDir)).
 		StringVar(&storageDirectory)
 	app.Flag("storage-name", "The main json file that tracks checked in files").
 		Default(defaultStorageName).
