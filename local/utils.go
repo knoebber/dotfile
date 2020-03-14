@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // RelativePath converts path into a relative path.
@@ -53,7 +55,7 @@ func createIfNotExist(dir, fileName string) (bool, error) {
 	}
 
 	if err := f.Close(); err != nil {
-		return false, fmt.Errorf("closing %#v: %w", fileName, err)
+		return false, errors.Wrapf(err, "closing %#v", fileName)
 	}
 
 	return true, nil
