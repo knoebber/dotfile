@@ -35,6 +35,8 @@ func MustGetTracked(s Storer, alias string) (*Tracked, error) {
 	return tf, nil
 }
 
+// UncompressRevision gets and uncompressions a revision.
+// Returns the uncompressed bytes of alias at hash.
 func UncompressRevision(s Storer, alias, hash string) (*bytes.Buffer, error) {
 	contents, err := s.GetRevision(alias, hash)
 	if err != nil {
@@ -100,6 +102,7 @@ func Init(s Storer, relativePath, fileName string) (alias string, err error) {
 	return
 }
 
+// NewCommit saves a revision of the file at its current state.
 func NewCommit(s Storer, alias, message string) error {
 	tf, err := MustGetTracked(s, alias)
 	if err != nil {
@@ -122,6 +125,7 @@ func NewCommit(s Storer, alias, message string) error {
 	return s.SaveRevision(tf, commit)
 }
 
+// Checkout reverts a tracked file to its state at hash.
 func Checkout(s Storer, alias, hash string) error {
 	tf, err := MustGetTracked(s, alias)
 	if err != nil {
