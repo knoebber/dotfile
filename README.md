@@ -1,9 +1,11 @@
 ## Dotfile [![Build Status](https://travis-ci.org/knoebber/dotfile.svg?branch=master)](https://travis-ci.org/knoebber/dotfile)
 
 Dotfile is a simple version control system designed for single files.
-It is currently under development and not usable.
+It is currently under development.
 
-## Planned Functionality
+## Working Features
+
+[![demo](https://asciinema.org/a/vEMt14MIf1Imlul8cpaDv9JXh.svg)](https://asciinema.org/a/vEMt14MIf1Imlul8cpaDv9JXh?autoplay=1)
 
 Dotfile commands are based on `git` but simplified. Checking a file in is simple:
 
@@ -26,10 +28,18 @@ Open a tracked file in `$EDITOR` without having to type its path:
 dot edit bashrc
 ```
 
+View commit history
+
+```
+dot log bashrc
+```
+
 Check the diff after making changes:
 
 ```
-dot diff bashrc
+dot diff bashrc # diff against last commit
+
+dot diff bashrc 42d4220dda4d43d639a6b7ac76f2ff4e04b651a6
 ```
 
 Reverting a file is easy:
@@ -37,10 +47,7 @@ Reverting a file is easy:
 ```
 dot checkout bashrc # reverts to the last commit
 
-dot log bashrc
-<commit hash> | <commit message - timestamp>
-
-dot checkout bashrc <commit hash> 
+dot checkout bashrc 42d4220dda4d43d639a6b7ac76f2ff4e04b651a6
 ```
 
 
@@ -48,8 +55,11 @@ Unlike git, there is no need to stage files before making a commit:
 
 ```
 dot commit bashrc # Uses the current timestamp as the commit message
+
 dot commit emacs "Add dotfile bindings"
 ```
+
+## Planned Features
 
 Push changes:
 
@@ -68,3 +78,5 @@ Or pull everything on a new machine:
 ```
 dot pull --all
 ```
+
+View and make changes to your tracked files on dotfilehub.com
