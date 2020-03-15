@@ -5,7 +5,7 @@ It is currently under development.
 
 ## Working Features
 
-[![demo](https://asciinema.org/a/vEMt14MIf1Imlul8cpaDv9JXh.svg)](https://asciinema.org/a/vEMt14MIf1Imlul8cpaDv9JXh?autoplay=1)
+[Asciinema Demo](https://asciinema.org/a/vEMt14MIf1Imlul8cpaDv9JXh?autoplay=1)
 
 Dotfile commands are based on `git` but simplified. Checking a file in is simple:
 
