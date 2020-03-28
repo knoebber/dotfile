@@ -1,23 +1,10 @@
 package file
 
-import (
-	"strings"
-)
+// Tracked is a file that dotfile is tracking.
+type Tracked struct {
+	RelativePath string   `json:"path"`     // The relative path to the file - something like '~/.vimrc'
+	Revision     string   `json:"revision"` // The hash of the files current commit.
+	Commits      []Commit `json:"commits"`  // The commits the file has.
 
-type trackedFile struct {
-	Path    string    `json:"path"`
-	Current string    `json:"current"`
-	Commits []*commit `json:"commits"`
-}
-
-type commit struct {
-	Hash      string `json:"hash"`
-	Message   string `json:"message"`
-	Timestamp int64  `json:"timestamp"`
-}
-
-// Paths are stored as relative paths so that dotfile can work with different home directories.
-// getFullPath returns the full path to a tracked file.
-func (tf *trackedFile) getFullPath(home string) string {
-	return strings.Replace(tf.Path, "~", home, 1)
+	Alias string `json:"-"` // The alias of the file. For example, 'vim' might map to ~/.vimrc.
 }

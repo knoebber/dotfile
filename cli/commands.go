@@ -1,13 +1,18 @@
 package cli
 
 import (
-	"github.com/knoebber/dotfile/file"
+	"os"
+	"os/exec"
+	"path/filepath"
+
+	"github.com/knoebber/dotfile/local"
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
-
-	"fmt"
-	"os"
 )
+
+// Used for edit and diff.
+// Allows for easy unit tests.
+var execCommand = exec.Command
 
 const (
 	defaultStorageDir  string = ".dotfile/"
@@ -18,7 +23,7 @@ const (
 func getHome() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get user home directory")
+		return "", errors.Wrap(err, "getting user home directory")
 	}
 	return home, nil
 }
@@ -26,13 +31,14 @@ func getHome() (string, error) {
 // Returns a function that initializes dotfile storage.
 // The result function must be ran at the time of a command being run so that
 // the user can override default storage configuration with --storage-dir or --storage-name.
-func getStorageClosure(home string, dir, name *string) func() (*file.Storage, error) {
-	return func() (*file.Storage, error) {
-		storage := &file.Storage{}
+func getStorageClosure(home string, dir, name *string) func() (*local.Storage, error) {
+	return func() (*local.Storage, error) {
+		storage, err := local.NewStorage(home, *dir, *name)
 
-		if err := storage.Setup(home, *dir, *name); err != nil {
-			return nil, errors.Wrap(err, "failed to setup dotfile storage")
+		if err != nil {
+			return nil, errors.Wrap(err, "getting local storage")
 		}
+
 		return storage, nil
 	}
 }
@@ -51,8 +57,8 @@ func AddCommandsToApplication(app *kingpin.Application) error {
 
 	gs := getStorageClosure(home, &storageDirectory, &storageName)
 
-	app.Flag("storage-dir", "The directory where version control storage is stored").
-		Default(fmt.Sprintf("%s/%s", home, defaultStorageDir)).
+	app.Flag("storage-dir", "The directory where version control data is stored").
+		Default(filepath.Join(home, defaultStorageDir)).
 		StringVar(&storageDirectory)
 	app.Flag("storage-name", "The main json file that tracks checked in files").
 		Default(defaultStorageName).
