@@ -1,23 +1,29 @@
 package cli
 
 import (
-	"fmt"
+	"io/ioutil"
 	"os"
 	"testing"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/local"
 	"github.com/stretchr/testify/assert"
 )
 
 const (
-	nonExistantFile  = "file_does_not_exist"
-	notTrackedFile   = "/dev/null"
-	trackedFile      = "helpers_test.go"
-	trackedFileAlias = "helpers_test"
-	testDir          = "testdata/"
+	nonExistantFile         = "file_does_not_exist"
+	notTrackedFile          = "/dev/null"
+	testDir                 = "testdata/"
+	trackedFile             = testDir + "testfile.txt"
+	trackedFileAlias        = "testfile"
+	initialTestFileContents = "Some stuff.\n"
+	updatedTestFileContents = initialTestFileContents + "Some new content!\n"
 )
 
-func getTestStorageClosure() func() (*file.Storage, error) {
+// Based on https://npf.io/2015/06/testing-exec-command/
+
+var sneakyTestingReference *testing.T
+
+func getTestStorageClosure() func() (*local.Storage, error) {
 	home, _ := getHome()
 	dir := testDir
 	name := defaultStorageName
@@ -25,6 +31,8 @@ func getTestStorageClosure() func() (*file.Storage, error) {
 }
 
 func initTestFile(t *testing.T) {
+	os.Mkdir(testDir, 0755)
+	writeTestFile(t, []byte(initialTestFileContents))
 	initCommand := &initCommand{
 		fileName:   trackedFile,
 		getStorage: getTestStorageClosure(),
@@ -33,6 +41,16 @@ func initTestFile(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func updateTestFile(t *testing.T) {
+	writeTestFile(t, []byte(updatedTestFileContents))
+}
+
 func clearTestStorage() {
-	os.Remove(fmt.Sprintf("%s%s", testDir, defaultStorageName))
+	os.RemoveAll(testDir)
+}
+
+func writeTestFile(t *testing.T, contents []byte) {
+	if err := ioutil.WriteFile(trackedFile, contents, 0644); err != nil {
+		t.Fatalf("setting up %s: %v", trackedFile, err)
+	}
 }

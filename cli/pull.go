@@ -3,13 +3,13 @@ package cli
 import (
 	"fmt"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/local"
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type pullCommand struct {
-	getStorage func() (*file.Storage, error)
+	getStorage func() (*local.Storage, error)
 	fileName   string
 	pullAll    bool
 }
@@ -30,7 +30,7 @@ func (pc *pullCommand) run(ctx *kingpin.ParseContext) error {
 	return nil
 }
 
-func addPullSubCommandToApplication(app *kingpin.Application, gs func() (*file.Storage, error)) {
+func addPullSubCommandToApplication(app *kingpin.Application, gs func() (*local.Storage, error)) {
 	pc := &pullCommand{
 		getStorage: gs,
 	}
