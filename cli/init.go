@@ -4,14 +4,14 @@ import (
 	"fmt"
 
 	"github.com/knoebber/dotfile/file"
-	"github.com/pkg/errors"
+	"github.com/knoebber/dotfile/local"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type initCommand struct {
-	getStorage func() (*file.Storage, error)
+	getStorage func() (*local.Storage, error)
 	fileName   string
-	altName    string
+	alias      string
 }
 
 func (ic *initCommand) run(ctx *kingpin.ParseContext) error {
@@ -20,20 +20,25 @@ func (ic *initCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
-	alias, err := file.Init(s, ic.fileName, ic.altName)
+	relativePath, err := local.RelativePath(ic.fileName, s.Home)
 	if err != nil {
-		return errors.Wrapf(err, "failed to initialize %#v", ic.fileName)
+		return err
+	}
+
+	alias, err := file.Init(s, relativePath, ic.alias)
+	if err != nil {
+		return err
 	}
 
 	fmt.Printf("Initialized %s as %#v\n", ic.fileName, alias)
 	return nil
 }
 
-func addInitSubCommandToApplication(app *kingpin.Application, gs func() (*file.Storage, error)) {
+func addInitSubCommandToApplication(app *kingpin.Application, gs func() (*local.Storage, error)) {
 	ic := &initCommand{
 		getStorage: gs,
 	}
 	p := app.Command("init", "begin tracking a file").Action(ic.run)
 	p.Arg("file-name", "the file to track").Required().StringVar(&ic.fileName)
-	p.Arg("alt-name", "optional friendly name").StringVar(&ic.altName)
+	p.Arg("alias", "optional friendly name").StringVar(&ic.alias)
 }

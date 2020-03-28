@@ -2,28 +2,23 @@ package cli
 
 import (
 	"os"
-	"os/exec"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/local"
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type editCommand struct {
-	getStorage func() (*file.Storage, error)
+	getStorage func() (*local.Storage, error)
 	fileName   string
 }
 
-var (
-	execCommand = exec.Command
-
-	ErrEditorEnvVarNotSet = errors.New("EDITOR environment variable must be set")
-)
+var errEditorEnvVarNotSet = errors.New("EDITOR environment variable must be set")
 
 func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 	editor := os.Getenv("EDITOR")
 	if editor == "" {
-		return ErrEditorEnvVarNotSet
+		return errEditorEnvVarNotSet
 	}
 
 	s, err := e.getStorage()
@@ -31,9 +26,9 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
-	path, err := file.GetPath(s, e.fileName)
+	path, err := s.GetPath(e.fileName)
 	if err != nil {
-		return errors.Wrapf(err, "error getting path for filename: %#v", e.fileName)
+		return err
 	}
 
 	cmd := execCommand(editor, path)
@@ -43,7 +38,7 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 	return cmd.Run()
 }
 
-func addEditSubCommandToApplication(app *kingpin.Application, gs func() (*file.Storage, error)) {
+func addEditSubCommandToApplication(app *kingpin.Application, gs func() (*local.Storage, error)) {
 	ec := &editCommand{
 		getStorage: gs,
 	}

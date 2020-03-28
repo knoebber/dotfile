@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"gopkg.in/alecthomas/kingpin.v2"
-
 	"github.com/knoebber/dotfile/cli"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 func main() {
