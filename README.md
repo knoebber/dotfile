@@ -1,9 +1,22 @@
 ## Dotfile [![Build Status](https://travis-ci.org/knoebber/dotfile.svg?branch=master)](https://travis-ci.org/knoebber/dotfile)
 
 Dotfile is a simple version control system designed for single files.
-It is currently under development.
 
-## Working Features
+This repo creates two binaries:
+
+`dot` - manage files locally
+
+`dotfilehub` - manage files remotely
+
+## CLI
+
+### Installing
+
+Build: `make dot`
+
+Then either add `bin/` to your path, or copy the binary somewhere else.
+
+### Commands
 
 [Asciinema Demo](https://asciinema.org/a/vEMt14MIf1Imlul8cpaDv9JXh?autoplay=1)
 
@@ -59,24 +72,7 @@ dot commit bashrc # Uses the current timestamp as the commit message
 dot commit emacs "Add dotfile bindings"
 ```
 
-## Planned Features
+## Dotfilehub
+Use [dotfilehub.com](https://dotfilehub.com) to manage your dotfiles.
 
-Push changes:
-
-```
-dot push i3
-```
-
-Pull a file:
-
-```
-dot pull i3 # Installs as ~/.config/i3/config
-```
-
-Or pull everything on a new machine:
-
-```
-dot pull --all
-```
-
-View and make changes to your tracked files on dotfilehub.com
+You can also self host. Just build the binary: `make dotfilehub`
