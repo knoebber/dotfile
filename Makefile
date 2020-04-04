@@ -1,4 +1,5 @@
 CLI_BINARY_NAME := dot
+SERVER_BINARY_NAME := server
 
 GO_TEST_FLAGS := -v -cover -count=1
 GO_DEEP_TEST_FLAGS := $(GO_TEST_FLAGS) -race
@@ -17,7 +18,10 @@ ci_test:
 cli:
 	go build -o bin/$(CLI_BINARY_NAME) cli/*.go
 
+server:
+	go build -o bin/$(SERVER_BINARY_NAME) server/*.go
+
 clean:
 	rm -f bin/*
 
-.PHONY: cli
+.PHONY: cli server
