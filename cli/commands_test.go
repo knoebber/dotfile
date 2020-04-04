@@ -1,4 +1,4 @@
-package cli
+package main
 
 import (
 	"testing"
@@ -9,5 +9,5 @@ import (
 
 func TestAddCommandsToApplication(t *testing.T) {
 	app := kingpin.New("dotfile", "version control optimized for single files")
-	assert.NoError(t, AddCommandsToApplication(app))
+	assert.NoError(t, addCommandsToApplication(app))
 }

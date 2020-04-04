@@ -1,4 +1,4 @@
-package cli
+package main
 
 import (
 	"os"
@@ -43,8 +43,8 @@ func getStorageClosure(home string, dir, name *string) func() (*local.Storage, e
 	}
 }
 
-// AddCommandsToApplication initializes the cli.
-func AddCommandsToApplication(app *kingpin.Application) error {
+// initializes the cli.
+func addCommandsToApplication(app *kingpin.Application) error {
 	var (
 		storageDirectory string
 		storageName      string

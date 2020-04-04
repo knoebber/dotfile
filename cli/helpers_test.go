@@ -1,4 +1,4 @@
-package cli
+package main
 
 import (
 	"io/ioutil"
