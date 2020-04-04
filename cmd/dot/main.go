@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/knoebber/dotfile/cli"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"os"
 )
 
 func main() {
@@ -12,6 +13,5 @@ func main() {
 	if err := cli.AddCommandsToApplication(app); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 	}
-
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 }
