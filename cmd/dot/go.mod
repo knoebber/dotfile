@@ -7,5 +7,4 @@ require (
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 )
 
-
-replace	github.com/knoebber/dotfile v0.0.0 => ../..
+replace github.com/knoebber/dotfile v0.0.0 => ../..
