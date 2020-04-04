@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"testing"
@@ -9,5 +9,5 @@ import (
 const invalidAddr = "example.com"
 
 func TestStartServer(t *testing.T) {
-	assert.Panics(t, func() { startServer(invalidAddr) })
+	assert.Panics(t, func() { Start(invalidAddr) })
 }
