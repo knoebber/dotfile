@@ -16,7 +16,8 @@ dot:
 	go build -o bin/dot cmd/dot/*.go
 
 dotfilehub:
-	go build -o bin/dotfilehub cmd/dotfilehub/*.go && cp -r server/assets bin/assets
+	go build -o bin/dotfilehub cmd/dotfilehub/*.go && \
+		cp -r cmd/dotfilehub/assets bin/assets
 
 clean:
 	rm -f bin/*
