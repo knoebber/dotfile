@@ -18,11 +18,10 @@ func Start(addr string) {
 	r := mux.NewRouter()
 	log.Println("serving dotfiles at", addr)
 
-	r.Use(handlers.ProxyHeaders)
 	setupRoutes(r)
 
 	s := &http.Server{
-		Handler:      handlers.LoggingHandler(os.Stdout, r),
+		Handler:      handlers.LoggingHandler(os.Stdout, handlers.ProxyHeaders(r)),
 		Addr:         addr,
 		WriteTimeout: timeout,
 		ReadTimeout:  timeout,
