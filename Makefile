@@ -15,11 +15,12 @@ ci_test:
 dot:
 	go build -o bin/dot cmd/dot/*.go
 
-dotfilehub:
+dotfilehub: clean
 	go build -o bin/dotfilehub cmd/dotfilehub/*.go && \
-		cp -r cmd/dotfilehub/assets bin/assets
+		cp -r cmd/dotfilehub/assets bin/assets && \
+                cp -r cmd/dotfilehub/tmpl bin/tmpl
 
 clean:
-	rm -f bin/*
+	rm -rf bin/*
 
-.PHONY: cli server
+.PHONY: cli dotfilehub

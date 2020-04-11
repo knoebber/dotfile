@@ -1,0 +1,22 @@
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Version control for dotfiles">
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <title>{{.Title}}</title>
+  </head>
+  <body>
+    <header>
+      <nav>
+        {{- range .Links}}
+        <a class="{{.GetClass}}" href="{{.URL}}">{{.Title}}</a>
+        {{- end}}
+      </nav>
+    </header>
+    <section>
+      <h1>{{.Title}}</h1>
+      {{.Body}}
+    </section>
+  </body>
+</html>
