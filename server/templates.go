@@ -11,18 +11,14 @@ const (
 	loginTitle = "Login"
 )
 
-var rootTemplate *template.Template
+var templates *template.Template
 
-// Root is the data the root template expects.
+// Root is the common data that all templates expect.
 type Root struct {
 	Title string
 	Links []Link
-}
 
-// Static is the data a static page expects.
-type Static struct {
-	Root
-	Body string
+	templateName string
 }
 
 // Link populates a navbar link.
@@ -38,11 +34,6 @@ func (l *Link) GetClass() string {
 		return "active"
 	}
 	return ""
-}
-
-func loadTemplates() (err error) {
-	rootTemplate, err = template.ParseFiles("tmpl/root.html")
-	return
 }
 
 func newLink(url, title, currentTitle string) Link {
@@ -61,18 +52,22 @@ func getStaticLinks(currentTitle string) []Link {
 	}
 }
 
-func newStatic(title, body string) *Static {
-	s := new(Static)
-	s.Title = title
-	s.Body = body
-	s.Links = getStaticLinks(title)
-	return s
+func newStaticView(title string) *Root {
+	return &Root{
+		Title: title,
+		Links: getStaticLinks(title),
+	}
+}
+
+func loadTemplates() (err error) {
+	templates, err = template.ParseGlob("tmpl/*")
+
+	return
 }
 
 // Renders pages without dynamic content.
-func renderStatic(w http.ResponseWriter, s *Static) {
-	err := rootTemplate.ExecuteTemplate(w, "root.html", s)
-
+func renderStatic(w http.ResponseWriter, templateName, title string) {
+	err := templates.ExecuteTemplate(w, templateName, newStaticView(title))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

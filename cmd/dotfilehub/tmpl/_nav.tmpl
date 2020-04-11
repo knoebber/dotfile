@@ -1,0 +1,9 @@
+{{define "nav"}}
+<header>
+  <nav>
+    {{- range .Links}}
+    <a class="{{.GetClass}}" href="{{.URL}}">{{.Title}}</a>
+    {{- end}}
+  </nav>
+</header>
+{{end}}
