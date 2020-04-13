@@ -7,8 +7,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestStart(t *testing.T) {
-	os.Mkdir("testdata/", 0755)
+const testDir = "testdata/"
 
-	assert.NoError(t, Start("testdata/dotfilehub.db"))
+func TestStart(t *testing.T) {
+	// Tests that tables are able to be created without error.
+	os.RemoveAll(testDir)
+	os.Mkdir(testDir, 0755)
+
+	assert.NoError(t, Start(testDir+"dotfilehub.db"))
 }
