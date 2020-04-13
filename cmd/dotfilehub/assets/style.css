@@ -13,7 +13,11 @@ html {
     font-size: 23px;
     background: var(--background);
     line-height: 1.6;
-    font-family: Arial,x-locale-body,sans-serif;
+    font-family: georgia, sans-serif;
+}
+
+section {
+    margin: 3rem;
 }
 
 *,
@@ -22,36 +26,70 @@ html {
     box-sizing: inherit;
 }
 
+button, a, h1, h2, h3, h4, label {
+    color: var(--headline);
+}
+
+a:hover, .active {
+    color: var(--highlight);
+}
+
 nav {
     display: flex;
     flex-direction: row;
     border-bottom: solid 3px var(--secondary);
 }
 
-button {
-    background-color: var(--headline);
-    color: var(--headline);
+nav > a:nth-child(2) {
+    /* Pushes everything after this child to the right nav. */
+    margin-left: auto;
 }
 
-a {
-    color: var(--headline);
+button {
+    background-color: var(--highlight);
+    font-weight: 500;
+    cursor: pointer;
+    padding: 10px;
+    border: solid 1px var(--highlight);
+    border-radius: 3px;
+    font-size: 1.05rem;
+}
+
+button:hover {
+    box-shadow: 0 5px 15px -10px rgba(31, 18, 53, 0.6)
+}
+
+nav > a {
     text-decoration: none;
     padding-left: 1rem;
     padding-right: 1rem;
 }
 
-a:hover {
-    color: var(--highlight);
+label:hover {
+    text-decoration: underline;
 }
 
-a:active {
-    color: var(--highlight);
+form {
+    display: grid;
+    max-width: 500px;
+    gap: 1rem;
 }
 
-h1, h2, h3, h4 {
-    color: var(--headline);
+form > label, form > button {
+    grid-column: 1;
 }
 
-.active {
-    color: var(--highlight);
+form > input {
+    grid-column: 2 / 4;
 }
+
+input {
+    font-size: 1.1rem;
+}
+
+@media (max-width: 600px) {
+    form > input {
+        grid-column: 1;
+    }
+}
+
