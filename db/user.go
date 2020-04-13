@@ -9,16 +9,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const (
-	minPasswordLength = 8
-	cliTokenLength    = 32
-)
+const cliTokenLength = 32
 
 // User is the model for a dotfilehub user.
 type User struct {
 	ID             int64
 	Username       string  `validate:"required"`
-	Email          *string `validate:"email"` // Not required; users may opt in to enable account recovery.
+	Email          *string `validate:"omitempty,email"` // Not required; users may opt in to enable account recovery.
 	EmailConfirmed bool
 	PasswordHash   []byte
 	CLIToken       string `validate:"required"` // Allows CLI to write to server.
@@ -48,10 +45,6 @@ func (u *User) insertStmt() (sql.Result, error) {
 }
 
 func CreateUser(username, password string, email *string) (*User, error) {
-	if len(password) < minPasswordLength {
-		return nil, fmt.Errorf("password must be at least %d characters", minPasswordLength)
-	}
-
 	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 	if err != nil {
 		return nil, err
@@ -77,6 +70,12 @@ func CreateUser(username, password string, email *string) (*User, error) {
 	u.ID = id
 
 	return u, nil
+}
+
+// UserLogin checks a username / password.
+// If the credentials are valid, returns a new session.
+func UserLogin(username, password string) (*Session, error) {
+	return new(Session), nil
 }
 
 func cliToken() (string, error) {

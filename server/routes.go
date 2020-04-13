@@ -9,6 +9,7 @@ import (
 func setupRoutes(r *mux.Router) {
 	assetRoutes(r)
 	staticRoutes(r)
+	formRoutes(r)
 }
 
 func assetRoutes(r *mux.Router) {
@@ -19,6 +20,12 @@ func assetRoutes(r *mux.Router) {
 
 func staticRoutes(r *mux.Router) {
 	r.HandleFunc("/", createStaticHandler("index.tmpl", indexTitle))
-	r.HandleFunc("/about.html", createStaticHandler("about.tmpl", aboutTitle))
-	r.HandleFunc("/login.html", createStaticHandler("login.tmpl", loginTitle))
+	r.HandleFunc("/about", createStaticHandler("about.tmpl", aboutTitle))
+	r.HandleFunc("/login", createStaticHandler("login.tmpl", loginTitle)).Methods("GET")
+	r.HandleFunc("/signup", createStaticHandler("signup.tmpl", "Signup")).Methods("GET")
+}
+
+func formRoutes(r *mux.Router) {
+	r.HandleFunc("/login", handleLogin).Methods("POST")
+	r.HandleFunc("/signup", handleSignup).Methods("POST")
 }

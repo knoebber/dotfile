@@ -3,13 +3,12 @@
   {{template "nav" .}}
   <section>
     <h1>{{.Title}}</h1>
-    <form method="post" action="/login">
+    <form method="post" action="/signup">
       <label for="username">Username</label>
       <input id="username" name="username" type="text" required>
       <label for="password">Password</label>
       <input id="password" name="password" type="password" required>
       <button>Submit</button>
     </form>
-    <p>Or <a href="/signup">signup</a></p>
   </section>
 </body>

@@ -47,8 +47,8 @@ func newLink(url, title, currentTitle string) Link {
 func getStaticLinks(currentTitle string) []Link {
 	return []Link{
 		newLink("/", indexTitle, currentTitle),
-		newLink("/about.html", aboutTitle, currentTitle),
-		newLink("/login.html", loginTitle, currentTitle),
+		newLink("/about", aboutTitle, currentTitle),
+		newLink("/login", loginTitle, currentTitle),
 	}
 }
 
@@ -66,9 +66,6 @@ func loadTemplates() (err error) {
 }
 
 // Renders pages without dynamic content.
-func renderStatic(w http.ResponseWriter, templateName, title string) {
-	err := templates.ExecuteTemplate(w, templateName, newStaticView(title))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+func renderStatic(w http.ResponseWriter, templateName, title string) error {
+	return templates.ExecuteTemplate(w, templateName, newStaticView(title))
 }
