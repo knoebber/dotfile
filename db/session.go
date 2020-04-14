@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const sessionIDLength = 32
+const sessionIDLength = 24
 
 // Session is the model for the sessions table.
 // It tracks a users active sessions.
@@ -24,10 +24,10 @@ func (*Session) createStmt() string {
 CREATE TABLE IF NOT EXISTS sessions(
 id                   INTEGER PRIMARY KEY,
 session              TEXT NOT NULL UNIQUE,
-user_id              INTEGER NOT NULL,
-created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-FOREIGN KEY(user_id) REFERENCES users(id)
-);`
+user_id              INTEGER NOT NULL REFERENCES users,
+created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS sessions_user_index ON sessions(user_id);`
 }
 
 func (s *Session) insertStmt() (sql.Result, error) {

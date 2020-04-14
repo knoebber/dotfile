@@ -9,7 +9,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const cliTokenLength = 32
+const cliTokenLength = 24
 
 // User is the model for a dotfilehub user.
 type User struct {

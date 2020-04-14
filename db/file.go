@@ -15,11 +15,11 @@ func (*File) createStmt() string {
 	return `
 CREATE TABLE IF NOT EXISTS files(
 id                   INTEGER PRIMARY KEY,
-user_id              INTEGER NOT NULL,
+user_id              INTEGER NOT NULL REFERENCES users,
 alias                TEXT NOT NULL,
 path                 TEXT NOT NULL,
 currents             TEXT NOT NULL,
-content              BLOB NOT NULL,
-FOREIGN KEY(user_id) REFERENCES users(id)
-);`
+content              BLOB NOT NULL
+);
+CREATE INDEX IF NOT EXISTS files_user_index ON files(user_id);`
 }
