@@ -13,9 +13,9 @@ type Temp struct {
 func (*Temp) createStmt() string {
 	return `
 CREATE TABLE IF NOT EXISTS temps(
-id                   INTEGER PRIMARY KEY,
-file_id              INTEGER NOT NULL REFERENCES files,
-content              BLOB NOT NULL
+id      INTEGER PRIMARY KEY,
+file_id INTEGER NOT NULL REFERENCES files,
+content BLOB NOT NULL
 );
 CREATE INDEX IF NOT EXISTS temps_file_index ON temps(file_id);`
 }

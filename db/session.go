@@ -22,10 +22,10 @@ type Session struct {
 func (*Session) createStmt() string {
 	return `
 CREATE TABLE IF NOT EXISTS sessions(
-id                   INTEGER PRIMARY KEY,
-session              TEXT NOT NULL UNIQUE,
-user_id              INTEGER NOT NULL REFERENCES users,
-created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+id         INTEGER PRIMARY KEY,
+session    TEXT NOT NULL UNIQUE,
+user_id    INTEGER NOT NULL REFERENCES users,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS sessions_user_index ON sessions(user_id);`
 }
