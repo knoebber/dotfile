@@ -14,11 +14,11 @@ const timeout = 10 * time.Second
 
 // Start starts the dotfile web server.
 // Expects an assets folder in the same directory from where the binary is ran.
-func Start(addr string) {
+func Start(addr string, secure bool) {
 	r := mux.NewRouter()
 	log.Println("serving dotfiles at", addr)
 
-	setupRoutes(r)
+	setupRoutes(r, secure)
 
 	s := &http.Server{
 		Handler:      handlers.LoggingHandler(os.Stdout, handlers.ProxyHeaders(r)),

@@ -12,7 +12,7 @@ import (
 
 const defaultAddress = ":3001"
 
-func parseFlags() (string, string) {
+func parseFlags() (string, string, bool) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
@@ -21,18 +21,19 @@ func parseFlags() (string, string) {
 
 	addr := flag.String("addr", defaultAddress, "HTTP address to listen on")
 	dbPath := flag.String("db", defaultDBName, "Name of sqlite database file")
+	secure := flag.Bool("secure", false, "Set session cookie to HTTPS only")
 	flag.Parse()
 
-	return *addr, *dbPath
+	return *addr, *dbPath, *secure
 }
 
 func main() {
-	addr, dbPath := parseFlags()
+	addr, dbPath, secure := parseFlags()
 
 	if err := db.Start(dbPath); err != nil {
 		log.Panicf("starting database connection: %v", err)
 	}
 	defer db.Close()
 
-	server.Start(addr)
+	server.Start(addr, secure)
 }

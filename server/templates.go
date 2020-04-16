@@ -6,17 +6,19 @@ import (
 )
 
 const (
-	indexTitle = "Dotfilehub"
-	aboutTitle = "About"
-	loginTitle = "Login"
+	indexTitle  = "Dotfilehub"
+	aboutTitle  = "About"
+	loginTitle  = "Login"
+	signupTitle = "Signup"
 )
 
 var templates *template.Template
 
 // Root is the common data that all templates expect.
 type Root struct {
-	Title string
-	Links []Link
+	Title        string
+	ErrorMessage string
+	Links        []Link
 
 	templateName string
 }
@@ -52,20 +54,19 @@ func getStaticLinks(currentTitle string) []Link {
 	}
 }
 
-func newStaticView(title string) *Root {
+func createView(title string, errMsg string) *Root {
 	return &Root{
-		Title: title,
-		Links: getStaticLinks(title),
+		Title:        title,
+		Links:        getStaticLinks(title),
+		ErrorMessage: errMsg,
 	}
 }
 
 func loadTemplates() (err error) {
-	templates, err = template.ParseGlob("tmpl/*")
-
+	templates, err = template.ParseGlob("tmpl/*.tmpl")
 	return
 }
 
-// Renders pages without dynamic content.
-func renderStatic(w http.ResponseWriter, templateName, title string) error {
-	return templates.ExecuteTemplate(w, templateName, newStaticView(title))
+func renderTemplate(w http.ResponseWriter, templateName, title, errMsg string) error {
+	return templates.ExecuteTemplate(w, templateName, createView(title, errMsg))
 }

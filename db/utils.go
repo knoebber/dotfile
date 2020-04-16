@@ -3,6 +3,7 @@ package db
 import (
 	"crypto/rand"
 	"database/sql"
+	"fmt"
 	"io"
 
 	"github.com/pkg/errors"
@@ -29,6 +30,14 @@ func insert(i inserter) (id int64, err error) {
 	}
 
 	return id, nil
+}
+
+// Ensure that table and column are constant values to avoid SQL injection.
+// Value is safe to be user generated.
+func count(table, column, value string) (count int, err error) {
+	query := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s = ?", table, column)
+	err = connection.QueryRow(query, value).Scan(&count)
+	return
 }
 
 // Rolls back a database transaction.

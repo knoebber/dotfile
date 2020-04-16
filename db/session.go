@@ -8,14 +8,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-const sessionIDLength = 24
+const sessionLength = 24
 
 // Session is the model for the sessions table.
 // It tracks a users active sessions.
 type Session struct {
 	ID        int64
 	Session   string `validate:"required"`
-	UserID    int    `validate:"required"`
+	UserID    int64  `validate:"required"`
 	CreatedAt time.Time
 }
 
@@ -34,7 +34,7 @@ func (s *Session) insertStmt() (sql.Result, error) {
 	return connection.Exec("INSERT INTO sessions(session, user_id) VALUES(?, ?)", s.Session, s.UserID)
 }
 
-func CreateSession(userID int) (*Session, error) {
+func createSession(userID int64) (*Session, error) {
 	session, err := session()
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func CreateSession(userID int) (*Session, error) {
 }
 
 func session() (string, error) {
-	buff, err := randomBytes(cliTokenLength)
+	buff, err := randomBytes(sessionLength)
 	if err != nil {
 		return "", errors.Wrap(err, "generating session ID")
 	}

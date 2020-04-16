@@ -6,10 +6,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func setupRoutes(r *mux.Router) {
+func setupRoutes(r *mux.Router, secure bool) {
 	assetRoutes(r)
 	staticRoutes(r)
-	formRoutes(r)
+	authRoutes(r, secure)
 }
 
 func assetRoutes(r *mux.Router) {
@@ -21,11 +21,9 @@ func assetRoutes(r *mux.Router) {
 func staticRoutes(r *mux.Router) {
 	r.HandleFunc("/", createStaticHandler("index.tmpl", indexTitle))
 	r.HandleFunc("/about", createStaticHandler("about.tmpl", aboutTitle))
-	r.HandleFunc("/login", createStaticHandler("login.tmpl", loginTitle)).Methods("GET")
-	r.HandleFunc("/signup", createStaticHandler("signup.tmpl", "Signup")).Methods("GET")
 }
 
-func formRoutes(r *mux.Router) {
-	r.HandleFunc("/login", handleLogin).Methods("POST")
-	r.HandleFunc("/signup", handleSignup).Methods("POST")
+func authRoutes(r *mux.Router, secure bool) {
+	r.HandleFunc("/login", createFormHandler(createHandleLogin(secure), "login.tmpl", loginTitle))
+	r.HandleFunc("/signup", createFormHandler(handleSignup, "signup.tmpl", signupTitle))
 }

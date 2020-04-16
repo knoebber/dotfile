@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"database/sql"
+	"github.com/knoebber/dotfile/usererr"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -44,7 +45,60 @@ func (u *User) insertStmt() (sql.Result, error) {
 	)
 }
 
+func getUser(username string) (*User, error) {
+	user := new(User)
+
+	err := connection.
+		QueryRow("SELECT * FROM users WHERE username = ?", username).
+		Scan(
+			&user.ID,
+			&user.Username,
+			&user.Email,
+			&user.EmailConfirmed,
+			&user.PasswordHash,
+			&user.CLIToken,
+			&user.CreatedAt,
+		)
+	if err != nil {
+		return nil, errors.Wrapf(err, "querying for user %#v", username)
+	}
+
+	return user, nil
+}
+
+func validateUserInfo(username, password string, email *string) error {
+	n, err := count("users", "username", username)
+	if err != nil {
+		return err
+	}
+
+	if n > 0 {
+		return usererr.Duplicate("Username", username)
+	}
+
+	if email == nil {
+		return nil
+	}
+
+	n, err = count("users", "email", *email)
+	if err != nil {
+		return err
+	}
+
+	if n > 0 {
+		return usererr.Duplicate("Email", *email)
+	}
+
+	return nil
+}
+
+// CreateUser inserts a new user into the users table.
+// Email is optional.
 func CreateUser(username, password string, email *string) (*User, error) {
+	if err := validateUserInfo(username, password, email); err != nil {
+		return nil, err
+	}
+
 	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 	if err != nil {
 		return nil, err
@@ -75,7 +129,16 @@ func CreateUser(username, password string, email *string) (*User, error) {
 // UserLogin checks a username / password.
 // If the credentials are valid, returns a new session.
 func UserLogin(username, password string) (*Session, error) {
-	return new(Session), nil
+	user, err := getUser(username)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(password)); err != nil {
+		return nil, err
+	}
+
+	return createSession(user.ID)
 }
 
 func cliToken() (string, error) {
