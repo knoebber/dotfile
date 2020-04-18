@@ -11,11 +11,12 @@ import (
 const sessionLength = 24
 
 // Session is the model for the sessions table.
-// It tracks a users active sessions.
+// It tracks a user's active sessions.
 type Session struct {
 	ID        int64
 	Session   string `validate:"required"`
 	UserID    int64  `validate:"required"`
+	Username  string
 	CreatedAt time.Time
 }
 
@@ -54,8 +55,36 @@ func createSession(userID int64) (*Session, error) {
 func session() (string, error) {
 	buff, err := randomBytes(sessionLength)
 	if err != nil {
-		return "", errors.Wrap(err, "generating session ID")
+		return "", errors.Wrap(err, "generating session")
 	}
 
 	return base64.URLEncoding.EncodeToString(buff), nil
+}
+
+// GetSession gets a user's session.
+func GetSession(session string) (*Session, error) {
+	s := new(Session)
+
+	err := connection.
+		QueryRow(`
+SELECT sessions.id,
+       session,
+       users.id,
+       username,
+       sessions.created_at
+FROM sessions
+JOIN users ON users.id = user_id 
+WHERE session = ?`, session).
+		Scan(
+			&s.ID,
+			&s.Session,
+			&s.UserID,
+			&s.Username,
+			&s.CreatedAt,
+		)
+	if err != nil {
+		return nil, errors.Wrapf(err, "querying for session %#v", session)
+	}
+
+	return s, nil
 }

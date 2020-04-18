@@ -10,7 +10,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-const minPassLength = 8
+const (
+	minPassLength = 8
+	sessionCookie = "dotfilehub-session"
+)
 
 // If form handler returns an error then the same form will be rendered again with a flash error.
 // When there is no error it's assumed that the response is set.
@@ -18,15 +21,23 @@ type formHandler func(w http.ResponseWriter, r *http.Request) error
 
 func createStaticHandler(templateName, title string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := renderTemplate(w, templateName, title, ""); err != nil {
-			templateError(w, title, err)
+		page, err := newPage(r, templateName, title)
+		if err != nil {
+			pageError(w, title, err)
+		}
+
+		if err := page.render(w); err != nil {
+			pageError(w, title, err)
 		}
 	}
 }
 
 func createFormHandler(handleForm formHandler, templateName, title string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var formErr string
+		page, err := newPage(r, templateName, title)
+		if err != nil {
+			pageError(w, title, err)
+		}
 
 		if r.Method == "PUT" || r.Method == "POST" {
 			if err := r.ParseForm(); err != nil {
@@ -34,13 +45,12 @@ func createFormHandler(handleForm formHandler, templateName, title string) http.
 				return
 			}
 
-			formErr = checkErr(handleForm(w, r))
+			// Set a flash error.
+			page.ErrorMessage = checkErr(handleForm(w, r))
 		}
 
-		templateErr := renderTemplate(w, templateName, title, formErr)
-
-		if templateErr != nil {
-			templateError(w, title, templateErr)
+		if err := page.render(w); err != nil {
+			pageError(w, title, err)
 		}
 	}
 }
@@ -55,7 +65,7 @@ func createHandleLogin(secure bool) formHandler {
 			return usererr.Invalid("Username or password is incorrect.")
 		}
 		http.SetCookie(w, &http.Cookie{
-			Name:     "dotfilehub-session",
+			Name:     sessionCookie,
 			Value:    s.Session,
 			Secure:   secure,
 			HttpOnly: true,
@@ -103,10 +113,10 @@ func checkErr(err error) string {
 	return "Unexpected error - if this continues please contact an admin."
 }
 
-func templateError(w http.ResponseWriter, title string, err error) {
+func pageError(w http.ResponseWriter, title string, err error) {
 	setError(
 		w,
-		errors.Wrapf(err, "rendering static page %#v", title),
+		errors.Wrapf(err, "rendering page %#v", title),
 		"Failed to render template",
 		http.StatusInternalServerError,
 	)
