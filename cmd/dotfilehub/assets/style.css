@@ -74,13 +74,14 @@ label:hover {
     text-decoration: underline;
 }
 
-form {
+form:not(.form-redirect) {
     display: grid;
     max-width: 500px;
     gap: 1rem;
 }
 
 form > label, form > button {
+    min-width: 100px;
     grid-column: 1;
 }
 
@@ -92,10 +93,22 @@ input {
     font-size: 1.1rem;
 }
 
-.flash-error {
+.flash-error, .flash-success {
     padding: 1rem;
-    background: var(--tertiary);
     border-radius: 3px;
+}
+
+.flash-success {
+    background: var(--highlight);
+}
+
+.flash-error {
+    background: var(--tertiary);
+}
+
+.danger {
+    background: var(--tertiary);
+    border: solid 1px var(--tertiary);
 }
 
 @media (max-width: 600px) {

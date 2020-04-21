@@ -10,7 +10,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const cliTokenLength = 24
+const (
+	cliTokenLength = 24
+	pwQuery        = "SELECT id, password_hash FROM users"
+	userQuery      = "SELECT id, username, email, email_confirmed, cli_token, created_at FROM users"
+)
 
 // User is the model for a dotfilehub user.
 type User struct {
@@ -23,6 +27,11 @@ type User struct {
 	CreatedAt      time.Time
 }
 
+// JoinDate returns a formatted date of a users join date.
+func (u *User) JoinDate() string {
+	return formatTime(u.CreatedAt)
+}
+
 func (*User) createStmt() string {
 	return `
 CREATE TABLE IF NOT EXISTS users(
@@ -33,7 +42,8 @@ email_confirmed INTEGER NOT NULL DEFAULT 0,
 password_hash   BLOB NOT NULL,
 cli_token       TEXT NOT NULL UNIQUE,
 created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-);`
+);
+CREATE INDEX IF NOT EXISTS users_username_index ON users(username);`
 }
 
 func (u *User) insertStmt() (sql.Result, error) {
@@ -43,27 +53,6 @@ func (u *User) insertStmt() (sql.Result, error) {
 		u.PasswordHash,
 		u.CLIToken,
 	)
-}
-
-func getUser(username string) (*User, error) {
-	user := new(User)
-
-	err := connection.
-		QueryRow("SELECT * FROM users WHERE username = ?", username).
-		Scan(
-			&user.ID,
-			&user.Username,
-			&user.Email,
-			&user.EmailConfirmed,
-			&user.PasswordHash,
-			&user.CLIToken,
-			&user.CreatedAt,
-		)
-	if err != nil {
-		return nil, errors.Wrapf(err, "querying for user %#v", username)
-	}
-
-	return user, nil
 }
 
 func validateUserInfo(username, password string, email *string) error {
@@ -90,6 +79,61 @@ func validateUserInfo(username, password string, email *string) error {
 	}
 
 	return nil
+}
+
+// Looks up a user by their ID or username - only one is required.
+// Returns their userID in for the case when the caller only has the username.
+func compareUserPassword(userID int64, username string, password string) (int64, error) {
+	var (
+		row  *sql.Row
+		hash []byte
+		id   int64
+	)
+
+	if userID != 0 {
+		row = connection.QueryRow(pwQuery+" WHERE id = ?", userID)
+	} else if username != "" {
+		row = connection.QueryRow(pwQuery+" WHERE username = ?", username)
+	}
+	if err := row.Scan(&id, &hash); err != nil {
+		return 0, err
+	}
+
+	if err := bcrypt.CompareHashAndPassword(hash, []byte(password)); err != nil {
+		return 0, err
+	}
+
+	return id, nil
+
+}
+
+// GetUser gets a user.
+// Only one argument is required.
+// This does not scan password_hash.
+func GetUser(userID int64, username string) (*User, error) {
+	var query *sql.Row
+
+	user := new(User)
+	if userID != 0 {
+		query = connection.QueryRow(userQuery+" WHERE id = ?", userID)
+	} else if username != "" {
+		query = connection.QueryRow(userQuery+" WHERE username = ?", username)
+	}
+
+	err := query.
+		Scan(
+			&user.ID,
+			&user.Username,
+			&user.Email,
+			&user.EmailConfirmed,
+			&user.CLIToken,
+			&user.CreatedAt,
+		)
+	if err != nil {
+		return nil, errors.Wrapf(err, "querying for user (id:%d || username: %#v)", userID, username)
+	}
+
+	return user, nil
 }
 
 // CreateUser inserts a new user into the users table.
@@ -126,19 +170,42 @@ func CreateUser(username, password string, email *string) (*User, error) {
 	return u, nil
 }
 
+// UpdateEmail updates a users email and sets confirmed to false.
+func UpdateEmail(userID int64, email string) error {
+	if err := validate.Var(email, "email"); err != nil {
+		return err
+	}
+
+	_, err := connection.Exec("UPDATE users SET email = ?, email_confirmed = 0 WHERE id = ?", email, userID)
+	return err
+}
+
+func UpdatePassword(userID int64, currentPass, newPass string) error {
+	_, err := compareUserPassword(userID, "", currentPass)
+	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+		return usererr.Invalid("Confirm does not match.")
+	} else if err != nil {
+		return err
+	}
+
+	hashed, err := bcrypt.GenerateFromPassword([]byte(newPass), bcrypt.MinCost)
+	if err != nil {
+		return err
+	}
+
+	_, err = connection.Exec("UPDATE users SET password_hash = ? WHERE id = ?", hashed, userID)
+	return err
+}
+
 // UserLogin checks a username / password.
 // If the credentials are valid, returns a new session.
 func UserLogin(username, password string) (*Session, error) {
-	user, err := getUser(username)
+	userID, err := compareUserPassword(0, username, password)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(password)); err != nil {
-		return nil, err
-	}
-
-	return createSession(user.ID)
+	return createSession(userID)
 }
 
 func cliToken() (string, error) {

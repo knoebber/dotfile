@@ -28,6 +28,7 @@ session    TEXT NOT NULL UNIQUE,
 user_id    INTEGER NOT NULL REFERENCES users,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
 CREATE INDEX IF NOT EXISTS sessions_user_index ON sessions(user_id);`
 }
 
@@ -87,4 +88,9 @@ WHERE session = ?`, session).
 	}
 
 	return s, nil
+}
+
+func Logout(sessionID int64) error {
+	_, err := connection.Exec("DELETE FROM sessions WHERE id = ?", sessionID)
+	return err
 }

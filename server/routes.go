@@ -9,7 +9,7 @@ import (
 func setupRoutes(r *mux.Router, secure bool) {
 	assetRoutes(r)
 	staticRoutes(r)
-	authRoutes(r, secure)
+	userRoutes(r, secure)
 }
 
 func assetRoutes(r *mux.Router) {
@@ -19,11 +19,17 @@ func assetRoutes(r *mux.Router) {
 }
 
 func staticRoutes(r *mux.Router) {
-	r.HandleFunc("/", createStaticHandler("index.tmpl", indexTitle))
-	r.HandleFunc("/about", createStaticHandler("about.tmpl", aboutTitle))
+	r.HandleFunc("/", getIndexHandler())
+	r.HandleFunc("/about", getAboutHandler())
 }
 
-func authRoutes(r *mux.Router, secure bool) {
-	r.HandleFunc("/login", createFormHandler(createHandleLogin(secure), "login.tmpl", loginTitle))
-	r.HandleFunc("/signup", createFormHandler(handleSignup, "signup.tmpl", signupTitle))
+func userRoutes(r *mux.Router, secure bool) {
+	r.HandleFunc("/login", getLoginHandler(secure))
+	r.HandleFunc("/signup", getSignupHandler())
+	r.HandleFunc("/logout", getLogoutHandler())
+
+	sub := r.PathPrefix("/{username}").Subrouter()
+	sub.HandleFunc("", getUserHandler())
+	sub.HandleFunc("/email", getEmailHandler())
+	sub.HandleFunc("/password", getPasswordHandler())
 }

@@ -1,0 +1,21 @@
+{{template "head" .}}
+<body>
+  {{template "nav" .}}
+  {{template "flash" .}}
+  <section>
+    <h1>{{.Title}}</h1>
+    <p>Joined: <strong>{{.Data.joined}}</strong></p>
+    {{if .Owned}}
+      {{if .Data.email}}
+      <p>Email: <strong>{{.Data.email}}</strong></p>
+      <p><a href="/{{.Vars.username}}/email">Update email</a></p>
+      {{else}}
+      <p><a href="/{{.Vars.username}}/email">Enable account recovery</a></p>
+      {{end}}
+      <p><a href="/{{.Vars.username}}/password">Update password</a></p>
+      <form action="/logout" method="post" class="form-redirect">
+        <button class="danger">Logout</button>
+      </form>
+    {{end}}
+  </section>
+</body>

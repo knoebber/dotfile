@@ -10,7 +10,7 @@ import (
 	"github.com/knoebber/dotfile/server"
 )
 
-const defaultAddress = ":3001"
+const defaultAddress = ":3000"
 
 func parseFlags() (string, string, bool) {
 	home, err := os.UserHomeDir()

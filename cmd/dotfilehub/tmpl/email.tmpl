@@ -1,0 +1,12 @@
+{{template "head" .}}
+<body>
+  {{template "nav" .}}
+  {{template "flash" .}}
+  <section>
+    <form method="post" action="/{{.Vars.username}}/email">
+      <label for="email">Email:</label>
+      <input value="{{.Data.email}}" id="email" name="email" type="email" required>
+      <button>Submit</button>
+    </form>
+  </section>
+</body>

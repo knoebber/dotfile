@@ -5,9 +5,17 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/pkg/errors"
 )
+
+const timestampDisplayFormat = "January 02, 2006"
+
+// NotFound returns whether err is wrapping a no rows error.
+func NotFound(err error) bool {
+	return errors.Is(err, sql.ErrNoRows)
+}
 
 type inserter interface {
 	insertStmt() (sql.Result, error)
@@ -59,4 +67,9 @@ func randomBytes(n int) ([]byte, error) {
 	}
 
 	return buff, nil
+}
+
+func formatTime(t time.Time) string {
+	return t.Format(timestampDisplayFormat)
+
 }

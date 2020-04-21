@@ -2,10 +2,23 @@ package server
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/knoebber/dotfile/db"
+	"github.com/knoebber/dotfile/usererr"
 	"github.com/pkg/errors"
+)
+
+// Titles of static pages.
+const (
+	indexTitle    = "Dotfilehub"
+	aboutTitle    = "About"
+	loginTitle    = "Login"
+	signupTitle   = "Signup"
+	emailTitle    = "Update Email"
+	passwordTitle = "Update Password"
 )
 
 var templates *template.Template
@@ -13,16 +26,44 @@ var templates *template.Template
 // Page is used for rendering pages and tracking request state.
 // Exported fields/methods are called within templates.
 type Page struct {
-	Title        string
-	ErrorMessage string
-	Links        []Link
+	Title          string
+	SuccessMessage string
+	ErrorMessage   string
+	Links          []Link
+	Vars           map[string]string
+	Data           map[string]string
 
-	templateName string
-	title        string
 	session      *db.Session
+	templateName string
 }
 
-func (p *Page) setSession(r *http.Request) error {
+// Owned returns whether the current logged in user owns the page.
+func (p *Page) Owned() bool {
+	return p.session != nil && p.session.Username == p.Vars["username"]
+}
+
+func (p *Page) flashSuccess(msg string) {
+	p.SuccessMessage = msg
+}
+
+func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
+	if db.NotFound(err) {
+		setError(w, err, "Not found", http.StatusNotFound)
+		return true
+	}
+
+	if uerr, ok := err.(usererr.Messager); ok {
+		log.Print("flashing expected error:", err)
+		p.ErrorMessage = uerr.Message()
+	} else {
+		log.Print("flashing fallback from unexpected error: ", err)
+		p.ErrorMessage = "Unexpected error - if this continues please contact an admin."
+	}
+
+	return false
+}
+
+func (p *Page) setSession(w http.ResponseWriter, r *http.Request) error {
 	if p.session != nil {
 		return nil
 	}
@@ -35,7 +76,14 @@ func (p *Page) setSession(r *http.Request) error {
 	}
 
 	p.session, err = db.GetSession(cookie.Value)
-	if err != nil {
+	if db.NotFound(err) {
+		http.SetCookie(w, &http.Cookie{
+			Name:   sessionCookie,
+			MaxAge: -1,
+		})
+
+		return nil
+	} else if err != nil {
 		return err
 	}
 
@@ -45,18 +93,17 @@ func (p *Page) setSession(r *http.Request) error {
 func (p *Page) setLinks() {
 	var userLink Link
 
-	username := p.session.Username
-
 	if p.session != nil {
-		userLink = newLink("/"+username, username, username)
+		username := p.session.Username
+		userLink = newLink("/"+username, "Profile", p.Title)
 	} else {
 		userLink = newLink("/login", loginTitle, p.Title)
 	}
 
 	p.Links = []Link{
-		userLink,
+		newLink("/", indexTitle, p.Title),
 		newLink("/about", aboutTitle, p.Title),
-		newLink("/login", loginTitle, p.Title),
+		userLink,
 	}
 }
 
@@ -64,13 +111,15 @@ func (p *Page) render(w http.ResponseWriter) error {
 	return templates.ExecuteTemplate(w, p.templateName, p)
 }
 
-func newPage(r *http.Request, templateName, title string) (*Page, error) {
+func newPage(w http.ResponseWriter, r *http.Request, templateName, title string) (*Page, error) {
 	p := &Page{
 		Title:        title,
+		Vars:         mux.Vars(r),
+		Data:         make(map[string]string),
 		templateName: templateName,
 	}
 
-	if err := p.setSession(r); err != nil {
+	if err := p.setSession(w, r); err != nil {
 		return nil, err
 	}
 

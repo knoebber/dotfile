@@ -1,12 +1,5 @@
 package server
 
-const (
-	indexTitle  = "Dotfilehub"
-	aboutTitle  = "About"
-	loginTitle  = "Login"
-	signupTitle = "Signup"
-)
-
 // Link populates a navbar link.
 type Link struct {
 	URL    string
