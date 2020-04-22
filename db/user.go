@@ -180,6 +180,8 @@ func UpdateEmail(userID int64, email string) error {
 	return err
 }
 
+// UpdatePassword updates a users password.
+// currentPass must match the current hash.
 func UpdatePassword(userID int64, currentPass, newPass string) error {
 	_, err := compareUserPassword(userID, "", currentPass)
 	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {

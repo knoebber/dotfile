@@ -2,19 +2,21 @@ package usererr
 
 import "fmt"
 
-type invalid struct {
+// InvalidErr should be thrown when the user attempts an invalid action.
+type InvalidErr struct {
 	reason string
 }
 
-func (i *invalid) Error() string {
+func (i *InvalidErr) Error() string {
 	return fmt.Sprintf("validation error: %s", i.reason)
 }
 
-func (i *invalid) Message() string {
+// Message implements the Messager interface.
+func (i *InvalidErr) Message() string {
 	return i.reason
 }
 
 // Invalid returns a new invalid error.
-func Invalid(reason string) *invalid {
-	return &invalid{reason: reason}
+func Invalid(reason string) *InvalidErr {
+	return &InvalidErr{reason: reason}
 }

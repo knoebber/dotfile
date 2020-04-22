@@ -82,7 +82,7 @@ func session() (string, error) {
 	return base64.URLEncoding.EncodeToString(buff), nil
 }
 
-// Check session checks if session exists, and adds a new row to session_locations if the IP is new.
+// CheckSession checks if session exists, and adds a new row to session_locations if the IP is new.
 func CheckSession(session, ip string) (*Session, error) {
 	s := new(Session)
 
@@ -112,6 +112,7 @@ func CheckSession(session, ip string) (*Session, error) {
 	return s, nil
 }
 
+// Logout sets the session to deleted.
 func Logout(sessionID int64) error {
 	_, err := connection.Exec("UPDATE sessions SET deleted_at = ? WHERE id = ?", time.Now(), sessionID)
 	if err != nil {
