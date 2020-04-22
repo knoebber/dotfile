@@ -8,7 +8,20 @@ import (
 	"github.com/pkg/errors"
 )
 
-const sessionLength = 24
+const (
+	sessionLength = 24
+	sessionQuery  = `
+SELECT sessions.id,
+       session,
+       users.id,
+       username,
+       sessions.created_at,
+       session_locations.ip
+FROM sessions
+JOIN users ON users.id = user_id 
+LEFT JOIN session_locations ON session_id = sessions.id
+`
+)
 
 // Session is the model for the sessions table.
 // It tracks a user's active sessions.
@@ -17,7 +30,9 @@ type Session struct {
 	Session   string `validate:"required"`
 	UserID    int64  `validate:"required"`
 	Username  string
+	LastIP    *string
 	CreatedAt time.Time
+	DeletedAt *time.Time
 }
 
 func (*Session) createStmt() string {
@@ -26,7 +41,8 @@ CREATE TABLE IF NOT EXISTS sessions(
 id         INTEGER PRIMARY KEY,
 session    TEXT NOT NULL UNIQUE,
 user_id    INTEGER NOT NULL REFERENCES users,
-created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+deleted_at DATETIME
 );
 
 CREATE INDEX IF NOT EXISTS sessions_user_index ON sessions(user_id);`
@@ -48,6 +64,10 @@ func createSession(userID int64) (*Session, error) {
 	}
 
 	id, err := insert(s)
+	if err != nil {
+		return nil, err
+	}
+
 	s.ID = id
 
 	return s, nil
@@ -62,35 +82,41 @@ func session() (string, error) {
 	return base64.URLEncoding.EncodeToString(buff), nil
 }
 
-// GetSession gets a user's session.
-func GetSession(session string) (*Session, error) {
+// Check session checks if session exists, and adds a new row to session_locations if the IP is new.
+func CheckSession(session, ip string) (*Session, error) {
 	s := new(Session)
 
 	err := connection.
-		QueryRow(`
-SELECT sessions.id,
-       session,
-       users.id,
-       username,
-       sessions.created_at
-FROM sessions
-JOIN users ON users.id = user_id 
-WHERE session = ?`, session).
+		QueryRow(sessionQuery+" WHERE deleted_at IS NULL AND session = ?", session).
 		Scan(
 			&s.ID,
 			&s.Session,
 			&s.UserID,
 			&s.Username,
 			&s.CreatedAt,
+			&s.LastIP,
 		)
+
 	if err != nil {
 		return nil, errors.Wrapf(err, "querying for session %#v", session)
+	}
+
+	if s.LastIP != nil && *s.LastIP == ip {
+		return s, nil
+	}
+
+	if err = addSessionLocation(s.ID, ip); err != nil {
+		return nil, err
 	}
 
 	return s, nil
 }
 
 func Logout(sessionID int64) error {
-	_, err := connection.Exec("DELETE FROM sessions WHERE id = ?", sessionID)
-	return err
+	_, err := connection.Exec("UPDATE sessions SET deleted_at = ? WHERE id = ?", time.Now(), sessionID)
+	if err != nil {
+		return errors.Wrapf(err, "setting session %d to deleted", sessionID)
+	}
+
+	return nil
 }

@@ -53,7 +53,7 @@ func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
 	}
 
 	if uerr, ok := err.(usererr.Messager); ok {
-		log.Print("flashing expected error:", err)
+		log.Print("flashing: ", err)
 		p.ErrorMessage = uerr.Message()
 	} else {
 		log.Print("flashing fallback from unexpected error: ", err)
@@ -75,13 +75,12 @@ func (p *Page) setSession(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	p.session, err = db.GetSession(cookie.Value)
+	p.session, err = db.CheckSession(cookie.Value, r.RemoteAddr)
 	if db.NotFound(err) {
 		http.SetCookie(w, &http.Cookie{
 			Name:   sessionCookie,
 			MaxAge: -1,
 		})
-
 		return nil
 	} else if err != nil {
 		return err

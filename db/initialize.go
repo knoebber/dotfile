@@ -25,6 +25,7 @@ func createTables() error {
 	for _, model := range []tableCreator{
 		new(User),
 		new(Session),
+		new(SessionLocation),
 		new(File),
 		new(Temp),
 		new(Commit),
