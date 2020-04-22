@@ -2,38 +2,38 @@ package main
 
 import (
 	"flag"
-	"log"
 	"os"
 	"path/filepath"
 
-	"github.com/knoebber/dotfile/db"
 	"github.com/knoebber/dotfile/server"
 )
 
-const defaultAddress = ":3000"
+const (
+	defaultAddress = ":3000"
+	defaultDB      = ".dotfilehub.db"
+)
 
-func parseFlags() (string, string, bool) {
+func getConfig() server.Config {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
 	}
-	defaultDBName := filepath.Join(home, ".dotfilehub.db")
+	defaultDBName := filepath.Join(home, defaultDB)
 
 	addr := flag.String("addr", defaultAddress, "HTTP address to listen on")
 	dbPath := flag.String("db", defaultDBName, "Name of sqlite database file")
 	secure := flag.Bool("secure", false, "Set session cookie to HTTPS only")
+	proxyHeaders := flag.Bool("proxyheaders", false, "Set request IP by inspecting reverse proxy headers")
 	flag.Parse()
 
-	return *addr, *dbPath, *secure
+	return server.Config{
+		Addr:         *addr,
+		DBPath:       *dbPath,
+		Secure:       *secure,
+		ProxyHeaders: *proxyHeaders,
+	}
 }
 
 func main() {
-	addr, dbPath, secure := parseFlags()
-
-	if err := db.Start(dbPath); err != nil {
-		log.Panicf("starting database connection: %v", err)
-	}
-	defer db.Close()
-
-	server.Start(addr, secure)
+	server.Start(getConfig())
 }

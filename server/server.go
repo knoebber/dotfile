@@ -8,28 +8,48 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/knoebber/dotfile/db"
 )
+
+// Config configures the server.
+type Config struct {
+	Addr         string // Address to listen at.
+	Secure       bool   // Sets session cookie to HTTPS only.
+	ProxyHeaders bool   // Sets request IP from reverse proxy headers.
+	DBPath       string // The path to store the sqlite database file.
+}
 
 const timeout = 10 * time.Second
 
 // Start starts the dotfile web server.
 // Expects an assets folder in the same directory from where the binary is ran.
-func Start(addr string, secure bool) {
-	r := mux.NewRouter()
-	log.Println("serving dotfiles at", addr)
+func Start(cfg Config) {
+	if err := db.Start(cfg.DBPath); err != nil {
+		log.Panicf("starting database connection: %v", err)
+	}
+	defer db.Close()
 
-	setupRoutes(r, secure)
+	r := mux.NewRouter()
+
+	setupRoutes(r, cfg.Secure)
 
 	s := &http.Server{
-		Handler:      handlers.LoggingHandler(os.Stdout, handlers.ProxyHeaders(r)),
-		Addr:         addr,
+		Addr:         cfg.Addr,
 		WriteTimeout: timeout,
 		ReadTimeout:  timeout,
+	}
+
+	if cfg.ProxyHeaders {
+		s.Handler = handlers.LoggingHandler(os.Stdout, handlers.ProxyHeaders(r))
+	} else {
+		s.Handler = handlers.LoggingHandler(os.Stdout, r)
 	}
 
 	if err := loadTemplates(); err != nil {
 		log.Panic(err)
 	}
+
+	log.Println("serving dotfiles at", cfg.Addr)
 
 	log.Panicf("starting dotfile server: %v", s.ListenAndServe())
 }
