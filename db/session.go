@@ -19,7 +19,7 @@ SELECT sessions.id,
        session_locations.ip
 FROM sessions
 JOIN users ON users.id = user_id 
-LEFT JOIN session_locations ON session_id = sessions.id
+LEFT JOIN session_locations ON session_id = sessions.id AND last = 1
 `
 )
 

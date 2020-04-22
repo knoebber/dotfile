@@ -14,9 +14,9 @@ import (
 // Config configures the server.
 type Config struct {
 	Addr         string // Address to listen at.
+	DBPath       string // The path to store the sqlite database file.
 	Secure       bool   // Sets session cookie to HTTPS only.
 	ProxyHeaders bool   // Sets request IP from reverse proxy headers.
-	DBPath       string // The path to store the sqlite database file.
 }
 
 const timeout = 10 * time.Second
