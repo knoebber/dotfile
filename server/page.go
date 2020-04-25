@@ -17,6 +17,7 @@ const (
 	aboutTitle    = "About"
 	loginTitle    = "Login"
 	signupTitle   = "Signup"
+	exploreTitle  = "Explore"
 	emailTitle    = "Update Email"
 	passwordTitle = "Update Password"
 )
@@ -33,13 +34,13 @@ type Page struct {
 	Vars           map[string]string
 	Data           map[string]string
 
-	session      *db.Session
+	Session      *db.Session
 	templateName string
 }
 
 // Owned returns whether the current logged in user owns the page.
 func (p *Page) Owned() bool {
-	return p.session != nil && p.session.Username == p.Vars["username"]
+	return p.Session != nil && p.Session.Username == p.Vars["username"]
 }
 
 func (p *Page) flashSuccess(msg string) {
@@ -64,7 +65,7 @@ func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
 }
 
 func (p *Page) setSession(w http.ResponseWriter, r *http.Request) error {
-	if p.session != nil {
+	if p.Session != nil {
 		return nil
 	}
 
@@ -75,7 +76,7 @@ func (p *Page) setSession(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	p.session, err = db.CheckSession(cookie.Value, r.RemoteAddr)
+	p.Session, err = db.CheckSession(cookie.Value, r.RemoteAddr)
 	if db.NotFound(err) {
 		http.SetCookie(w, &http.Cookie{
 			Name:   sessionCookie,
@@ -92,8 +93,8 @@ func (p *Page) setSession(w http.ResponseWriter, r *http.Request) error {
 func (p *Page) setLinks() {
 	var userLink Link
 
-	if p.session != nil {
-		username := p.session.Username
+	if p.Session != nil {
+		username := p.Session.Username
 		userLink = newLink("/"+username, "Profile", p.Title)
 	} else {
 		userLink = newLink("/login", loginTitle, p.Title)
@@ -101,6 +102,7 @@ func (p *Page) setLinks() {
 
 	p.Links = []Link{
 		newLink("/", indexTitle, p.Title),
+		newLink("/explore", exploreTitle, p.Title),
 		newLink("/about", aboutTitle, p.Title),
 		userLink,
 	}

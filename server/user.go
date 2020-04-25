@@ -14,7 +14,7 @@ const (
 )
 
 func checkSession(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	if p.session != nil {
+	if p.Session != nil {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return true
 	}
@@ -71,7 +71,7 @@ func handleEmail(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return false
 	}
 
-	if err := db.UpdateEmail(p.session.UserID, r.Form.Get("email")); err != nil {
+	if err := db.UpdateEmail(p.Session.UserID, r.Form.Get("email")); err != nil {
 		return p.setError(w, err)
 	}
 	p.Data["email"] = r.Form.Get("email")
@@ -97,7 +97,7 @@ func handlePassword(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 		return p.setError(w, usererr.Invalid("Confirm does not match."))
 	}
 
-	if err := db.UpdatePassword(p.session.UserID, currentPass, newPass); err != nil {
+	if err := db.UpdatePassword(p.Session.UserID, currentPass, newPass); err != nil {
 		return p.setError(w, err)
 	}
 
@@ -126,7 +126,7 @@ func loadUser(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 
 func handleLogout(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	if p.Owned() {
-		if err := db.Logout(p.session.ID); err != nil {
+		if err := db.Logout(p.Session.ID); err != nil {
 			log.Print(err)
 		}
 	}
