@@ -46,7 +46,7 @@ func createHandler(desc *pageDescription) http.HandlerFunc {
 		}
 
 		if err := page.render(w); err != nil {
-			pageError(w, page.Title, err)
+			templateError(w, page.Title, err)
 		}
 	}
 }
@@ -54,10 +54,14 @@ func createHandler(desc *pageDescription) http.HandlerFunc {
 func pageError(w http.ResponseWriter, title string, err error) {
 	setError(
 		w,
-		errors.Wrapf(err, "rendering page %#v", title),
-		fmt.Sprintf("Failed to render page %#v", title),
+		errors.Wrapf(err, "creating page %#v", title),
+		fmt.Sprintf("Failed to create page %#v", title),
 		http.StatusInternalServerError,
 	)
+}
+
+func templateError(w http.ResponseWriter, title string, err error) {
+	log.Print(errors.Wrapf(err, "template error: rendering %#v", title))
 }
 
 func badRequest(w http.ResponseWriter, err error) {
