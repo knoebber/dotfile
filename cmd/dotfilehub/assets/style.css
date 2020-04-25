@@ -85,12 +85,13 @@ form > label, form > button {
     grid-column: 1;
 }
 
-form > input {
+form > input, form > textarea {
     grid-column: 2 / 4;
 }
 
 input {
     font-size: 1.1rem;
+    max-width: 200px;
 }
 
 .flash-error, .flash-success {

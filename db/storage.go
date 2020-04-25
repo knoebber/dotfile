@@ -6,11 +6,11 @@ import (
 
 // Storage implements the file.Storage interface using a sqlite database.
 type Storage struct {
-	userID int
+	userID int64
 }
 
 // NewStorage returns a storage specific to a user.
-func NewStorage(userID int) *Storage {
+func NewStorage(userID int64) *Storage {
 	return &Storage{
 		userID: userID,
 	}
@@ -24,7 +24,12 @@ func (s *Storage) GetContents() (contents []byte, err error) {
 
 // GetTracked returns a users tracked file.
 func (s *Storage) GetTracked(alias string) (*file.Tracked, error) {
-	return nil, nil
+	tf, err := getTrackedFile(s.userID, alias)
+	if err != nil {
+		return nil, err
+	}
+
+	return tf, nil
 }
 
 // GetRevision pulls a users revision from the database.
