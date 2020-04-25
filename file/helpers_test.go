@@ -1,6 +1,8 @@
 package file
 
 import (
+	"bytes"
+
 	"github.com/pkg/errors"
 )
 
@@ -55,7 +57,7 @@ func (ms *MockStorer) GetRevision(string, string) ([]byte, error) {
 	return []byte{}, nil
 }
 
-func (ms *MockStorer) SaveRevision(*Tracked, *Commit) error {
+func (ms *MockStorer) SaveRevision(tf *Tracked, buff *bytes.Buffer, hash string) error {
 	if ms.saveRevisionErr {
 		return errors.New("save revision error")
 	}

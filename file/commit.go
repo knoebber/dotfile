@@ -6,34 +6,29 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/pkg/errors"
 )
 
 // Commit represents a revision for a tracked file.
 type Commit struct {
-	Hash       string        `json:"hash"`
-	Message    string        `json:"message"`
-	Timestamp  int64         `json:"timestamp"`
-	Compressed *bytes.Buffer `json:"-"`
+	Hash      string `json:"hash"`
+	Message   string `json:"message"`
+	Timestamp int64  `json:"timestamp"`
 }
 
-func newCommit(contents []byte, message string) (*Commit, error) {
+func hashAndCompress(contents []byte) (*bytes.Buffer, string, error) {
+	hash := fmt.Sprintf("%x", sha1.Sum(contents))
+
 	compressed := new(bytes.Buffer)
 	w := zlib.NewWriter(compressed)
 	defer w.Close()
 
 	if _, err := w.Write(contents); err != nil {
-		return nil, errors.Wrap(err, "compressing file for commit")
+		return nil, "", errors.Wrap(err, "compressing file for commit")
 	}
 
-	return &Commit{
-		Hash:       fmt.Sprintf("%x", sha1.Sum(contents)),
-		Message:    message,
-		Timestamp:  time.Now().Unix(),
-		Compressed: compressed,
-	}, nil
+	return compressed, hash, nil
 }
 
 func uncompress(compressed []byte) (*bytes.Buffer, error) {

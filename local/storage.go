@@ -22,6 +22,7 @@
 package local
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"path/filepath"
@@ -123,14 +124,14 @@ func (s *Storage) GetContents(relativePath string) ([]byte, error) {
 
 // SaveRevision saves a commit to the file system.
 // Creates a new directory when its the first commit.
-func (s *Storage) SaveRevision(tf *file.Tracked, c *file.Commit) (err error) {
+func (s *Storage) SaveRevision(tf *file.Tracked, buf *bytes.Buffer, hash string) (err error) {
 	var created bool
 
 	// Create the directory for the files commits if it doesn't exist
 	commitDir := filepath.Join(s.dir, tf.Alias)
 
 	// The name of the file will be the hash
-	commitPath := filepath.Join(commitDir, c.Hash)
+	commitPath := filepath.Join(commitDir, hash)
 
 	if created, err = createIfNotExist(commitDir, commitPath); err != nil {
 		return errors.Wrap(err, "creating directory for commits")
@@ -140,7 +141,7 @@ func (s *Storage) SaveRevision(tf *file.Tracked, c *file.Commit) (err error) {
 		return errors.New("revision already exists")
 	}
 
-	if err = ioutil.WriteFile(commitPath, c.Compressed.Bytes(), 0644); err != nil {
+	if err = ioutil.WriteFile(commitPath, buf.Bytes(), 0644); err != nil {
 		return errors.Wrap(err, "writing commit bytes")
 	}
 
@@ -152,13 +153,13 @@ func (s *Storage) SaveRevision(tf *file.Tracked, c *file.Commit) (err error) {
 // Returns nil when alias isn't tracked.
 // This never returns an error - it is present to satisfy file.Storer.
 func (s *Storage) GetTracked(alias string) (*file.Tracked, error) {
-	t, ok := s.files[alias]
+	tf, ok := s.files[alias]
 	if !ok {
 		return nil, nil
 	}
 
-	t.Alias = alias
-	return t, nil
+	tf.Alias = alias
+	return tf, nil
 }
 
 // SaveTracked saves a tracked file to JSON.
