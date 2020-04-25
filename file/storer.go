@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"regexp"
+	"time"
 )
 
 const initialCommitMessage = "Initial commit"
@@ -16,8 +17,42 @@ type Storer interface {
 	GetTracked(alias string) (tf *Tracked, err error)
 	SaveTracked(tf *Tracked) (err error)
 	GetRevision(alias, hash string) (contents []byte, err error)
-	SaveRevision(tf *Tracked, c *Commit) (err error)
+	SaveRevision(tf *Tracked, buff *bytes.Buffer, hash string) (err error)
 	Revert(contents []byte, path string) (err error)
+}
+
+// Creates an alias from the path of the file.
+// Works by removing leading dots and file extensions.
+// Examples: ~/.vimrc: vimrc
+//           ~/.config/i3/config: config
+//           ~/.config/alacritty/alacritty.yml: alacritty
+func pathToAlias(path string) (string, error) {
+	matches := pathToAliasRegex.FindStringSubmatch(path)
+	if len(matches) < 2 {
+		return "", fmt.Errorf("failed to get alias from %#v", path)
+	}
+	return matches[1], nil
+}
+
+func newRevision(s Storer, tf *Tracked, message string) error {
+	contents, err := s.GetContents(tf.RelativePath)
+	if err != nil {
+		return err
+	}
+
+	compressed, hash, err := hashAndCompress(contents)
+	if err != nil {
+		return err
+	}
+
+	tf.Revision = hash
+	tf.Commits = append(tf.Commits, Commit{
+		Hash:      hash,
+		Message:   message,
+		Timestamp: time.Now().Unix(),
+	})
+
+	return s.SaveRevision(tf, compressed, hash)
 }
 
 // MustGetTracked attempts to find alias.
@@ -54,10 +89,7 @@ func UncompressRevision(s Storer, alias, hash string) (*bytes.Buffer, error) {
 // Init initializes a file for dotfile to track.
 // It creates a tracked file with an initial commit.
 func Init(s Storer, relativePath, fileName string) (alias string, err error) {
-	var (
-		tf     *Tracked
-		commit *Commit
-	)
+	var tf *Tracked
 
 	if fileName == "" {
 		alias, err = pathToAlias(relativePath)
@@ -78,28 +110,17 @@ func Init(s Storer, relativePath, fileName string) (alias string, err error) {
 		return
 	}
 
-	contents, err := s.GetContents(relativePath)
-	if err != nil {
-		return
-	}
-
-	commit, err = newCommit(contents, initialCommitMessage)
-	if err != nil {
-		return
-	}
-
 	tf = &Tracked{
 		RelativePath: relativePath,
-		Revision:     commit.Hash,
-		Commits:      []Commit{*commit},
 		Alias:        alias,
+		Commits:      []Commit{},
 	}
 
-	if err = s.SaveRevision(tf, commit); err != nil {
-		return
+	if err := newRevision(s, tf, initialCommitMessage); err != nil {
+		return "", err
 	}
 
-	return
+	return alias, nil
 }
 
 // NewCommit saves a revision of the file at its current state.
@@ -109,20 +130,7 @@ func NewCommit(s Storer, alias, message string) error {
 		return err
 	}
 
-	contents, err := s.GetContents(tf.RelativePath)
-	if err != nil {
-		return err
-	}
-
-	commit, err := newCommit(contents, message)
-	if err != nil {
-		return err
-	}
-
-	tf.Commits = append(tf.Commits, *commit)
-	tf.Revision = commit.Hash
-
-	return s.SaveRevision(tf, commit)
+	return newRevision(s, tf, message)
 }
 
 // Checkout reverts a tracked file to its state at hash.
@@ -149,6 +157,9 @@ func Checkout(s Storer, alias, hash string) error {
 	}
 
 	uncompressed, err := UncompressRevision(s, alias, hash)
+	if err != nil {
+		return err
+	}
 
 	if err := s.Revert(uncompressed.Bytes(), tf.RelativePath); err != nil {
 		return err
@@ -157,17 +168,4 @@ func Checkout(s Storer, alias, hash string) error {
 	tf.Revision = hash
 
 	return s.SaveTracked(tf)
-}
-
-// Creates an alias from the path of the file.
-// Works by removing leading dots and file extensions.
-// Examples: ~/.vimrc: vimrc
-//           ~/.config/i3/config: config
-//           ~/.config/alacritty/alacritty.yml: alacritty
-func pathToAlias(path string) (string, error) {
-	matches := pathToAliasRegex.FindStringSubmatch(path)
-	if len(matches) < 2 {
-		return "", fmt.Errorf("failed to get alias from %#v", path)
-	}
-	return matches[1], nil
 }
