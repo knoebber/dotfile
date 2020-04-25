@@ -12,12 +12,12 @@ var pathToAliasRegex = regexp.MustCompile(`(\w+)(\.\w+)?$`)
 
 // Storer is an interface that encapsulates the I/O that is required for dotfile.
 type Storer interface {
-	GetContents(string) ([]byte, error)
-	GetTracked(string) (*Tracked, error)
-	SaveTracked(*Tracked) error
-	GetRevision(string, string) ([]byte, error)
-	SaveRevision(*Tracked, *Commit) error
-	Revert([]byte, string) error
+	GetContents(path string) (contents []byte, err error)
+	GetTracked(alias string) (tf *Tracked, err error)
+	SaveTracked(tf *Tracked) (err error)
+	GetRevision(alias, hash string) (contents []byte, err error)
+	SaveRevision(tf *Tracked, c *Commit) (err error)
+	Revert(contents []byte, path string) (err error)
 }
 
 // MustGetTracked attempts to find alias.
