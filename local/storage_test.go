@@ -108,20 +108,20 @@ func TestSaveRevision(t *testing.T) {
 
 	t.Run("error when unable to create commit directory", func(t *testing.T) {
 		s := &Storage{path: "/not/exist"}
-		err := s.SaveRevision(new(file.Tracked), new(file.Commit))
+		err := s.SaveRevision(new(file.Tracked), nil, "")
 		assert.Error(t, err)
 	})
 
 	s := setupTestStorage()
 	t.Run("error when unable to create commit file", func(t *testing.T) {
-		err := s.SaveRevision(new(file.Tracked), new(file.Commit))
+		err := s.SaveRevision(new(file.Tracked), nil, "")
 		assert.Error(t, err)
 	})
 
 	t.Run("error when revision already exists", func(t *testing.T) {
 		_ = os.Mkdir(filepath.Join(testDir, testAlias), 0755)
 		_ = ioutil.WriteFile(filepath.Join(testDir, testAlias, testHash), []byte(testContent), 0644)
-		err := s.SaveRevision(&file.Tracked{Alias: testAlias}, &file.Commit{Hash: testHash})
+		err := s.SaveRevision(&file.Tracked{Alias: testAlias}, nil, testHash)
 		assert.Error(t, err)
 	})
 
