@@ -21,6 +21,7 @@ func assetRoutes(r *mux.Router) {
 func staticRoutes(r *mux.Router) {
 	r.HandleFunc("/", getIndexHandler())
 	r.HandleFunc("/about", getAboutHandler())
+	r.HandleFunc("/explore", getExploreHandler())
 }
 
 func userRoutes(r *mux.Router, secure bool) {

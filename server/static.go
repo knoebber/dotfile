@@ -9,6 +9,13 @@ func getIndexHandler() http.HandlerFunc {
 	})
 }
 
+func getExploreHandler() http.HandlerFunc {
+	return createHandler(&pageDescription{
+		templateName: "explore.tmpl",
+		title:        exploreTitle,
+	})
+}
+
 func getAboutHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "about.tmpl",
