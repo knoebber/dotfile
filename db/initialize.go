@@ -27,7 +27,7 @@ func createTables() error {
 		new(Session),
 		new(SessionLocation),
 		new(File),
-		new(Temp),
+		new(TempFile),
 		new(Commit),
 		new(Revision),
 	} {
