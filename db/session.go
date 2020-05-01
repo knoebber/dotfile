@@ -48,8 +48,8 @@ deleted_at DATETIME
 CREATE INDEX IF NOT EXISTS sessions_user_index ON sessions(user_id);`
 }
 
-func (s *Session) insertStmt() (sql.Result, error) {
-	return connection.Exec("INSERT INTO sessions(session, user_id) VALUES(?, ?)", s.Session, s.UserID)
+func (s *Session) insertStmt(e executor) (sql.Result, error) {
+	return e.Exec("INSERT INTO sessions(session, user_id) VALUES(?, ?)", s.Session, s.UserID)
 }
 
 func createSession(userID int64) (*Session, error) {
@@ -63,7 +63,7 @@ func createSession(userID int64) (*Session, error) {
 		UserID:  userID,
 	}
 
-	id, err := insert(s)
+	id, err := insert(s, nil)
 	if err != nil {
 		return nil, err
 	}

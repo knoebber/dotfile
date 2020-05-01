@@ -29,7 +29,6 @@ func createTables() error {
 		new(File),
 		new(TempFile),
 		new(Commit),
-		new(Revision),
 	} {
 		_, err := connection.Exec(model.createStmt())
 		if err != nil {

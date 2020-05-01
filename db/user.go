@@ -46,8 +46,8 @@ created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 CREATE INDEX IF NOT EXISTS users_username_index ON users(username);`
 }
 
-func (u *User) insertStmt() (sql.Result, error) {
-	return connection.Exec("INSERT INTO users(username, email, password_hash, cli_token) VALUES(?, ?, ?, ?)",
+func (u *User) insertStmt(e executor) (sql.Result, error) {
+	return e.Exec("INSERT INTO users(username, email, password_hash, cli_token) VALUES(?, ?, ?, ?)",
 		u.Username,
 		u.Email,
 		u.PasswordHash,
@@ -56,12 +56,16 @@ func (u *User) insertStmt() (sql.Result, error) {
 }
 
 func validateUserInfo(username, password string, email *string) error {
-	n, err := count("users", "username", username)
+	var count int
+
+	err := connection.
+		QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", username).
+		Scan(&count)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "checking duplicate username: %#v", username)
 	}
 
-	if n > 0 {
+	if count > 0 {
 		return usererr.Duplicate("Username", username)
 	}
 
@@ -69,12 +73,15 @@ func validateUserInfo(username, password string, email *string) error {
 		return nil
 	}
 
-	n, err = count("users", "email", *email)
+	err = connection.
+		QueryRow("SELECT COUNT(*) FROM users WHERE email = ?", email).
+		Scan(&count)
+
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "checking duplicate email: %#v", username)
 	}
 
-	if n > 0 {
+	if count > 0 {
 		return usererr.Duplicate("Email", *email)
 	}
 
@@ -160,7 +167,7 @@ func CreateUser(username, password string, email *string) (*User, error) {
 		CLIToken:     cliToken,
 	}
 
-	id, err := insert(u)
+	id, err := insert(u, nil)
 	if err != nil {
 		return nil, errors.Wrapf(err, "creating record for new user %#v", username)
 	}

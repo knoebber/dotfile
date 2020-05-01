@@ -7,27 +7,59 @@ import (
 	"io"
 	"time"
 
+	"github.com/knoebber/dotfile/usererr"
 	"github.com/pkg/errors"
 )
 
-const timestampDisplayFormat = "January 02, 2006"
+const (
+	timestampDisplayFormat = "January 02, 2006"
+
+	// Some safe guards against abusing uploads.
+	// Total ~150 megabytes of storage per user.
+	// Making accounts is currently trivial however.
+	// If it becomes a problem the next step is requiring email verification.
+	maxFilesPerUser   = 100
+	maxCommitsPerFile = 100
+	maxBlobSizeBytes  = 15000
+)
+
+func checkSize(content []byte, name string) error {
+	if len(content) > maxBlobSizeBytes {
+		return usererr.Invalid(fmt.Sprintf("%s is too large (max=%dKB)", name, maxBlobSizeBytes/1000))
+	}
+	return nil
+
+}
 
 // NotFound returns whether err is wrapping a no rows error.
 func NotFound(err error) bool {
 	return errors.Is(err, sql.ErrNoRows)
 }
 
-type inserter interface {
-	insertStmt() (sql.Result, error)
+type executor interface {
+	Exec(string, ...interface{}) (sql.Result, error)
 }
 
-func insert(i inserter) (id int64, err error) {
+type inserter interface {
+	insertStmt(executor) (sql.Result, error)
+}
+
+func insert(i inserter, tx *sql.Tx) (id int64, err error) {
+	var res sql.Result
+
 	if err = validate.Struct(i); err != nil {
 		return 0, err
 	}
 
-	res, err := i.insertStmt()
-	if err != nil {
+	if tx != nil {
+		res, err = i.insertStmt(tx)
+	} else {
+		res, err = i.insertStmt(connection)
+	}
+
+	if err != nil && tx != nil {
+		return 0, rollback(tx, err)
+	} else if err != nil {
 		return 0, err
 	}
 
@@ -38,14 +70,6 @@ func insert(i inserter) (id int64, err error) {
 	}
 
 	return id, nil
-}
-
-// Ensure that table and column are constant values to avoid SQL injection.
-// Value is safe to be user generated.
-func count(table, column, value string) (count int, err error) {
-	query := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s = ?", table, column)
-	err = connection.QueryRow(query, value).Scan(&count)
-	return
 }
 
 // Rolls back a database transaction.

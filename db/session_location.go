@@ -31,8 +31,8 @@ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 CREATE INDEX IF NOT EXISTS session_locations_session_index ON session_locations(session_id);`
 }
 
-func (s *SessionLocation) insertStmt() (sql.Result, error) {
-	return connection.Exec("INSERT INTO session_locations(session_id, ip) VALUES(?, ?)", s.SessionID, s.IP)
+func (s *SessionLocation) insertStmt(e executor) (sql.Result, error) {
+	return e.Exec("INSERT INTO session_locations(session_id, ip) VALUES(?, ?)", s.SessionID, s.IP)
 }
 
 func addSessionLocation(sessionID int64, ip string) error {
@@ -41,7 +41,7 @@ func addSessionLocation(sessionID int64, ip string) error {
 		IP:        ip,
 	}
 
-	id, err := insert(s)
+	id, err := insert(s, nil)
 	if err != nil {
 		return errors.Wrapf(err, "adding location %#v to session %d", ip, sessionID)
 	}

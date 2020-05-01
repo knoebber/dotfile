@@ -1,46 +1,67 @@
 package db
 
 import (
-	"github.com/knoebber/dotfile/file"
+	"bytes"
+	"time"
+
+	"github.com/pkg/errors"
 )
 
 // Storage implements the file.Storage interface using a sqlite database.
 type Storage struct {
-	userID int64
+	file *File
 }
 
-// NewStorage returns a storage specific to a user.
-func NewStorage(userID int64) *Storage {
-	return &Storage{
-		userID: userID,
-	}
-}
-
-// GetContents reads the bytes from the users temp file.
-// Returns an error if the temp file is not set.
-func (s *Storage) GetContents() (contents []byte, err error) {
-	return nil, nil
-}
-
-// GetTracked returns a users tracked file.
-func (s *Storage) GetTracked(alias string) (*file.Tracked, error) {
-	tf, err := getTrackedFile(s.userID, alias)
+// NewStorage returns a storage loaded with a users file.
+func NewStorage(userID int64, alias string) (*Storage, error) {
+	f, err := getFile(userID, alias)
 	if err != nil {
 		return nil, err
 	}
 
-	return tf, nil
+	return &Storage{file: f}, nil
 }
 
-// GetRevision pulls a users revision from the database.
-// Result is zlib compressed.
-func (s *Storage) GetRevision(string, string) (compressed []byte, err error) {
-	return nil, nil
+// GetContents reads the bytes from the users temp file.
+// Returns an error if the temp file is not set.
+func (s *Storage) GetContents(path string) ([]byte, error) {
+	temp, err := getTempFileByPath(s.file.UserID, path)
+	if err != nil {
+		return nil, err
+	}
+
+	return temp.Content, nil
 }
 
-// SaveRevision saves a commit to the database.
-func (s *Storage) SaveRevision(*file.Tracked, *file.Commit) error {
-	return nil
+// GetRevision pulls a user's revision at hash from the database.
+func (s *Storage) GetRevision(alias, hash string) ([]byte, error) {
+	return getRevision(s.file.UserID, alias, hash)
+}
+
+// SaveCommit saves a commit to the database.
+func (s *Storage) SaveCommit(buff *bytes.Buffer, alias, hash, message string, timestamp time.Time) error {
+	tx, err := connection.Begin()
+	if err != nil {
+		return errors.Wrap(err, "starting transaction for save revision")
+	}
+
+	commit := &Commit{
+		FileID:    s.file.ID,
+		Hash:      hash,
+		Message:   message,
+		Revision:  buff.Bytes(),
+		Timestamp: timestamp,
+	}
+
+	if _, err := insert(commit, tx); err != nil {
+		return errors.Wrapf(err, "inserting commit for file %d", s.file.ID)
+	}
+
+	if err := updateRevision(tx, s.file.ID, hash); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 // Revert overwrites the files current contents with bytes.
