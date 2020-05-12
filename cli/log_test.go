@@ -10,9 +10,7 @@ func TestLog(t *testing.T) {
 	clearTestStorage()
 	initTestFile(t)
 
-	logCommand := &logCommand{
-		getStorage: getTestStorageClosure(),
-	}
+	logCommand := new(logCommand)
 
 	t.Run("returns error when file is not tracked", func(t *testing.T) {
 		logCommand.fileName = notTrackedFile

@@ -11,7 +11,6 @@ func TestCommit(t *testing.T) {
 	initTestFile(t)
 
 	commitCommand := &commitCommand{
-		getStorage:    getTestStorageClosure(),
 		commitMessage: "test commit",
 	}
 

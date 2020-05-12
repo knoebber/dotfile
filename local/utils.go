@@ -5,66 +5,67 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
-// RelativePath converts path into a relative path.
+type trackedFile struct {
+	Path     string   `json:"path"`
+	Revision string   `json:"revision"`
+	Commits  []commit `json:"commits"`
+}
+
+type commit struct {
+	Hash      string `json:"hash"`
+	Message   string `json:"message"`
+	Timestamp int64  `json:"timestamp"` // Unix timestamp in nanoseconds.
+}
+
+// Creates a path that is reusable between machines.
 // Returns an error when path does not exist.
-func RelativePath(path, home string) (string, error) {
-	_, fileErr := os.Stat(path)
-	if os.IsNotExist(fileErr) {
+func convertPath(path, home string) (string, error) {
+	var err error
+
+	if !Exists(path) {
 		return "", fmt.Errorf("%#v not found", path)
 	}
 
-	fullPath, err := filepath.Abs(path)
-	if err != nil {
-		return "", err
-	}
-
-	relativePath := strings.Replace(fullPath, home, "~", 1)
-
-	if !strings.Contains(relativePath, "~") {
-		return "", fmt.Errorf("%#v is not in home directory", path)
-	}
-
-	return relativePath, nil
-}
-
-func fullPath(relativePath, home string) string {
-	return strings.Replace(relativePath, "~", home, 1)
-}
-
-// Creates a directory and a file.
-// Returns true if any files were created.
-func createIfNotExist(dir, fileName string) (bool, error) {
-	if !exists(dir) {
-		if createErr := os.Mkdir(dir, 0755); createErr != nil {
-			return false, createErr
+	// Get the full path.
+	if path[0] != '/' {
+		path, err = filepath.Abs(path)
+		if err != nil {
+			return "", err
 		}
 	}
 
-	if exists(fileName) {
-		return false, nil
+	// If the path is not in $HOME then use as is.
+	if !strings.Contains(path, home) {
+		return path, nil
 	}
 
-	f, createErr := os.Create(fileName)
-
-	if createErr != nil {
-		return false, createErr
-	}
-
-	if err := f.Close(); err != nil {
-		return false, errors.Wrapf(err, "closing %#v", fileName)
-	}
-
-	return true, nil
+	return strings.Replace(path, home, "~", 1), nil
 }
 
-func exists(path string) bool {
+func fullPath(path, home string) string {
+	if path[0] == '/' {
+		return path
+	}
+	return strings.Replace(path, "~", home, 1)
+}
+
+// Exists returns whether the file or directory exists.
+func Exists(path string) bool {
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		return false
 	}
+
 	return true
+}
+
+// Creates a director if it does not exist.
+func createDir(dir string) error {
+	if Exists(dir) {
+		return nil
+	}
+
+	return os.Mkdir(dir, 0755)
 }

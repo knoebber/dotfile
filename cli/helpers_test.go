@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/knoebber/dotfile/local"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,20 +22,18 @@ const (
 
 var sneakyTestingReference *testing.T
 
-func getTestStorageClosure() func() (*local.Storage, error) {
+func init() {
 	home, _ := getHome()
-	dir := testDir
-	name := defaultStorageName
-	return getStorageClosure(home, &dir, &name)
+	config = cliConfig{
+		home:       home,
+		storageDir: testDir,
+	}
 }
 
 func initTestFile(t *testing.T) {
 	os.Mkdir(testDir, 0755)
 	writeTestFile(t, []byte(initialTestFileContents))
-	initCommand := &initCommand{
-		fileName:   trackedFile,
-		getStorage: getTestStorageClosure(),
-	}
+	initCommand := &initCommand{path: trackedFile}
 	err := initCommand.run(nil)
 	assert.NoError(t, err)
 }

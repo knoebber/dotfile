@@ -1,11 +1,12 @@
 package file
 
 import (
-	"github.com/pkg/errors"
+	"bytes"
+	"errors"
+	"time"
 )
 
 const (
-	testAlias   = "testalias"
 	testPath    = "/testpath"
 	invalidPath = "&"
 	testMessage = "Test commit message"
@@ -19,50 +20,51 @@ type MockStorer struct {
 	getContentsErr      bool
 	saveTrackedErr      bool
 	getRevisionErr      bool
-	saveRevisionErr     bool
+	uncompressErr       bool
+	saveCommitErr       bool
 	revertErr           bool
+	hasCommit           bool
+	hasCommitErr        bool
 }
 
-func (ms *MockStorer) GetTracked(string) (*Tracked, error) {
-	if ms.getTrackedErr {
-		return nil, errors.New("get tracked error")
+func (ms *MockStorer) HasCommit(string) (bool, error) {
+	if ms.hasCommitErr {
+		return false, errors.New("has commit error")
 	}
-	if ms.testAliasNotTracked {
-		return nil, nil
-	}
-	return new(Tracked), nil
+	return ms.hasCommit, nil
 }
 
-func (ms *MockStorer) GetContents(string) ([]byte, error) {
+func (ms *MockStorer) GetContents() ([]byte, error) {
 	if ms.getContentsErr {
 		return nil, errors.New("get contents error")
 	}
 	return []byte(testContent), nil
 }
 
-func (ms *MockStorer) SaveTracked(*Tracked) error {
-	if ms.saveTrackedErr {
-		return errors.New("save contents error")
-	}
-	return nil
-}
-
-func (ms *MockStorer) GetRevision(string, string) ([]byte, error) {
+func (ms *MockStorer) GetRevision(string) ([]byte, error) {
 	if ms.getRevisionErr {
 		return nil, errors.New("get contents error")
 	}
+	if ms.uncompressErr {
+		return nil, nil
+	}
 
-	return []byte{}, nil
+	compressed, _, err := hashAndCompress([]byte(testContent))
+	if err != nil {
+		return nil, err
+	}
+
+	return compressed.Bytes(), nil
 }
 
-func (ms *MockStorer) SaveRevision(*Tracked, *Commit) error {
-	if ms.saveRevisionErr {
+func (ms *MockStorer) SaveCommit(*bytes.Buffer, string, string, time.Time) error {
+	if ms.saveCommitErr {
 		return errors.New("save revision error")
 	}
 	return nil
 }
 
-func (ms *MockStorer) Revert([]byte, string) error {
+func (ms *MockStorer) Revert(*bytes.Buffer, string) error {
 	if ms.revertErr {
 		return errors.New("revert error")
 	}

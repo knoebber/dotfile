@@ -7,17 +7,17 @@ import (
 )
 
 const (
-	testFiles            = "files.json"
-	testHome             = "/home/testing"
-	testAlias            = "testalias"
-	testHash             = "9abdbcf4ea4e2c1c077c21b8c2f2470ff36c31ce"
-	nonExistantFile      = "file_does_not_exist"
-	notTrackedFile       = "/dev/null"
-	testDir              = "testdata/"
-	testTrackedFile      = testDir + "testfile.txt"
-	testTrackedFileAlias = "testfile"
-	testContent          = "Some stuff.\n"
-	updatedTestContent   = testContent + "Some new content!\n"
+	testHome           = "/home/testing"
+	testAlias          = "testalias"
+	testMessage        = "test message"
+	testHash           = "9abdbcf4ea4e2c1c077c21b8c2f2470ff36c31ce"
+	testUpdatedHash    = "5d12fbbc6038e0b6a3e798dd790512ba03de7b6a"
+	nonExistantFile    = "file_does_not_exist"
+	notTrackedFile     = "/dev/null"
+	testDir            = "testdata/"
+	testTrackedFile    = testDir + "testfile.txt"
+	testContent        = "Some stuff.\n"
+	updatedTestContent = testContent + "Some new content!\n"
 )
 
 func initTestdata(t *testing.T) {
@@ -33,9 +33,21 @@ func clearTestStorage() {
 	_ = os.RemoveAll(testDir)
 }
 
-func setupTestStorage() *Storage {
+func setupTestFile(t *testing.T) *Storage {
 	clearTestStorage()
-	s, _ := NewStorage(testHome, testDir, testFiles)
+	os.Mkdir(testDir, 0755)
+	writeTestFile(t, []byte(testContent))
+
+	_, err := InitFile(testHome, testDir, testTrackedFile, testAlias)
+	if err != nil {
+		t.Fatalf("initializing test file: %s", err)
+	}
+
+	s, err := LoadFile(testHome, testDir, testAlias)
+	if err != nil {
+		t.Fatalf("loading test file: %s", err)
+	}
+
 	return s
 }
 
