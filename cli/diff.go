@@ -17,22 +17,25 @@ const (
 )
 
 type diffCommand struct {
-	getStorage func() (*local.Storage, error)
 	fileName   string
-	revision   string
+	commitHash string
 }
 
 func (d *diffCommand) run(ctx *kingpin.ParseContext) error {
-	s, err := d.getStorage()
+	s, err := loadFile(d.fileName)
 	if err != nil {
 		return err
+	}
+
+	if d.commitHash == "" {
+		d.commitHash = s.Tracking.Revision
 	}
 
 	if _, err := exec.LookPath(diffCmd); err != nil {
 		return fmt.Errorf("%s not found in $PATH", diffCmd)
 	}
 
-	return diff(s, d.fileName, d.revision)
+	return diff(s, d.fileName, d.commitHash)
 }
 
 // Color is supported by GNU diff utilities 3.4 and greater.
@@ -44,21 +47,12 @@ func diffSupportsColor() bool {
 func diff(s *local.Storage, fileName, hash string) error {
 	var cmd *exec.Cmd
 
-	tf, err := file.MustGetTracked(s, fileName)
+	path, err := s.GetPath()
 	if err != nil {
 		return err
 	}
 
-	path, err := s.GetPath(fileName)
-	if err != nil {
-		return err
-	}
-
-	if hash == "" {
-		hash = tf.Revision
-	}
-
-	lastRevision, err := file.UncompressRevision(s, tf.Alias, hash)
+	lastRevision, err := file.UncompressRevision(s, hash)
 	if err != nil {
 		return err
 	}
@@ -97,14 +91,12 @@ func diff(s *local.Storage, fileName, hash string) error {
 	return nil
 }
 
-func addDiffSubCommandToApplication(app *kingpin.Application, gs func() (*local.Storage, error)) {
-	dc := &diffCommand{
-		getStorage: gs,
-	}
+func addDiffSubCommandToApplication(app *kingpin.Application) {
+	dc := new(diffCommand)
 	c := app.Command("diff", "check changes to tracked file").Action(dc.run)
 	c.Arg("file-name", "file to check changes in").Required().StringVar(&dc.fileName)
 	c.Arg("commit-hash",
 		"the revision to diff against; default current").
-		StringVar(&dc.revision)
+		StringVar(&dc.commitHash)
 
 }

@@ -15,7 +15,7 @@ type pullCommand struct {
 }
 
 func (pc *pullCommand) run(ctx *kingpin.ParseContext) error {
-	_, err := pc.getStorage()
+	_, err := loadFile(pc.fileName)
 	if err != nil {
 		return err
 	}
@@ -30,10 +30,9 @@ func (pc *pullCommand) run(ctx *kingpin.ParseContext) error {
 	return nil
 }
 
-func addPullSubCommandToApplication(app *kingpin.Application, gs func() (*local.Storage, error)) {
-	pc := &pullCommand{
-		getStorage: gs,
-	}
+func addPullSubCommandToApplication(app *kingpin.Application) {
+	pc := new(pullCommand)
+
 	p := app.Command("pull", "pull changes from central service").Action(pc.run)
 	p.Arg("file-name", "the file to pull").StringVar(&pc.fileName)
 	p.Flag("all", "pull all tracked files").BoolVar(&pc.pullAll)

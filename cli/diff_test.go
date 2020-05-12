@@ -26,9 +26,7 @@ func TestDiff(t *testing.T) {
 	execCommand = fakeDiffCommand
 	defer func() { execCommand = exec.Command }()
 
-	diffCommand := &diffCommand{
-		getStorage: getTestStorageClosure(),
-	}
+	diffCommand := new(diffCommand)
 
 	t.Run("returns error when file is not tracked", func(t *testing.T) {
 		diffCommand.fileName = notTrackedFile
