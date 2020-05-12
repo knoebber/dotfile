@@ -6,15 +6,37 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io"
+	"regexp"
 
 	"github.com/pkg/errors"
 )
 
-// Commit represents a revision for a tracked file.
-type Commit struct {
-	Hash      string `json:"hash"`
-	Message   string `json:"message"`
-	Timestamp int64  `json:"timestamp"`
+var pathToAliasRegex = regexp.MustCompile(`(\w+)(\.\w+)?$`)
+
+type NotTrackedError struct {
+	alias string
+}
+
+func (e *NotTrackedError) Error() string {
+	return fmt.Sprintf("%#v is not tracked", e.alias)
+}
+
+// NotTracked returns a new NotTrackedError
+func ErrNotTracked(alias string) error {
+	return &NotTrackedError{alias}
+}
+
+// PathToAlias creates an alias from the path of the file.
+// Works by removing leading dots and file extensions.
+// Examples: ~/.vimrc: vimrc
+//           ~/.config/i3/config: config
+//           ~/.config/alacritty/alacritty.yml: alacritty
+func PathToAlias(path string) (string, error) {
+	matches := pathToAliasRegex.FindStringSubmatch(path)
+	if len(matches) < 2 {
+		return "", fmt.Errorf("creating alias for %#v", path)
+	}
+	return matches[1], nil
 }
 
 func hashAndCompress(contents []byte) (*bytes.Buffer, string, error) {
