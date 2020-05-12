@@ -3,14 +3,12 @@ package cli
 import (
 	"os"
 
-	"github.com/knoebber/dotfile/local"
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type editCommand struct {
-	getStorage func() (*local.Storage, error)
-	fileName   string
+	fileName string
 }
 
 var errEditorEnvVarNotSet = errors.New("EDITOR environment variable must be set")
@@ -21,12 +19,12 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 		return errEditorEnvVarNotSet
 	}
 
-	s, err := e.getStorage()
+	s, err := loadFile(e.fileName)
 	if err != nil {
 		return err
 	}
 
-	path, err := s.GetPath(e.fileName)
+	path, err := s.GetPath()
 	if err != nil {
 		return err
 	}
@@ -38,10 +36,8 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 	return cmd.Run()
 }
 
-func addEditSubCommandToApplication(app *kingpin.Application, gs func() (*local.Storage, error)) {
-	ec := &editCommand{
-		getStorage: gs,
-	}
+func addEditSubCommandToApplication(app *kingpin.Application) {
+	ec := new(editCommand)
 	c := app.Command("edit", "open a tracked file in $EDITOR").Action(ec.run)
 	c.Arg("file-name", "the file to edit").Required().StringVar(&ec.fileName)
 }
