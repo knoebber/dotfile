@@ -3,77 +3,24 @@ package file
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 	"time"
 )
 
 const initialCommitMessage = "Initial commit"
 
-var pathToAliasRegex = regexp.MustCompile(`(\w+)(\.\w+)?$`)
-
 // Storer is an interface that encapsulates the I/O that is required for dotfile.
 type Storer interface {
-	GetContents(path string) (contents []byte, err error)
-	GetTracked(alias string) (tf *Tracked, err error)
-	SaveTracked(tf *Tracked) (err error)
-	GetRevision(alias, hash string) (contents []byte, err error)
-	SaveRevision(tf *Tracked, buff *bytes.Buffer, hash string) (err error)
-	Revert(contents []byte, path string) (err error)
+	HasCommit(hash string) (exists bool, err error)
+	GetContents() (contents []byte, err error)
+	GetRevision(hash string) (revision []byte, err error)
+	SaveCommit(buff *bytes.Buffer, hash, message string, timestamp time.Time) error
+	Revert(buff *bytes.Buffer, hash string) (err error)
 }
 
-// Creates an alias from the path of the file.
-// Works by removing leading dots and file extensions.
-// Examples: ~/.vimrc: vimrc
-//           ~/.config/i3/config: config
-//           ~/.config/alacritty/alacritty.yml: alacritty
-func pathToAlias(path string) (string, error) {
-	matches := pathToAliasRegex.FindStringSubmatch(path)
-	if len(matches) < 2 {
-		return "", fmt.Errorf("failed to get alias from %#v", path)
-	}
-	return matches[1], nil
-}
-
-func newRevision(s Storer, tf *Tracked, message string) error {
-	contents, err := s.GetContents(tf.RelativePath)
-	if err != nil {
-		return err
-	}
-
-	compressed, hash, err := hashAndCompress(contents)
-	if err != nil {
-		return err
-	}
-
-	tf.Revision = hash
-	tf.Commits = append(tf.Commits, Commit{
-		Hash:      hash,
-		Message:   message,
-		Timestamp: time.Now().Unix(),
-	})
-
-	return s.SaveRevision(tf, compressed, hash)
-}
-
-// MustGetTracked attempts to find alias.
-// Returns an error when it doesn't exist.
-func MustGetTracked(s Storer, alias string) (*Tracked, error) {
-	tf, err := s.GetTracked(alias)
-	if err != nil {
-		return nil, err
-	}
-
-	if tf == nil {
-		return nil, fmt.Errorf("%#v is not tracked", alias)
-	}
-
-	return tf, nil
-}
-
-// UncompressRevision gets and uncompressions a revision.
+// UncompressRevision reads a revision and uncompresses it.
 // Returns the uncompressed bytes of alias at hash.
-func UncompressRevision(s Storer, alias, hash string) (*bytes.Buffer, error) {
-	contents, err := s.GetRevision(alias, hash)
+func UncompressRevision(s Storer, hash string) (*bytes.Buffer, error) {
+	contents, err := s.GetRevision(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -86,86 +33,52 @@ func UncompressRevision(s Storer, alias, hash string) (*bytes.Buffer, error) {
 	return uncompressed, nil
 }
 
-// Init initializes a file for dotfile to track.
-// It creates a tracked file with an initial commit.
-func Init(s Storer, relativePath, fileName string) (alias string, err error) {
-	var tf *Tracked
-
-	if fileName == "" {
-		alias, err = pathToAlias(relativePath)
-		if err != nil {
-			return
-		}
-	} else {
-		alias = fileName
-	}
-
-	tf, err = s.GetTracked(alias)
-	if err != nil {
-		return
-	}
-
-	if tf != nil {
-		err = fmt.Errorf("%#v is tracking %s", alias, tf.RelativePath)
-		return
-	}
-
-	tf = &Tracked{
-		RelativePath: relativePath,
-		Alias:        alias,
-		Commits:      []Commit{},
-	}
-
-	if err := newRevision(s, tf, initialCommitMessage); err != nil {
-		return "", err
-	}
-
-	return alias, nil
+// Init creates a new commit with the initial commit message.
+func Init(s Storer) error {
+	return NewCommit(s, initialCommitMessage)
 }
 
 // NewCommit saves a revision of the file at its current state.
-func NewCommit(s Storer, alias, message string) error {
-	tf, err := MustGetTracked(s, alias)
+func NewCommit(s Storer, message string) error {
+	contents, err := s.GetContents()
 	if err != nil {
 		return err
 	}
 
-	return newRevision(s, tf, message)
+	compressed, hash, err := hashAndCompress(contents)
+	if err != nil {
+		return err
+	}
+
+	exists, err := s.HasCommit(hash)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("commit %#v already exists", hash)
+	}
+
+	return s.SaveCommit(compressed, hash, message, time.Now())
 }
 
 // Checkout reverts a tracked file to its state at hash.
-func Checkout(s Storer, alias, hash string) error {
-	tf, err := MustGetTracked(s, alias)
+func Checkout(s Storer, hash string) error {
+	exists, err := s.HasCommit(hash)
 	if err != nil {
 		return err
 	}
-
-	// Checkout to latest version by default.
-	if hash == "" {
-		hash = tf.Revision
-	}
-
-	found := false
-	for _, c := range tf.Commits {
-		if c.Hash == hash {
-			found = true
-			break
-		}
-	}
-	if !found {
+	if !exists {
 		return fmt.Errorf("revision %#v not found", hash)
 	}
 
-	uncompressed, err := UncompressRevision(s, alias, hash)
+	uncompressed, err := UncompressRevision(s, hash)
 	if err != nil {
 		return err
 	}
 
-	if err := s.Revert(uncompressed.Bytes(), tf.RelativePath); err != nil {
+	if err := s.Revert(uncompressed, hash); err != nil {
 		return err
 	}
 
-	tf.Revision = hash
-
-	return s.SaveTracked(tf)
+	return nil
 }

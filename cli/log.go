@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/knoebber/dotfile/file"
-	"github.com/knoebber/dotfile/local"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -16,30 +14,25 @@ const (
 )
 
 type logCommand struct {
-	getStorage func() (*local.Storage, error)
-	fileName   string
+	fileName string
 }
 
 func (l *logCommand) run(ctx *kingpin.ParseContext) error {
-	s, err := l.getStorage()
+	s, err := loadFile(l.fileName)
 	if err != nil {
 		return err
 	}
 
-	tf, err := file.MustGetTracked(s, l.fileName)
-	if err != nil {
-		return err
-	}
+	revision := s.Tracking.Revision
+	delim := strings.Repeat(delimChar, len(revision))
 
-	delim := strings.Repeat(delimChar, len(tf.Revision))
-
-	halfHeaderDelim := strings.Repeat(delimChar, (len(tf.Revision)-9)/2)
+	halfHeaderDelim := strings.Repeat(delimChar, (len(revision)-9)/2)
 	currentDelim := halfHeaderDelim + " CURRENT " + halfHeaderDelim + delimChar
-	for _, commit := range tf.Commits {
+	for _, commit := range s.Tracking.Commits {
 		timeStamp := time.Unix(commit.Timestamp, 0).Format(timestampDisplayFormat)
 
 		fmt.Println("")
-		if commit.Hash == tf.Revision {
+		if commit.Hash == revision {
 			fmt.Println(currentDelim)
 		} else {
 			fmt.Println(delim)
@@ -55,10 +48,9 @@ func (l *logCommand) run(ctx *kingpin.ParseContext) error {
 	return nil
 }
 
-func addLogSubCommandToApplication(app *kingpin.Application, gs func() (*local.Storage, error)) {
-	lc := &logCommand{
-		getStorage: gs,
-	}
+func addLogSubCommandToApplication(app *kingpin.Application) {
+	lc := new(logCommand)
+
 	c := app.Command("log", "shows revision history with commit hashes for a tracked file").Action(lc.run)
 	c.Arg("file-name", "tracked file to show history for").Required().StringVar(&lc.fileName)
 }

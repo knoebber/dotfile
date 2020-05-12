@@ -10,9 +10,7 @@ func TestCheckout(t *testing.T) {
 	clearTestStorage()
 	initTestFile(t)
 
-	checkoutCommand := &checkoutCommand{
-		getStorage: getTestStorageClosure(),
-	}
+	checkoutCommand := new(checkoutCommand)
 
 	t.Run("returns error when file is not tracked", func(t *testing.T) {
 		checkoutCommand.fileName = notTrackedFile
