@@ -12,8 +12,8 @@ type Storage struct {
 	file *File
 }
 
-// NewStorage returns a storage loaded with a users file.
-func NewStorage(userID int64, alias string) (*Storage, error) {
+// LoadFile returns a storage loaded with a users file.
+func LoadFile(userID int64, alias string) (*Storage, error) {
 	f, err := getFile(userID, alias)
 	if err != nil {
 		return nil, err
@@ -22,10 +22,15 @@ func NewStorage(userID int64, alias string) (*Storage, error) {
 	return &Storage{file: f}, nil
 }
 
+// HasCommit returns whether the file has a commit with hash.
+func (s *Storage) HasCommit(hash string) (exists bool, err error) {
+	return false, nil
+}
+
 // GetContents reads the bytes from the users temp file.
 // Returns an error if the temp file is not set.
-func (s *Storage) GetContents(path string) ([]byte, error) {
-	temp, err := getTempFileByPath(s.file.UserID, path)
+func (s *Storage) GetContents() ([]byte, error) {
+	temp, err := getTempFileByPath(s.file.UserID, s.file.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -34,12 +39,12 @@ func (s *Storage) GetContents(path string) ([]byte, error) {
 }
 
 // GetRevision pulls a user's revision at hash from the database.
-func (s *Storage) GetRevision(alias, hash string) ([]byte, error) {
-	return getRevision(s.file.UserID, alias, hash)
+func (s *Storage) GetRevision(hash string) ([]byte, error) {
+	return getRevision(s.file.ID, hash)
 }
 
 // SaveCommit saves a commit to the database.
-func (s *Storage) SaveCommit(buff *bytes.Buffer, alias, hash, message string, timestamp time.Time) error {
+func (s *Storage) SaveCommit(buff *bytes.Buffer, hash, message string, timestamp time.Time) error {
 	tx, err := connection.Begin()
 	if err != nil {
 		return errors.Wrap(err, "starting transaction for save revision")
@@ -65,6 +70,6 @@ func (s *Storage) SaveCommit(buff *bytes.Buffer, alias, hash, message string, ti
 }
 
 // Revert overwrites the files current contents with bytes.
-func (s *Storage) Revert([]byte, string) error {
+func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
 	return nil
 }

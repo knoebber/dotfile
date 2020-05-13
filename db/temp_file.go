@@ -12,7 +12,7 @@ const tempFileQuery = "SELECT * FROM temp_files"
 // TempFile models the temp_files table.
 // It represents a changed/new file that has not yet been commited.
 // Similar to an untracked or dirty file on the filesystem.
-// This allows the user to "stage" a file and view the result before saving.
+// This allows the user to "stage" a file and view results before saving.
 // Columns mirror the file table for the most part.
 // This is split into its own table to keep the unique indexes simple.
 type TempFile struct {

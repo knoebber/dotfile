@@ -12,7 +12,7 @@ const commitRevisionQuery = `
 SELECT revision
 FROM commits
 JOIN files ON files.id = file_id
-WHERE user_id = ? AND alias = ? AND hash = ?`
+WHERE file_id = ? AND hash = ?`
 
 const commitCountQuery = "SELECT COUNT(*) FROM commits WHERE file_id = ?"
 const commitValidateQuery = "SELECT COUNT(*) FROM commits WHERE file_id = ? AND hash = ?"
@@ -74,17 +74,17 @@ func (c *Commit) create(tx *sql.Tx) error {
 
 	id, err := insert(c, tx)
 	if err != nil {
-		return errors.Wrapf(err, "creating commit for file %d@%#v", c.FileID, c.Hash)
+		return errors.Wrapf(err, "creating commit for file %d at %#v", c.FileID, c.Hash)
 	}
 	c.ID = id
 
 	return nil
 }
 
-func getRevision(userID int64, alias, hash string) (revision []byte, err error) {
-	err = connection.QueryRow(commitRevisionQuery, userID, alias, hash).Scan(&revision)
+func getRevision(fileID int64, hash string) (revision []byte, err error) {
+	err = connection.QueryRow(commitRevisionQuery, fileID, hash).Scan(&revision)
 	if err != nil {
-		err = errors.Wrapf(err, "querying for user %d's revision: %#v@%#v", userID, alias, hash)
+		err = errors.Wrapf(err, "querying for file %d at %#v", fileID, hash)
 	}
 	return
 }
@@ -94,7 +94,7 @@ func validateCommit(fileID int64, hash string) error {
 
 	err := connection.QueryRow(commitValidateQuery, fileID, hash).Scan(&count)
 	if err != nil {
-		return errors.Wrapf(err, "checking duplicate commit for file %d@%#v", fileID, hash)
+		return errors.Wrapf(err, "checking duplicate commit for file %d at %#v", fileID, hash)
 
 	}
 	if count > 0 {
