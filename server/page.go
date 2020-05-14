@@ -54,7 +54,7 @@ func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
 	}
 
 	if uerr, ok := err.(usererr.Messager); ok {
-		log.Print("flashing: ", err)
+		log.Printf("flashing %s", err)
 		p.ErrorMessage = uerr.Message()
 	} else {
 		log.Print("flashing fallback from unexpected error: ", err)
