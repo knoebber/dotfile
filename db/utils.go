@@ -13,17 +13,17 @@ import (
 
 const (
 	timestampDisplayFormat = "January 02, 2006"
-
-	// Some safe guards against abusing uploads.
-	// Total ~150 megabytes of storage per user.
-	// Making accounts is currently trivial however.
-	// If it becomes a problem the next step is requiring email verification.
-	maxFilesPerUser   = 100
-	maxCommitsPerFile = 100
-	maxBlobSizeBytes  = 15000
+	maxTempsPerUser        = 10
+	maxFilesPerUser        = 100
+	maxCommitsPerFile      = 100
+	maxBlobSizeBytes       = 15000
 )
 
 func checkSize(content []byte, name string) error {
+	if len(content) == 0 {
+		return usererr.Invalid(fmt.Sprintf("%s is empty", name))
+	}
+
 	if len(content) > maxBlobSizeBytes {
 		return usererr.Invalid(fmt.Sprintf("%s is too large (max=%dKB)", name, maxBlobSizeBytes/1000))
 	}
@@ -44,11 +44,21 @@ type inserter interface {
 	insertStmt(executor) (sql.Result, error)
 }
 
+type checker interface {
+	check() error
+}
+
 func insert(i inserter, tx *sql.Tx) (id int64, err error) {
 	var res sql.Result
 
 	if err = validate.Struct(i); err != nil {
 		return 0, err
+	}
+
+	if c, ok := i.(checker); ok {
+		if err := c.check(); err != nil {
+			return 0, err
+		}
 	}
 
 	if tx != nil {

@@ -8,14 +8,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-const commitRevisionQuery = `
+const (
+	commitCountQuery    = "SELECT COUNT(*) FROM commits WHERE file_id = ?"
+	commitValidateQuery = "SELECT COUNT(*) FROM commits WHERE file_id = ? AND hash = ?"
+	commitRevisionQuery = `
 SELECT revision
 FROM commits
 JOIN files ON files.id = file_id
 WHERE file_id = ? AND hash = ?`
-
-const commitCountQuery = "SELECT COUNT(*) FROM commits WHERE file_id = ?"
-const commitValidateQuery = "SELECT COUNT(*) FROM commits WHERE file_id = ? AND hash = ?"
+)
 
 // Commit models the commits table.
 type Commit struct {
@@ -42,21 +43,32 @@ CREATE INDEX IF NOT EXISTS commits_file_index ON commits(file_id);
 CREATE UNIQUE INDEX IF NOT EXISTS commits_file_hash_index ON commits(file_id, hash);`
 }
 
-func (c *Commit) insertStmt(e executor) (sql.Result, error) {
+func (c *Commit) check() error {
 	var count int64
 
+	exists, err := hasCommit(c.FileID, c.Hash)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return usererr.Duplicate("File hash", c.Hash)
+	}
+
 	if err := checkSize(c.Revision, "Commit "+c.Hash); err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := connection.QueryRow(commitCountQuery, c.FileID).Scan(&count); err != nil {
-		return nil, errors.Wrapf(err, "counting file %d's commits", c.FileID)
+		return errors.Wrapf(err, "counting file %d's commits", c.FileID)
 	}
 
 	if count > maxCommitsPerFile {
-		return nil, usererr.Invalid("File has maximum amount of commits")
+		return usererr.Invalid("File has maximum amount of commits")
 	}
+	return nil
+}
 
+func (c *Commit) insertStmt(e executor) (sql.Result, error) {
 	return e.Exec(`
 INSERT INTO commits(file_id, hash, message, revision, timestamp) VALUES(?, ?, ?, ?, ?)`,
 		c.FileID,
@@ -68,10 +80,6 @@ INSERT INTO commits(file_id, hash, message, revision, timestamp) VALUES(?, ?, ?,
 }
 
 func (c *Commit) create(tx *sql.Tx) error {
-	if err := validateCommit(c.FileID, c.Hash); err != nil {
-		return err
-	}
-
 	id, err := insert(c, tx)
 	if err != nil {
 		return errors.Wrapf(err, "creating commit for file %d at %#v", c.FileID, c.Hash)
@@ -89,17 +97,18 @@ func getRevision(fileID int64, hash string) (revision []byte, err error) {
 	return
 }
 
-func validateCommit(fileID int64, hash string) error {
+func hasCommit(fileID int64, hash string) (bool, error) {
 	var count int
 
 	err := connection.QueryRow(commitValidateQuery, fileID, hash).Scan(&count)
 	if err != nil {
-		return errors.Wrapf(err, "checking duplicate commit for file %d at %#v", fileID, hash)
+		return false, errors.Wrapf(err, "checking if commit exists for file %d at %#v", fileID, hash)
+	}
+	return count > 0, nil
 
-	}
-	if count > 0 {
-		return usererr.Duplicate("File hash", hash)
-	}
+}
+
+func validateCommit(fileID int64, hash string) error {
+
 	return nil
-
 }
