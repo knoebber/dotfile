@@ -13,6 +13,8 @@ import (
 
 var pathToAliasRegex = regexp.MustCompile(`(\w+)(\.\w+)?$`)
 
+// NotTrackedError is returned when a file is not tracked.
+// TODO moved to usererr
 type NotTrackedError struct {
 	alias string
 }
@@ -21,7 +23,7 @@ func (e *NotTrackedError) Error() string {
 	return fmt.Sprintf("%#v is not tracked", e.alias)
 }
 
-// NotTracked returns a new NotTrackedError
+// ErrNotTracked returns a new NotTrackedError
 func ErrNotTracked(alias string) error {
 	return &NotTrackedError{alias}
 }
