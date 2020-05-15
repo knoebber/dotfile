@@ -128,7 +128,7 @@ func getTempFileByAlias(userID int64, path string) (*TempFile, error) {
 	res := new(TempFile)
 
 	if err := connection.
-		QueryRow(tempFileQuery+" WHERE user_id ? AND alias = ?", userID, path).
+		QueryRow(tempFileQuery+" WHERE user_id = ? AND alias = ?", userID, path).
 		Scan(
 			&res.ID,
 			&res.UserID,

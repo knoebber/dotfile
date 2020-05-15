@@ -127,6 +127,7 @@ func getFile(userID int64, alias string) (*File, error) {
 			&file.Path,
 			&file.Revision,
 			&file.Content,
+			&file.CreatedAt,
 		)
 	if err != nil {
 		return nil, errors.Wrapf(err, "querying for user %d's file %#v", userID, alias)
