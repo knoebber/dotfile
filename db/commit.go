@@ -44,7 +44,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS commits_file_hash_index ON commits(file_id, ha
 }
 
 func (c *Commit) check() error {
-	var count int64
+	var count int
 
 	exists, err := hasCommit(c.FileID, c.Hash)
 	if err != nil {

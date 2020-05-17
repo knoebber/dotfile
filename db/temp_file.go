@@ -38,7 +38,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS temp_files_user_index ON temp_files(user_id);
 }
 
 func (f *TempFile) check() error {
-	var count int64
+	var count int
 
 	if err := checkSize(f.Content, "File "+f.Alias); err != nil {
 		return err
