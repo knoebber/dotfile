@@ -124,7 +124,7 @@ func compareUserPassword(userID int64, username string, password string) (int64,
 }
 
 // GetUser gets a user.
-// Only one argument is required.
+// Only one argument is required - userID will be used if both are present.
 // This does not scan password_hash.
 func GetUser(userID int64, username string) (*User, error) {
 	var query *sql.Row
@@ -134,6 +134,8 @@ func GetUser(userID int64, username string) (*User, error) {
 		query = connection.QueryRow(userQuery+" WHERE id = ?", userID)
 	} else if username != "" {
 		query = connection.QueryRow(userQuery+" WHERE username = ?", username)
+	} else {
+		return nil, errors.New("must provide userID or username")
 	}
 
 	err := query.
@@ -200,7 +202,7 @@ func UpdateEmail(userID int64, email string) error {
 func UpdatePassword(userID int64, currentPass, newPass string) error {
 	_, err := compareUserPassword(userID, "", currentPass)
 	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-		return usererr.Invalid("Confirm does not match.")
+		return usererr.Invalid("Current password does not match.")
 	} else if err != nil {
 		return err
 	}

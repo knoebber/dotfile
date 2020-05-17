@@ -17,17 +17,17 @@ func setupRoutes(r *mux.Router, secure bool) {
 // Pages that do not have a dynamic route element.
 // These conflict with the username wild card.
 // Seed the DB on start to prevent these from being registered.
-// Important that these routes are setup first or the route walking won't work as expected.
+// Important that these routes are setup first so that registerRoutes works as expected.
 func staticRoutes(r *mux.Router, secure bool) {
 	r.HandleFunc("/", getIndexHandler())
 	r.HandleFunc("/about", getAboutHandler())
 	r.HandleFunc("/explore", getExploreHandler())
+	r.HandleFunc("/signup", getSignupHandler(secure))
 	r.HandleFunc("/login", getLoginHandler(secure))
 	r.HandleFunc("/logout", getLogoutHandler())
-	r.HandleFunc("/signup", getSignupHandler())
 	r.HandleFunc("/email", getEmailHandler())
 	r.HandleFunc("/password", getPasswordHandler())
-	seedRegisteredRoutes(r)
+	registerRoutes(r)
 }
 
 func assetRoutes(r *mux.Router) {
@@ -41,7 +41,7 @@ func dynamicRoutes(r *mux.Router) {
 	sub.HandleFunc("", getUserHandler())
 }
 
-func seedRegisteredRoutes(r *mux.Router) {
+func registerRoutes(r *mux.Router) {
 	reserved := []interface{}{}
 	err := r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		pathTemplate, err := route.GetPathTemplate()

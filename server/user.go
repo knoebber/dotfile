@@ -9,10 +9,9 @@ import (
 	"github.com/knoebber/dotfile/usererr"
 )
 
-const (
-	minPassLength = 8
-)
+const minPassLength = 8
 
+// Redirects to index when session exists.
 func checkSession(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	if p.Session != nil {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -23,54 +22,55 @@ func checkSession(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 
 func createHandleLogin(secure bool) pageBuilder {
 	return func(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-		s, err := db.UserLogin(r.Form.Get("username"), r.Form.Get("password"))
-		if err != nil {
-			// Print the real error and show the user a generic catch all.
-			log.Print(err)
-			return p.setError(w, usererr.Invalid("Username or password is incorrect."))
-		}
-
-		http.SetCookie(w, &http.Cookie{
-			Name:     sessionCookie,
-			Value:    s.Session,
-			Secure:   secure,
-			HttpOnly: true,
-		})
-
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return true
+		return login(w, r, p, secure)
 	}
 }
 
-func handleSignup(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	username := r.Form.Get("username")
-	password := r.Form.Get("password")
-	confirm := r.Form.Get("confirm")
-
-	if len(password) < minPassLength {
-		return p.setError(w, usererr.Invalid(fmt.Sprintf("Password must be %d or more characters.", minPassLength)))
-	}
-
-	if password != confirm {
-		p.setError(w, usererr.Invalid("Passwords do not match."))
-		return false
-	}
-
-	_, err := db.CreateUser(username, password, nil)
+func login(w http.ResponseWriter, r *http.Request, p *Page, secure bool) (done bool) {
+	s, err := db.UserLogin(r.Form.Get("username"), r.Form.Get("password"))
 	if err != nil {
-		return p.setError(w, err)
+		// Print the real error and show the user a generic catch all.
+		log.Print(err)
+		return p.setError(w, usererr.Invalid("Username or password is incorrect."))
 	}
 
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	http.SetCookie(w, &http.Cookie{
+		Name:     sessionCookie,
+		Value:    s.Session,
+		Secure:   secure,
+		HttpOnly: true,
+	})
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return true
 }
 
-func handleEmail(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	if !p.Owned() {
-		p.setError(w, usererr.Invalid("Not allowed."))
-		return false
-	}
+func createHandleSignup(secure bool) pageBuilder {
+	return func(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+		username := r.Form.Get("username")
+		password := r.Form.Get("password")
+		confirm := r.Form.Get("confirm")
 
+		if len(password) < minPassLength {
+			msg := fmt.Sprintf("Password must be at least %d characters.", minPassLength)
+			return p.setError(w, usererr.Invalid(msg))
+		}
+
+		if password != confirm {
+			p.setError(w, usererr.Invalid("Passwords do not match."))
+			return false
+		}
+
+		_, err := db.CreateUser(username, password, nil)
+		if err != nil {
+			return p.setError(w, err)
+		}
+
+		return login(w, r, p, secure)
+	}
+}
+
+func handleEmail(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	if err := db.UpdateEmail(p.Session.UserID, r.Form.Get("email")); err != nil {
 		return p.setError(w, err)
 	}
@@ -81,11 +81,8 @@ func handleEmail(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 }
 
 func handlePassword(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	if !p.Owned() {
-		return p.setError(w, usererr.Invalid("Not allowed."))
-	}
-
 	currentPass := r.Form.Get("current")
+
 	newPass := r.Form.Get("new")
 	confirm := r.Form.Get("confirm")
 
@@ -106,9 +103,18 @@ func handlePassword(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 }
 
 func loadUser(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	var email string
+	var (
+		user  *db.User
+		email string
+		err   error
+	)
 
-	user, err := db.GetUser(0, p.Vars["username"])
+	if p.Vars["username"] == "" {
+		user, err = db.GetUser(p.Session.UserID, "")
+	} else {
+		user, err = db.GetUser(0, p.Vars["username"])
+	}
+
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -125,10 +131,8 @@ func loadUser(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 }
 
 func handleLogout(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	if p.Owned() {
-		if err := db.Logout(p.Session.ID); err != nil {
-			log.Print(err)
-		}
+	if err := db.Logout(p.Session.ID); err != nil {
+		log.Print(err)
 	}
 
 	http.SetCookie(w, &http.Cookie{
@@ -149,12 +153,12 @@ func getLoginHandler(secure bool) http.HandlerFunc {
 	})
 }
 
-func getSignupHandler() http.HandlerFunc {
+func getSignupHandler(secure bool) http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "signup.tmpl",
 		title:        signupTitle,
 		loadData:     checkSession,
-		handleForm:   handleSignup,
+		handleForm:   createHandleSignup(secure),
 	})
 }
 
@@ -172,6 +176,7 @@ func getEmailHandler() http.HandlerFunc {
 		title:        emailTitle,
 		loadData:     loadUser,
 		handleForm:   handleEmail,
+		protected:    true,
 	})
 }
 
@@ -180,11 +185,13 @@ func getPasswordHandler() http.HandlerFunc {
 		templateName: "password.tmpl",
 		title:        passwordTitle,
 		handleForm:   handlePassword,
+		protected:    true,
 	})
 }
 
 func getLogoutHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		handleForm: handleLogout,
+		protected:  true,
 	})
 }
