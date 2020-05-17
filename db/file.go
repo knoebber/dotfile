@@ -1,7 +1,6 @@
 package db
 
 import (
-	"bytes"
 	"database/sql"
 	"time"
 
@@ -12,9 +11,9 @@ import (
 const (
 	fileCountQuery     = "SELECT COUNT(*) FROM files WHERE user_id = ?"
 	fileValidateQuery  = "SELECT COUNT(*) FROM files WHERE user_id = ? AND alias = ?"
-	getFileQuery       = "SELECT * FROM files WHERE user_id = ? AND alias = ?"
 	updateCurrentQuery = "UPDATE files SET revision = ? WHERE id = ?"
 	updateContentQuery = "UPDATE files SET content = ?, revision = ? WHERE id = ?"
+	getFileQuery       = "SELECT * FROM files WHERE user_id = ? AND alias = ?"
 	fileCommitsQuery   = `
 SELECT file_id,
        alias, 
@@ -97,21 +96,13 @@ INSERT INTO files(user_id, alias, path, revision, content) VALUES(?, ?, ?, ?, ?)
 	)
 }
 
-func updateContent(tx *sql.Tx, fileID int64, buff *bytes.Buffer, hash string) error {
-	newContent := buff.Bytes()
-	if err := checkSize(newContent, "File revision "+hash); err != nil {
+func updateContent(tx *sql.Tx, fileID int64, content []byte, hash string) error {
+	if err := checkSize(content, "File revision "+hash); err != nil {
 		return err
 	}
 
-	if _, err := tx.Exec(updateCurrentQuery, newContent, hash, fileID); err != nil {
+	if _, err := tx.Exec(updateCurrentQuery, content, hash, fileID); err != nil {
 		return rollback(tx, errors.Wrapf(err, "updating file %d content to %#v", fileID, hash))
-	}
-	return nil
-}
-
-func updateRevision(tx *sql.Tx, fileID int64, newHash string) error {
-	if _, err := tx.Exec(updateCurrentQuery, newHash, fileID); err != nil {
-		return rollback(tx, errors.Wrapf(err, "setting file %d to revision %#v", fileID, newHash))
 	}
 	return nil
 }
@@ -136,6 +127,7 @@ func getFile(userID int64, alias string) (*File, error) {
 	return file, nil
 }
 
+// TODO .. not being used yet.
 func getFileAndCommits(userID int64, alias string) (*File, []Commit, error) {
 	file := new(File)
 	commits := []Commit{}

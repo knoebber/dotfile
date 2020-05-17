@@ -10,49 +10,21 @@ import (
 
 // Storage implements the file.Storage interface using a sqlite database.
 type Storage struct {
-	file *File
-	tx   *sql.Tx
+	staged *stagedFile
+	tx     *sql.Tx
 }
 
-func newStorage() (s *Storage, err error) {
+// NewStorage returns a storage loaded with a users file information.
+// Storage should always be created this way.
+func NewStorage(userID int64, alias string) (s *Storage, err error) {
 	s = new(Storage)
 
 	s.tx, err = connection.Begin()
 	if err != nil {
 		return nil, errors.Wrap(err, "starting storage transaction")
 	}
-	return
-}
 
-// LoadFile returns a storage loaded with a users file.
-func LoadFile(userID int64, alias string) (*Storage, error) {
-	s, err := newStorage()
-	if err != nil {
-		return nil, err
-	}
-
-	s.file, err = getFile(userID, alias)
-	if err != nil {
-		return nil, err
-	}
-
-	return s, nil
-}
-
-// InitFile initializes a new file to be tracked.
-// Expects that a temp file is setup with the alias first.
-func InitFile(userID int64, alias string) (*Storage, error) {
-	s, err := newStorage()
-	if err != nil {
-		return nil, err
-	}
-
-	temp, err := getTempFileByAlias(userID, alias)
-	if err != nil {
-		return nil, err
-	}
-
-	s.file, err = temp.save(s.tx)
+	s.staged, err = setupStagedFile(s.tx, userID, alias)
 	if err != nil {
 		return nil, err
 	}
@@ -64,36 +36,35 @@ func InitFile(userID int64, alias string) (*Storage, error) {
 // Must be called after the storage is done being used.
 func (s *Storage) Close() error {
 	if err := s.tx.Commit(); err != nil {
-		return errors.Wrapf(err, "closing transaction for file %d", s.file.ID)
+		return errors.Wrapf(err, "closing transaction for file %d", s.staged.FileID)
 	}
 	return nil
 }
 
 // HasCommit returns whether the file has a commit with hash.
 func (s *Storage) HasCommit(hash string) (exists bool, err error) {
-	return hasCommit(s.file.ID, hash)
+	return hasCommit(s.staged.FileID, hash)
 }
 
-// GetContents reads the bytes from the users temp file.
+// GetContents returns the bytes from the users temp file.
 // Returns an error if the temp file is not set.
 func (s *Storage) GetContents() ([]byte, error) {
-	temp, err := getTempFileByAlias(s.file.UserID, s.file.Alias)
-	if err != nil {
-		return nil, err
+	if len(s.staged.DirtyContent) == 0 {
+		return nil, errors.New("temp file has not content")
 	}
 
-	return temp.Content, nil
+	return s.staged.DirtyContent, nil
 }
 
-// GetRevision pulls a user's revision at hash from the database.
+// GetRevision returns a commits contents.
 func (s *Storage) GetRevision(hash string) ([]byte, error) {
-	return getRevision(s.file.ID, hash)
+	return getRevision(s.staged.FileID, hash)
 }
 
 // SaveCommit saves a commit to the database.
 func (s *Storage) SaveCommit(buff *bytes.Buffer, hash, message string, timestamp time.Time) error {
 	commit := &Commit{
-		FileID:    s.file.ID,
+		FileID:    s.staged.FileID,
 		Hash:      hash,
 		Message:   message,
 		Revision:  buff.Bytes(),
@@ -101,17 +72,13 @@ func (s *Storage) SaveCommit(buff *bytes.Buffer, hash, message string, timestamp
 	}
 
 	if _, err := insert(commit, s.tx); err != nil {
-		return errors.Wrapf(err, "inserting commit for file %d", s.file.ID)
+		return errors.Wrapf(err, "inserting commit for file %d", s.staged.FileID)
 	}
 
-	if err := updateRevision(s.tx, s.file.ID, hash); err != nil {
-		return err
-	}
-
-	return nil
+	return s.Revert(buff, hash)
 }
 
 // Revert overwrites the files current contents with bytes.
 func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
-	return updateContent(s.tx, s.file.ID, buff, hash)
+	return updateContent(s.tx, s.staged.FileID, buff.Bytes(), hash)
 }

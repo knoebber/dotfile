@@ -12,7 +12,7 @@ const (
 	commitCountQuery    = "SELECT COUNT(*) FROM commits WHERE file_id = ?"
 	commitValidateQuery = "SELECT COUNT(*) FROM commits WHERE file_id = ? AND hash = ?"
 	commitRevisionQuery = `
-SELECT revision
+SELECT commits.revision
 FROM commits
 JOIN files ON files.id = file_id
 WHERE file_id = ? AND hash = ?`
