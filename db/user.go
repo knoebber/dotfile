@@ -19,7 +19,7 @@ const (
 // User is the model for a dotfilehub user.
 type User struct {
 	ID             int64
-	Username       string  `validate:"required"`
+	Username       string  `validate:"alphanum"`
 	Email          *string `validate:"omitempty,email"` // Not required; users may opt in to enable account recovery.
 	EmailConfirmed bool
 	PasswordHash   []byte
@@ -55,34 +55,43 @@ func (u *User) insertStmt(e executor) (sql.Result, error) {
 	)
 }
 
-func validateUserInfo(username, password string, email *string) error {
+func (u *User) check() error {
 	var count int
 
+	if err := checkUsernameAllowed(u.Username); err != nil {
+		return err
+	}
+
 	err := connection.
-		QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", username).
+		QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", u.Username).
 		Scan(&count)
 	if err != nil {
-		return errors.Wrapf(err, "checking duplicate username: %#v", username)
+		return errors.Wrapf(err, "checking if username %#v is unique", u.Username)
 	}
 
 	if count > 0 {
-		return usererr.Duplicate("Username", username)
+		return usererr.Duplicate("Username", u.Username)
 	}
 
-	if email == nil {
+	if u.Email == nil {
 		return nil
 	}
 
-	err = connection.
-		QueryRow("SELECT COUNT(*) FROM users WHERE email = ?", email).
-		Scan(&count)
+	return checkUniqueEmail(*u.Email)
+}
+
+func checkUniqueEmail(email string) error {
+	var count int
+
+	err := connection.
+		QueryRow("SELECT COUNT(*) FROM users WHERE email = ?", email).Scan(&count)
 
 	if err != nil {
-		return errors.Wrapf(err, "checking duplicate email: %#v", username)
+		return errors.Wrapf(err, "checking if email %#v is unique", email)
 	}
 
 	if count > 0 {
-		return usererr.Duplicate("Email", *email)
+		return usererr.Duplicate("Email", email)
 	}
 
 	return nil
@@ -146,10 +155,6 @@ func GetUser(userID int64, username string) (*User, error) {
 // CreateUser inserts a new user into the users table.
 // Email is optional.
 func CreateUser(username, password string, email *string) (*User, error) {
-	if err := validateUserInfo(username, password, email); err != nil {
-		return nil, err
-	}
-
 	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 	if err != nil {
 		return nil, err
@@ -180,6 +185,9 @@ func CreateUser(username, password string, email *string) (*User, error) {
 // UpdateEmail updates a users email and sets confirmed to false.
 func UpdateEmail(userID int64, email string) error {
 	if err := validate.Var(email, "email"); err != nil {
+		return err
+	}
+	if err := checkUniqueEmail(email); err != nil {
 		return err
 	}
 
