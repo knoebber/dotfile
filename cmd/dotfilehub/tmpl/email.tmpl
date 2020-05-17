@@ -3,7 +3,7 @@
   {{template "nav" .}}
   {{template "flash" .}}
   <section>
-    <form method="post" action="/{{.Vars.username}}/email">
+    <form method="post" action="/email">
       <label for="email">Email:</label>
       <input value="{{.Data.email}}" id="email" name="email" type="email" required>
       <button>Submit</button>
