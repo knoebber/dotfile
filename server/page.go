@@ -26,7 +26,7 @@ const (
 var templates *template.Template
 
 // Page is used for rendering pages and tracking request state.
-// Exported fields/methods are called within templates.
+// Exported fields/methods may be used within templates.
 type Page struct {
 	Title          string
 	SuccessMessage string
@@ -37,6 +37,7 @@ type Page struct {
 
 	Session      *db.Session
 	templateName string
+	protected    bool // When true, redirect user to login when session is nil.
 }
 
 // Owned returns whether the current logged in user owns the page.
@@ -68,6 +69,7 @@ func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
 
 func (p *Page) setSession(w http.ResponseWriter, r *http.Request) error {
 	if p.Session != nil {
+		log.Print("warning - tried to set session twice")
 		return nil
 	}
 
@@ -80,6 +82,8 @@ func (p *Page) setSession(w http.ResponseWriter, r *http.Request) error {
 
 	p.Session, err = db.CheckSession(cookie.Value, r.RemoteAddr)
 	if db.NotFound(err) {
+		// Session in cookie does not exist in DB.
+		// Unset it.
 		http.SetCookie(w, &http.Cookie{
 			Name:   sessionCookie,
 			MaxAge: -1,
@@ -114,12 +118,13 @@ func (p *Page) render(w http.ResponseWriter) error {
 	return templates.ExecuteTemplate(w, p.templateName, p)
 }
 
-func newPage(w http.ResponseWriter, r *http.Request, templateName, title string) (*Page, error) {
+func newPage(w http.ResponseWriter, r *http.Request, templateName, title string, protected bool) (*Page, error) {
 	p := &Page{
 		Title:        title,
 		Vars:         mux.Vars(r),
 		Data:         make(map[string]string),
 		templateName: templateName,
+		protected:    protected,
 	}
 
 	if err := p.setSession(w, r); err != nil {
