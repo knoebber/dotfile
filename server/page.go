@@ -20,6 +20,7 @@ const (
 	exploreTitle  = "Explore"
 	emailTitle    = "Update Email"
 	passwordTitle = "Update Password"
+	newFileTitle  = "New File"
 )
 
 var templates *template.Template
@@ -53,9 +54,10 @@ func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
 		return true
 	}
 
-	if uerr, ok := err.(usererr.Messager); ok {
-		log.Printf("flashing %s", err)
-		p.ErrorMessage = uerr.Message()
+	var uerr *usererr.Error
+	if errors.As(err, &uerr) {
+		log.Printf("flashing %s error: %s", uerr.Reason, err)
+		p.ErrorMessage = uerr.Message
 	} else {
 		log.Print("flashing fallback from unexpected error: ", err)
 		p.ErrorMessage = "Unexpected error - if this continues please contact an admin."

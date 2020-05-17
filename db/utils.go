@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
+	"log"
 	"time"
 
 	"github.com/knoebber/dotfile/usererr"
@@ -51,7 +52,8 @@ func insert(i inserter, tx *sql.Tx) (id int64, err error) {
 	var res sql.Result
 
 	if err = validate.Struct(i); err != nil {
-		return 0, err
+		log.Print(err)
+		return 0, usererr.Invalid("Values are missing or improperly formatted.")
 	}
 
 	if c, ok := i.(checker); ok {
