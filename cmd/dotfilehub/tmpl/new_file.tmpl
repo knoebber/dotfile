@@ -1,0 +1,16 @@
+{{template "head" .}}
+<body>
+  {{template "nav" .}}
+  <h1>Create a File</h1>
+  <form action="/{{.Session.Username}}/file" method="post">
+    <label for="name">Name:</label>
+    <input id="name" name="name" required>
+
+    <label for="path">Path:</label>
+    <input id="path" name="path" placeholder="~/.bashrc" required>
+
+    <label for="contents">Contents:</label>
+    <textarea cols="80" rows="30" id="contents" name="contents" required></textarea>
+    <button>Submit</button>
+  </form>
+</body>

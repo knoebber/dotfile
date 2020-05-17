@@ -27,6 +27,7 @@ func staticRoutes(r *mux.Router, secure bool) {
 	r.HandleFunc("/logout", getLogoutHandler())
 	r.HandleFunc("/email", getEmailHandler())
 	r.HandleFunc("/password", getPasswordHandler())
+	r.HandleFunc("/new_file", getNewFileHandler())
 	registerRoutes(r)
 }
 
