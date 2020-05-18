@@ -1,0 +1,15 @@
+{{template "head" .}}
+<body>
+  {{template "nav" .}}
+  {{template "flash" .}}
+  <h1>{{.Title}}</h1>
+  {{template "file" .}}
+  <div class="flex-between">
+    <form method="post" class="form-redirect">
+      <button class="success">Create</button>
+    </form>
+    <form action="/new_file" class="form-redirect">
+      <button class="danger">Edit</button>
+    </form>
+  </div>
+</body>

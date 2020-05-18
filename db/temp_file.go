@@ -4,8 +4,11 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/knoebber/dotfile/file"
 	"github.com/pkg/errors"
 )
+
+// TODO prevent user from creating temp file with alias that already exists.
 
 const tempFileCountQuery = "SELECT COUNT(*) FROM temp_files WHERE user_id = ?"
 
@@ -40,6 +43,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS temp_files_user_index ON temp_files(user_id);
 func (f *TempFile) check() error {
 	var count int
 
+	if err := file.CheckAlias(f.Alias); err != nil {
+		return err
+	}
+
 	if err := checkSize(f.Content, "File "+f.Alias); err != nil {
 		return err
 	}
@@ -72,6 +79,17 @@ SET alias = ?, path = ?, content = ?, created_at = ?`,
 	)
 }
 
+// Create creates a new temp file.
+func (f *TempFile) Create() error {
+	id, err := insert(f, nil)
+	if err != nil {
+		return err
+	}
+	f.ID = id
+
+	return nil
+}
+
 func (f *TempFile) save(tx *sql.Tx) (*File, error) {
 	var err error
 
@@ -84,21 +102,26 @@ func (f *TempFile) save(tx *sql.Tx) (*File, error) {
 
 	file.ID, err = insert(file, tx)
 	if err != nil {
-		return nil, rollback(tx, errors.Wrapf(err, "creating file %#v for user %d", f.Alias, f.UserID))
+		return nil, errors.Wrapf(err, "creating file %#v for user %d", f.Alias, f.UserID)
+	}
+
+	_, err = tx.Exec("DELETE FROM temp_files WHERE user_id = ?", f.UserID)
+	if err != nil {
+		return nil, rollback(tx, errors.Wrapf(err, "deleting temp file %#v for user %d", f.Alias, f.UserID))
 	}
 
 	return file, nil
 
 }
 
-// Users can only have one temp file at a time.
-// This queries by the alias to make sure that the temp file is still the same
-// one that was originally staged.
-func getTempFile(userID int64, alias string) (*TempFile, error) {
+// GetTempFile finds a user's temp file.
+// Users can only have one temp file at a time, so alias can be empty.
+// When alias is present, ensures that temp file exists with alias.
+func GetTempFile(userID int64, alias string) (*TempFile, error) {
 	res := new(TempFile)
 
 	if err := connection.
-		QueryRow("SELECT * FROM temp_files WHERE user_id = ? AND alias = ?", userID, alias).
+		QueryRow("SELECT * FROM temp_files WHERE user_id = ? AND (? = '' OR alias = ?)", userID, alias, alias).
 		Scan(
 			&res.ID,
 			&res.UserID,

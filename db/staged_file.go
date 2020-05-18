@@ -10,15 +10,16 @@ type stagedFile struct {
 	DirtyContent []byte
 }
 
+// TODO test transaction logic more.
 func setupStagedFile(tx *sql.Tx, userID int64, alias string) (*stagedFile, error) {
 	var dirtyContent []byte
 
-	file, err := getFile(userID, alias)
+	file, err := getFileByUserID(userID, alias)
 	if err != nil && !NotFound(err) {
 		return nil, err
 	}
 
-	tempFile, err := getTempFile(userID, alias)
+	tempFile, err := GetTempFile(userID, alias)
 	if err != nil && !NotFound(err) {
 		return nil, err
 	}

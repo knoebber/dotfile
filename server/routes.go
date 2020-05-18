@@ -22,12 +22,12 @@ func staticRoutes(r *mux.Router, secure bool) {
 	r.HandleFunc("/", getIndexHandler())
 	r.HandleFunc("/about", getAboutHandler())
 	r.HandleFunc("/explore", getExploreHandler())
-	r.HandleFunc("/signup", getSignupHandler(secure))
-	r.HandleFunc("/login", getLoginHandler(secure))
-	r.HandleFunc("/logout", getLogoutHandler())
-	r.HandleFunc("/email", getEmailHandler())
-	r.HandleFunc("/password", getPasswordHandler())
-	r.HandleFunc("/new_file", getNewFileHandler())
+	r.HandleFunc("/signup", signupHandler(secure))
+	r.HandleFunc("/login", loginHandler(secure))
+	r.HandleFunc("/logout", logoutHandler())
+	r.HandleFunc("/email", emailHandler())
+	r.HandleFunc("/password", passwordHandler())
+	r.HandleFunc("/new_file", createFileHandler())
 	registerRoutes(r)
 }
 
@@ -38,8 +38,11 @@ func assetRoutes(r *mux.Router) {
 }
 
 func dynamicRoutes(r *mux.Router) {
+	r.HandleFunc("/new_file/{alias}", confirmFileHandler())
+
 	sub := r.PathPrefix("/{username}").Subrouter()
-	sub.HandleFunc("", getUserHandler())
+	sub.HandleFunc("", userHandler())
+	sub.HandleFunc("/{alias}", fileHandler())
 }
 
 func registerRoutes(r *mux.Router) {
@@ -52,6 +55,7 @@ func registerRoutes(r *mux.Router) {
 		reserved = append(reserved, pathTemplate[1:])
 		return nil
 	})
+
 	if err != nil {
 		log.Fatalf("walking routes: %s", err)
 	}

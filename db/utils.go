@@ -87,7 +87,7 @@ func insert(i inserter, tx *sql.Tx) (id int64, err error) {
 // It always returns an error.
 func rollback(tx *sql.Tx, err error) error {
 	if rbError := tx.Rollback(); rbError != nil {
-		return errors.Wrap(rbError, "rolling back database transaction")
+		return errors.Wrapf(err, "rolling back database transaction: %s", rbError)
 	}
 
 	return errors.Wrap(err, "rolled back from error")

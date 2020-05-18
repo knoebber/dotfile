@@ -38,13 +38,7 @@ func createHandler(desc *pageDescription) http.HandlerFunc {
 			return
 		}
 
-		// Optionally call a function to load data into page.Data.
-		// This is for templates to use when rendering a view.
-		if desc.loadData != nil && desc.loadData(w, r, page) {
-			return
-		}
-
-		// Call a form handler conditionally.
+		// Optionally handle a form.
 		if r.Method == "POST" && desc.handleForm != nil {
 			if err := r.ParseForm(); err != nil {
 				badRequest(w, errors.Wrapf(err, "parsing form %#v", page.Title))
@@ -53,8 +47,16 @@ func createHandler(desc *pageDescription) http.HandlerFunc {
 
 			if desc.handleForm(w, r, page) {
 				// Returns true when the form handler wrote the response writer.
+				// Common case is the form set a redirect.
+				// No need to load more data or render the template in this case.
 				return
 			}
+		}
+
+		// Optionally call a function to load data into page.Data.
+		// This is for templates to use when rendering a view.
+		if desc.loadData != nil && desc.loadData(w, r, page) {
+			return
 		}
 
 		if err := page.render(w); err != nil {

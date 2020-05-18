@@ -13,7 +13,6 @@ const (
 	fileValidateQuery  = "SELECT COUNT(*) FROM files WHERE user_id = ? AND alias = ?"
 	updateCurrentQuery = "UPDATE files SET revision = ? WHERE id = ?"
 	updateContentQuery = "UPDATE files SET content = ?, revision = ? WHERE id = ?"
-	getFileQuery       = "SELECT * FROM files WHERE user_id = ? AND alias = ?"
 	fileCommitsQuery   = `
 SELECT file_id,
        alias, 
@@ -96,6 +95,18 @@ INSERT INTO files(user_id, alias, path, revision, content) VALUES(?, ?, ?, ?, ?)
 	)
 }
 
+func (f *File) scan(row *sql.Row) error {
+	return row.Scan(
+		&f.ID,
+		&f.UserID,
+		&f.Alias,
+		&f.Path,
+		&f.Revision,
+		&f.Content,
+		&f.CreatedAt,
+	)
+}
+
 func updateContent(tx *sql.Tx, fileID int64, content []byte, hash string) error {
 	if err := checkSize(content, "File revision "+hash); err != nil {
 		return err
@@ -107,20 +118,30 @@ func updateContent(tx *sql.Tx, fileID int64, content []byte, hash string) error 
 	return nil
 }
 
-func getFile(userID int64, alias string) (*File, error) {
+// GetFileByUsername retrieves a user's file by their username.
+func GetFileByUsername(username string, alias string) (*File, error) {
 	file := new(File)
 
-	err := connection.QueryRow(getFileQuery, userID, alias).
-		Scan(
-			&file.ID,
-			&file.UserID,
-			&file.Alias,
-			&file.Path,
-			&file.Revision,
-			&file.Content,
-			&file.CreatedAt,
-		)
-	if err != nil {
+	row := connection.QueryRow(`
+SELECT files.* FROM files
+JOIN users ON user_id = users.id
+WHERE username = ? AND alias = ?
+`, username, alias)
+
+	if err := file.scan(row); err != nil {
+		return nil, errors.Wrapf(err, "querying for user %#v's file %#v", username, alias)
+	}
+
+	return file, nil
+}
+
+func getFileByUserID(userID int64, alias string) (*File, error) {
+	file := new(File)
+
+	row := connection.
+		QueryRow("SELECT * FROM files WHERE user_id = ? AND alias = ?", userID, alias)
+
+	if err := file.scan(row); err != nil {
 		return nil, errors.Wrapf(err, "querying for user %d's file %#v", userID, alias)
 	}
 

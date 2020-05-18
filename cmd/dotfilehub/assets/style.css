@@ -91,7 +91,16 @@ form > input, form > textarea {
 
 input {
     font-size: 1.1rem;
-    max-width: 200px;
+}
+
+pre {
+    padding: 10px;
+    font-family: source-code-pro,Menlo,Monaco,Consolas,Courier New,monospace;
+    background: var(--paragraph);
+    border-radius: 3px;
+    overflow: auto;
+    color: var(--background);
+    max-height: 60vh;
 }
 
 .flash-error, .flash-success {
@@ -99,17 +108,19 @@ input {
     border-radius: 3px;
 }
 
-.flash-success {
+.flash-success, .success {
     background: var(--highlight);
+    border: solid 1px var(--highlight);
 }
 
-.flash-error {
-    background: var(--tertiary);
-}
-
-.danger {
+.flash-error, .danger {
     background: var(--tertiary);
     border: solid 1px var(--tertiary);
+}
+
+.flex-between {
+    display: flex;
+    justify-content: space-between;
 }
 
 @media (max-width: 600px) {
