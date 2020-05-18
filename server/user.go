@@ -144,7 +144,7 @@ func handleLogout(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	return true
 }
 
-func getLoginHandler(secure bool) http.HandlerFunc {
+func loginHandler(secure bool) http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "login.tmpl",
 		title:        loginTitle,
@@ -153,43 +153,42 @@ func getLoginHandler(secure bool) http.HandlerFunc {
 	})
 }
 
-func getSignupHandler(secure bool) http.HandlerFunc {
+func signupHandler(secure bool) http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "signup.tmpl",
-		title:        signupTitle,
+		title:        "Signup",
 		loadData:     checkSession,
 		handleForm:   createHandleSignup(secure),
 	})
 }
 
-func getUserHandler() http.HandlerFunc {
+func userHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "user.tmpl",
-		title:        "<username>",
 		loadData:     loadUser,
 	})
 }
 
-func getEmailHandler() http.HandlerFunc {
+func emailHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "email.tmpl",
-		title:        emailTitle,
+		title:        "Set Email",
 		loadData:     loadUser,
 		handleForm:   handleEmail,
 		protected:    true,
 	})
 }
 
-func getPasswordHandler() http.HandlerFunc {
+func passwordHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "password.tmpl",
-		title:        passwordTitle,
+		title:        "Update Password",
 		handleForm:   handlePassword,
 		protected:    true,
 	})
 }
 
-func getLogoutHandler() http.HandlerFunc {
+func logoutHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		handleForm: handleLogout,
 		protected:  true,

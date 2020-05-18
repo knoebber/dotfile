@@ -11,16 +11,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Titles of static pages.
+// Titles of pages that live on the nav bar.
+// Important these stay constant as they are referenced in setLinks()
 const (
-	indexTitle    = "Dotfilehub"
-	aboutTitle    = "About"
-	loginTitle    = "Login"
-	signupTitle   = "Signup"
-	exploreTitle  = "Explore"
-	emailTitle    = "Update Email"
-	passwordTitle = "Update Password"
-	newFileTitle  = "New File"
+	indexTitle   = "Dotfilehub"
+	aboutTitle   = "About"
+	loginTitle   = "Login"
+	exploreTitle = "Explore"
 )
 
 var templates *template.Template
@@ -51,6 +48,7 @@ func (p *Page) flashSuccess(msg string) {
 
 func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
 	if db.NotFound(err) {
+		// TODO create not found template.
 		setError(w, err, "Not found", http.StatusNotFound)
 		return true
 	}
