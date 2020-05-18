@@ -29,7 +29,7 @@ func TestNewStorage(t *testing.T) {
 		createTestTempFile(t)
 		s, err := NewStorage(testUserID, testAlias)
 		failIf(t, err)
-		failIf(t, file.Init(s))
+		failIf(t, file.Init(s, testAlias))
 		assert.NoError(t, s.Close())
 	})
 }

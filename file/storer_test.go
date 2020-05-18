@@ -28,9 +28,14 @@ func TestUncompressRevision(t *testing.T) {
 }
 
 func TestInit(t *testing.T) {
+	t.Run("error on invalid alias", func(t *testing.T) {
+		s := &MockStorer{saveCommitErr: true}
+		assert.Error(t, Init(s, "alias cannot have spaces"))
+	})
+
 	t.Run("error on new commit", func(t *testing.T) {
 		s := &MockStorer{saveCommitErr: true}
-		assert.Error(t, Init(s))
+		assert.Error(t, Init(s, "test"))
 	})
 }
 

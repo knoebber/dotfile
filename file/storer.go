@@ -34,7 +34,11 @@ func UncompressRevision(s Storer, hash string) (*bytes.Buffer, error) {
 }
 
 // Init creates a new commit with the initial commit message.
-func Init(s Storer) error {
+func Init(s Storer, alias string) error {
+	if err := CheckAlias(alias); err != nil {
+		return err
+	}
+
 	return NewCommit(s, initialCommitMessage)
 }
 

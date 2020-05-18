@@ -8,10 +8,12 @@ import (
 	"io"
 	"regexp"
 
+	"github.com/knoebber/dotfile/usererr"
 	"github.com/pkg/errors"
 )
 
 var pathToAliasRegex = regexp.MustCompile(`(\w+)(\.\w+)?$`)
+var validAliasRegex = regexp.MustCompile(`^\w+$`)
 
 // NotTrackedError is returned when a file is not tracked.
 // TODO moved to usererr
@@ -39,6 +41,15 @@ func PathToAlias(path string) (string, error) {
 		return "", fmt.Errorf("creating alias for %#v", path)
 	}
 	return matches[1], nil
+}
+
+// CheckAlias checks whether the alias format is allowed.
+func CheckAlias(alias string) error {
+	if !validAliasRegex.Match([]byte(alias)) {
+		return usererr.Invalid(fmt.Sprintf("%#v has non word characters", alias))
+	}
+
+	return nil
 }
 
 func hashAndCompress(contents []byte) (*bytes.Buffer, string, error) {
