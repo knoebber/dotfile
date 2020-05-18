@@ -131,8 +131,8 @@ func createTestCommit(t *testing.T) {
 }
 
 func failIf(t *testing.T, err error, context ...string) {
-	t.Log("failed test setup")
 	if err != nil {
+		t.Log("failed test setup")
 		t.Fatal(context, err)
 	}
 }
