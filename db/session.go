@@ -52,7 +52,14 @@ func (s *Session) insertStmt(e executor) (sql.Result, error) {
 	return e.Exec("INSERT INTO sessions(session, user_id) VALUES(?, ?)", s.Session, s.UserID)
 }
 
-func createSession(userID int64) (*Session, error) {
+func createSession(username string) (*Session, error) {
+	var userID int64
+
+	err := connection.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "querying for userID from %#v", username)
+	}
+
 	session, err := session()
 	if err != nil {
 		return nil, err

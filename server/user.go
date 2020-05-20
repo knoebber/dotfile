@@ -94,7 +94,7 @@ func handlePassword(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 		return p.setError(w, usererr.Invalid("Confirm does not match."))
 	}
 
-	if err := db.UpdatePassword(p.Session.UserID, currentPass, newPass); err != nil {
+	if err := db.UpdatePassword(p.Session.Username, currentPass, newPass); err != nil {
 		return p.setError(w, err)
 	}
 
@@ -103,17 +103,14 @@ func handlePassword(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 }
 
 func loadUser(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	var (
-		user  *db.User
-		email string
-		err   error
-	)
+	var email string
 
-	if p.Vars["username"] == "" {
-		user, err = db.GetUser(p.Session.UserID, "")
-	} else {
-		user, err = db.GetUser(0, p.Vars["username"])
+	username := p.Vars["username"]
+	if username == "" {
+		username = p.Session.Username
 	}
+
+	user, err := db.GetUser(p.Session.Username)
 
 	if err != nil {
 		return p.setError(w, err)

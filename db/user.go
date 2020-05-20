@@ -10,11 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const (
-	cliTokenLength = 24
-	pwQuery        = "SELECT id, password_hash FROM users"
-	userQuery      = "SELECT id, username, email, email_confirmed, cli_token, created_at FROM users"
-)
+const cliTokenLength = 24
 
 // User is the model for a dotfilehub user.
 type User struct {
@@ -97,58 +93,50 @@ func checkUniqueEmail(email string) error {
 	return nil
 }
 
-// Looks up a user by their ID or username - only one is required.
-// Returns their userID in for the case when the caller only has the username.
-func compareUserPassword(userID int64, username string, password string) (int64, error) {
-	var (
-		row  *sql.Row
-		hash []byte
-		id   int64
-	)
+// Looks up a user by their username and compares the password to the stored hash.
+func compareUserPassword(username string, password string) error {
+	var hash []byte
 
-	if userID != 0 {
-		row = connection.QueryRow(pwQuery+" WHERE id = ?", userID)
-	} else if username != "" {
-		row = connection.QueryRow(pwQuery+" WHERE username = ?", username)
-	}
-	if err := row.Scan(&id, &hash); err != nil {
-		return 0, err
+	err := connection.
+		QueryRow("SELECT password_hash FROM users WHERE username = ?", username).
+		Scan(&hash)
+	if err != nil {
+		return fmt.Errorf("querying for user %#v password hash", username)
 	}
 
-	if err := bcrypt.CompareHashAndPassword(hash, []byte(password)); err != nil {
-		return 0, err
+	if err = bcrypt.CompareHashAndPassword(hash, []byte(password)); err != nil {
+		return err
 	}
 
-	return id, nil
+	return nil
 
 }
 
 // GetUser gets a user.
 // Only one argument is required - userID will be used if both are present.
 // This does not scan password_hash.
-func GetUser(userID int64, username string) (*User, error) {
-	var query *sql.Row
-
+func GetUser(username string) (*User, error) {
 	user := new(User)
-	if userID != 0 {
-		query = connection.QueryRow(userQuery+" WHERE id = ?", userID)
-	} else if username != "" {
-		query = connection.QueryRow(userQuery+" WHERE username = ?", username)
-	} else {
-		return nil, errors.New("must provide userID or username")
-	}
 
-	err := query.
-		Scan(
-			&user.ID,
-			&user.Username,
-			&user.Email,
-			&user.EmailConfirmed,
-			&user.CLIToken,
-			&user.CreatedAt,
-		)
+	err := connection.QueryRow(`
+SELECT id,
+       username,
+       email,
+       email_confirmed,
+       cli_token,
+       created_at
+FROM users
+WHERE username = ?
+`, username).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.EmailConfirmed,
+		&user.CLIToken,
+		&user.CreatedAt,
+	)
 	if err != nil {
-		return nil, errors.Wrapf(err, "querying for user (id:%d || username: %#v)", userID, username)
+		return nil, errors.Wrapf(err, "querying for user %#v", username)
 	}
 
 	return user, nil
@@ -199,8 +187,8 @@ func UpdateEmail(userID int64, email string) error {
 
 // UpdatePassword updates a users password.
 // currentPass must match the current hash.
-func UpdatePassword(userID int64, currentPass, newPass string) error {
-	_, err := compareUserPassword(userID, "", currentPass)
+func UpdatePassword(username string, currentPass, newPass string) error {
+	err := compareUserPassword(username, currentPass)
 	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 		return usererr.Invalid("Current password does not match.")
 	} else if err != nil {
@@ -212,19 +200,18 @@ func UpdatePassword(userID int64, currentPass, newPass string) error {
 		return err
 	}
 
-	_, err = connection.Exec("UPDATE users SET password_hash = ? WHERE id = ?", hashed, userID)
+	_, err = connection.Exec("UPDATE users SET password_hash = ? WHERE username = ?", hashed, username)
 	return err
 }
 
 // UserLogin checks a username / password.
 // If the credentials are valid, returns a new session.
 func UserLogin(username, password string) (*Session, error) {
-	userID, err := compareUserPassword(0, username, password)
-	if err != nil {
+	if err := compareUserPassword(username, password); err != nil {
 		return nil, err
 	}
 
-	return createSession(userID)
+	return createSession(username)
 }
 
 func cliToken() (string, error) {
