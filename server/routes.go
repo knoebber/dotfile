@@ -40,9 +40,10 @@ func assetRoutes(r *mux.Router) {
 func dynamicRoutes(r *mux.Router) {
 	r.HandleFunc("/new_file/{alias}", confirmFileHandler())
 
-	sub := r.PathPrefix("/{username}").Subrouter()
-	sub.HandleFunc("", userHandler())
-	sub.HandleFunc("/{alias}", fileHandler())
+	r.HandleFunc("/{username}", userHandler())
+	r.HandleFunc("/{username}/{alias}", fileHandler())
+	r.HandleFunc("/{username}/{alias}/commits", commitsHandler())
+	r.HandleFunc("/{username}/{alias}/{hash}", commitHandler())
 }
 
 func registerRoutes(r *mux.Router) {

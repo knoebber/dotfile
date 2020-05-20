@@ -63,7 +63,6 @@ func loadFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, err)
 	}
 
-	p.Data["alias"] = file.Alias
 	p.Data["path"] = file.Path
 	p.Data["content"] = string(file.Content)
 

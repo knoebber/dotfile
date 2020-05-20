@@ -66,7 +66,9 @@ func hashAndCompress(contents []byte) (*bytes.Buffer, string, error) {
 	return compressed, hash, nil
 }
 
-func uncompress(compressed []byte) (*bytes.Buffer, error) {
+// Uncompress uncompresses bytes.
+// Bytes are expected to be zlib compressed.
+func Uncompress(compressed []byte) (*bytes.Buffer, error) {
 	uncompressed := new(bytes.Buffer)
 
 	r, err := zlib.NewReader(bytes.NewBuffer(compressed))
@@ -76,7 +78,7 @@ func uncompress(compressed []byte) (*bytes.Buffer, error) {
 	defer r.Close()
 
 	if _, err = io.Copy(uncompressed, r); err != nil {
-		return nil, errors.Wrap(err, "copying uncompressed data")
+		return nil, errors.Wrap(err, "copying commits uncompressed data")
 	}
 
 	return uncompressed, nil

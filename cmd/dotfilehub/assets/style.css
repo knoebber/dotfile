@@ -95,12 +95,30 @@ input {
 
 pre {
     padding: 10px;
+    margin-top: 0;
     font-family: source-code-pro,Menlo,Monaco,Consolas,Courier New,monospace;
     background: var(--paragraph);
     border-radius: 3px;
     overflow: auto;
     color: var(--background);
     max-height: 60vh;
+}
+
+table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+th, td {
+  letter-spacing: 1px;
+}
+
+tbody td {
+  text-align: center;
+}
+
+.file-content {
+    margin-top: 1rem;
 }
 
 .flash-error, .flash-success {
@@ -121,6 +139,10 @@ pre {
 .flex-between {
     display: flex;
     justify-content: space-between;
+}
+
+.file-nav > a {
+    margin-right: 2rem;
 }
 
 @media (max-width: 600px) {

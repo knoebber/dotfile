@@ -30,11 +30,11 @@ type Page struct {
 	ErrorMessage   string
 	Links          []Link
 	Vars           map[string]string
-	Data           map[string]string
+	Data           map[string]interface{}
 
 	Session      *db.Session
 	templateName string
-	protected    bool // When true, redirect user to login when session is nil.
+	protected    bool // If true, redirect user to login when session is nil.
 }
 
 // Owned returns whether the current logged in user owns the page.
@@ -120,7 +120,7 @@ func newPage(w http.ResponseWriter, r *http.Request, templateName, title string,
 	p := &Page{
 		Title:        title,
 		Vars:         mux.Vars(r),
-		Data:         make(map[string]string),
+		Data:         make(map[string]interface{}),
 		templateName: templateName,
 		protected:    protected,
 	}

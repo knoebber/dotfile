@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/knoebber/dotfile/file"
 	"github.com/knoebber/dotfile/usererr"
 	"github.com/pkg/errors"
 )
@@ -16,6 +17,25 @@ SELECT commits.revision
 FROM commits
 JOIN files ON files.id = file_id
 WHERE file_id = ? AND hash = ?`
+	commitListQuery = `
+SELECT hash,
+       message, 
+       timestamp
+FROM commits
+JOIN files ON commits.file_id = files.id
+JOIN users ON files.user_id = users.id
+WHERE username = ? AND alias = ?`
+	commitViewQuery = `
+SELECT hash,
+       message,
+       path,
+       timestamp,
+       commits.revision
+FROM commits
+JOIN files ON commits.file_id = files.id
+JOIN users ON files.user_id = users.id
+WHERE username = ? AND alias = ? AND hash = ?
+`
 )
 
 // Commit models the commits table.
@@ -26,6 +46,20 @@ type Commit struct {
 	Message   string
 	Revision  []byte    `validate:"required"` // Compressed version of file at hash.
 	Timestamp time.Time `validate:"required"`
+}
+
+// CommitSummary is a summary of a commit.
+type CommitSummary struct {
+	Hash      string
+	Message   string
+	Timestamp string
+}
+
+// CommitView is used for an individual commit view.
+type CommitView struct {
+	CommitSummary
+	Path    string
+	Content string
 }
 
 // Unique index prevents a file from having a duplicate hash.
@@ -108,7 +142,55 @@ func hasCommit(fileID int64, hash string) (bool, error) {
 
 }
 
-func validateCommit(fileID int64, hash string) error {
+// GetCommitList gets a summary of all commits for a file.
+func GetCommitList(username, alias string) ([]CommitSummary, error) {
+	result := []CommitSummary{}
+	rows, err := connection.Query(commitListQuery, username, alias)
+	if err != nil {
+		return nil, errors.Wrapf(err, "querying commits for user %#v file %#v", username, alias)
+	}
 
-	return nil
+	for rows.Next() {
+		c := CommitSummary{}
+		timestamp := time.Time{}
+
+		if err := rows.Scan(
+			&c.Hash,
+			&c.Message,
+			&timestamp,
+		); err != nil {
+			return nil, errors.Wrapf(err, "scanning commits for user %#v file %#v", username, alias)
+		}
+		c.Timestamp = formatTime(timestamp)
+		result = append(result, c)
+	}
+	return result, nil
+}
+
+// GetCommit gets a commit and uncompresses its contents.
+func GetCommit(username, alias, hash string) (*CommitView, error) {
+	result := new(CommitView)
+	timestamp := time.Time{}
+	revision := []byte{}
+
+	err := connection.QueryRow(commitViewQuery, username, alias, hash).
+		Scan(
+			&result.Hash,
+			&result.Message,
+			&result.Path,
+			&timestamp,
+			&revision,
+		)
+	if err != nil {
+		return nil, errors.Wrapf(err, "querying for user %v commit %#v %#v", username, alias, hash)
+	}
+	result.Timestamp = formatTime(timestamp)
+
+	uncompressed, err := file.Uncompress(revision)
+	if err != nil {
+		return nil, err
+	}
+	result.Content = string(uncompressed.Bytes())
+
+	return result, nil
 }

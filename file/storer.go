@@ -25,7 +25,7 @@ func UncompressRevision(s Storer, hash string) (*bytes.Buffer, error) {
 		return nil, err
 	}
 
-	uncompressed, err := uncompress(contents)
+	uncompressed, err := Uncompress(contents)
 	if err != nil {
 		return nil, err
 	}

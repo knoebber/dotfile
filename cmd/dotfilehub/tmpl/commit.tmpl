@@ -1,0 +1,12 @@
+{{template "head" .}}
+<body>
+  {{template "nav" .}}
+  {{template "flash" .}}
+  <h1>
+    <a href="/{{.Vars.username}}/{{.Vars.alias}}">{{.Vars.alias}}</a>@{{.Vars.hash}}
+  </h1>
+  <strong>{{.Data.message}}</strong>
+  <br>
+  <em>{{.Data.timestamp}}</em>
+  {{template "file_content" .}}
+</body>

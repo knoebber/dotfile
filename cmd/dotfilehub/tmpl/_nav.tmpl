@@ -1,9 +1,9 @@
 {{define "nav"}}
 <header>
   <nav>
-    {{- range .Links}}
+    {{range .Links}}
     <a class="{{.GetClass}}" href="{{.URL}}">{{.Title}}</a>
-    {{- end}}
+    {{end}}
   </nav>
 </header>
 {{end}}

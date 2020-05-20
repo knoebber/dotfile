@@ -13,17 +13,6 @@ const (
 	fileValidateQuery  = "SELECT COUNT(*) FROM files WHERE user_id = ? AND alias = ?"
 	updateCurrentQuery = "UPDATE files SET revision = ? WHERE id = ?"
 	updateContentQuery = "UPDATE files SET content = ?, revision = ? WHERE id = ?"
-	fileCommitsQuery   = `
-SELECT file_id,
-       alias, 
-       path,
-       current, 
-       hash,
-       message, 
-       timestamp 
-FROM files
-JOIN commits ON commits.file_id = files.id
-WHERE userID = ? AND alias = ?"`
 )
 
 // File models the files table.
@@ -74,7 +63,7 @@ func (f *File) check() error {
 	}
 
 	if err := connection.QueryRow(fileCountQuery, f.UserID).Scan(&count); err != nil {
-		return errors.Wrapf(err, "counting user %d's file", f.UserID)
+		return errors.Wrapf(err, "counting user %d file", f.UserID)
 	}
 
 	if count > maxFilesPerUser {
@@ -129,7 +118,7 @@ WHERE username = ? AND alias = ?
 `, username, alias)
 
 	if err := file.scan(row); err != nil {
-		return nil, errors.Wrapf(err, "querying for user %#v's file %#v", username, alias)
+		return nil, errors.Wrapf(err, "querying for user %#v file %#v", username, alias)
 	}
 
 	return file, nil
@@ -142,44 +131,10 @@ func getFileByUserID(userID int64, alias string) (*File, error) {
 		QueryRow("SELECT * FROM files WHERE user_id = ? AND alias = ?", userID, alias)
 
 	if err := file.scan(row); err != nil {
-		return nil, errors.Wrapf(err, "querying for user %d's file %#v", userID, alias)
+		return nil, errors.Wrapf(err, "querying for user %d file %#v", userID, alias)
 	}
 
 	return file, nil
-}
-
-// TODO .. not being used yet.
-func getFileAndCommits(userID int64, alias string) (*File, []Commit, error) {
-	file := new(File)
-	commits := []Commit{}
-
-	rows, queryErr := connection.Query(fileCommitsQuery, userID, alias)
-
-	if errors.Is(queryErr, sql.ErrNoRows) {
-		return nil, nil, nil
-	} else if queryErr != nil {
-		return nil, nil, errors.Wrapf(
-			queryErr, "querying for user %d's file %#v", userID, alias)
-	}
-
-	for rows.Next() {
-		commit := Commit{}
-		if err := rows.Scan(
-			&file.ID,
-			&file.Alias,
-			&file.Path,
-			&file.Revision,
-			&commit.Hash,
-			&commit.Message,
-			&commit.Timestamp,
-		); err != nil {
-			err = errors.Wrapf(err, "scanning user %d's tracked file %#v", userID, alias)
-			return nil, nil, err
-		}
-		commits = append(commits, commit)
-	}
-
-	return file, commits, nil
 }
 
 func fileExists(userID int64, alias string) (bool, error) {

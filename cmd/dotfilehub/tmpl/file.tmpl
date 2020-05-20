@@ -3,5 +3,9 @@
   {{template "nav" .}}
   {{template "flash" .}}
   <h1>{{.Title}}</h1>
-  {{template "file" .}}
+  <div class="file-nav">
+    <a href="/{{.Vars.username}}/{{.Vars.alias}}/commits">View Commits</a>
+    <a href="/{{.Vars.username}}/{{.Vars.alias}}/edit">Edit</a>
+  </div>
+  {{template "file_content" .}}
 </body>
