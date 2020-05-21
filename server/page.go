@@ -14,10 +14,11 @@ import (
 // Titles of pages that live on the nav bar.
 // Important these stay constant as they are referenced in setLinks()
 const (
-	indexTitle   = "Dotfilehub"
-	aboutTitle   = "About"
-	loginTitle   = "Login"
-	exploreTitle = "Explore"
+	indexTitle    = "Dotfilehub"
+	aboutTitle    = "About"
+	settingsTitle = "Settings"
+	signupTitle   = "Signup"
+	loginTitle    = "Login"
 )
 
 var templates *template.Template
@@ -66,11 +67,6 @@ func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
 }
 
 func (p *Page) setSession(w http.ResponseWriter, r *http.Request) error {
-	if p.Session != nil {
-		log.Print("warning - tried to set session twice")
-		return nil
-	}
-
 	cookie, err := r.Cookie(sessionCookie)
 	if errors.Is(err, http.ErrNoCookie) {
 		return nil
@@ -95,19 +91,24 @@ func (p *Page) setSession(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (p *Page) setLinks() {
-	var userLink Link
+	var (
+		userLink     Link
+		settingsLink Link
+	)
 
 	if p.Session != nil {
 		username := p.Session.Username
 		userLink = newLink("/"+username, "Profile", p.Title)
+		settingsLink = newLink("/settings", settingsTitle, p.Title)
 	} else {
 		userLink = newLink("/login", loginTitle, p.Title)
+		settingsLink = newLink("/signup", signupTitle, p.Title)
 	}
 
 	p.Links = []Link{
 		newLink("/", indexTitle, p.Title),
-		newLink("/explore", exploreTitle, p.Title),
 		newLink("/about", aboutTitle, p.Title),
+		settingsLink,
 		userLink,
 	}
 }

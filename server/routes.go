@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/knoebber/dotfile/db"
@@ -17,17 +18,17 @@ func setupRoutes(r *mux.Router, secure bool) {
 // Pages that do not have a dynamic route element.
 // These conflict with the username wild card.
 // Seed the DB on start to prevent these from being registered.
-// Important that these routes are setup first so that registerRoutes works as expected.
+// Important that these routes are setup first so that registerRoutes only sees these.
 func staticRoutes(r *mux.Router, secure bool) {
 	r.HandleFunc("/", getIndexHandler())
 	r.HandleFunc("/about", getAboutHandler())
-	r.HandleFunc("/explore", getExploreHandler())
 	r.HandleFunc("/signup", signupHandler(secure))
 	r.HandleFunc("/login", loginHandler(secure))
 	r.HandleFunc("/logout", logoutHandler())
-	r.HandleFunc("/email", emailHandler())
-	r.HandleFunc("/password", passwordHandler())
 	r.HandleFunc("/new_file", createFileHandler())
+	r.HandleFunc("/settings", settingsHandler())
+	r.HandleFunc("/settings/email", emailHandler())
+	r.HandleFunc("/settings/password", passwordHandler())
 	registerRoutes(r)
 }
 
@@ -53,7 +54,9 @@ func registerRoutes(r *mux.Router) {
 		if err != nil {
 			return err
 		}
-		reserved = append(reserved, pathTemplate[1:])
+
+		split := strings.Split(pathTemplate, "/")
+		reserved = append(reserved, split[1])
 		return nil
 	})
 

@@ -13,6 +13,15 @@ const (
 	fileValidateQuery  = "SELECT COUNT(*) FROM files WHERE user_id = ? AND alias = ?"
 	updateCurrentQuery = "UPDATE files SET revision = ? WHERE id = ?"
 	updateContentQuery = "UPDATE files SET content = ?, revision = ? WHERE id = ?"
+	fileListQuery      = `
+SELECT alias,
+       path,
+       COUNT(commits.id) AS num_commits
+FROM files
+JOIN users on user_id = users.id
+JOIN commits on file_id = files.id
+WHERE username = ?
+GROUP BY files.id`
 )
 
 // File models the files table.
@@ -27,6 +36,13 @@ type File struct {
 	Revision  string
 	Content   []byte `validate:"required"`
 	CreatedAt time.Time
+}
+
+// FileSummary summarizes a file.
+type FileSummary struct {
+	Alias      string
+	Path       string
+	NumCommits int
 }
 
 // Unique indexes prevent a user from having duplicate alias / path.
@@ -122,6 +138,31 @@ WHERE username = ? AND alias = ?
 	}
 
 	return file, nil
+}
+
+// GetFilesByUsername gets a summary of all a users files.
+func GetFilesByUsername(username string) ([]FileSummary, error) {
+	result := []FileSummary{}
+	rows, err := connection.Query(fileListQuery, username)
+	if err != nil {
+		return nil, errors.Wrapf(err, "querying user %#v files", username)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		f := FileSummary{}
+
+		if err := rows.Scan(
+			&f.Alias,
+			&f.Path,
+			&f.NumCommits,
+		); err != nil {
+			return nil, errors.Wrapf(err, "scanning files for user %#v", username)
+		}
+		result = append(result, f)
+	}
+
+	return result, nil
 }
 
 func getFileByUserID(userID int64, alias string) (*File, error) {

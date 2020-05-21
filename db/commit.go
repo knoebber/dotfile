@@ -48,7 +48,7 @@ type Commit struct {
 	Timestamp time.Time `validate:"required"`
 }
 
-// CommitSummary is a summary of a commit.
+// CommitSummary summarizes a commit.
 type CommitSummary struct {
 	Hash      string
 	Message   string
@@ -149,6 +149,7 @@ func GetCommitList(username, alias string) ([]CommitSummary, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "querying commits for user %#v file %#v", username, alias)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		c := CommitSummary{}

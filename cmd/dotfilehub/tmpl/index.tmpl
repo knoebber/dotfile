@@ -1,11 +1,14 @@
 {{template "head" .}}
 <body>
   {{template "nav" .}}
-  <h1>Welcome to dotfilehub!</h1>
-  {{if .Session }}
-  <p>TODO get list of all files</p>
-  <a href="/new_file">Create a new file</a>
-  {{else}}
-  <p><a href="/signup">Signup</a> or <a href="/explore">browse files</a> to get started.</p>
-  {{end}}
+  <h1>Find Dotfiles</h1>
+  <form>
+    <label for="alias">Alias</label>
+    <input id="alias" name="alias" type="text" placeholder="vimrc">
+
+    <label for="path">Path</label>
+    <input id="path" name="path" type="text" placeholder="~/.vimrc">
+
+    <button type="submit">Search</button>
+  </form>
 </body>
