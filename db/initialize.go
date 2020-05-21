@@ -42,18 +42,12 @@ func createTables() error {
 // Start opens a connection a sqlite3 database.
 // It will create a new sqlite database file if not found.
 func Start(dbPath string) (err error) {
-	connection, err = sql.Open("sqlite3", dbPath)
+	dsn := "?_foreign_keys=true"
+	connection, err = sql.Open("sqlite3", dbPath+dsn)
 	if err != nil {
 		return err
 	}
 	log.Printf("using sqlite3 database %s", dbPath)
-
-	// Foreign keys must be enabled in sqlite.
-	// https://sqlite.org/foreignkeys.html
-	_, err = connection.Exec("PRAGMA foreign_keys = ON;")
-	if err != nil {
-		return err
-	}
 
 	validate = validator.New()
 
