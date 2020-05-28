@@ -117,6 +117,12 @@ tbody td {
   text-align: center;
 }
 
+.table-wrapper {
+    max-height: 60vh;
+    min-width: 1000px;
+    overflow: auto;
+}
+
 .file-content {
     margin-top: 1rem;
 }
@@ -139,14 +145,44 @@ tbody td {
 .flex-between {
     display: flex;
     justify-content: space-between;
+    align-items: end;
 }
 
 .file-nav > a {
     margin-right: 2rem;
 }
 
+@media (max-width: 1050px) {
+    /* Break point of when nav bar takes most of the screen up */
+    /* Kind of hacky layout, would like to come back to this */
+    body {
+        margin: 3rem;
+    }
+    section {
+        margin: unset;
+    }
+}
+
 @media (max-width: 600px) {
+    body {
+        margin: .5rem;
+    }
+
     form > input {
         grid-column: 1;
+    }
+    form > textarea {
+        grid-column: 1;
+    }
+    nav {
+        flex-direction: column;
+        align-items: center;
+        letter-spacing: 2px;
+    }
+    nav > a {
+        padding: 0;
+    }
+    nav > a:nth-child(3) {
+        margin-left: unset;
     }
 }

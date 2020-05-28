@@ -60,6 +60,7 @@ type CommitView struct {
 	CommitSummary
 	Path    string
 	Content string
+	Current bool
 }
 
 // Unique index prevents a file from having a duplicate hash.

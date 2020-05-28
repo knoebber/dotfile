@@ -15,7 +15,7 @@ func setupRoutes(r *mux.Router, secure bool) {
 	dynamicRoutes(r)
 }
 
-// Pages that do not have a dynamic route element.
+// Pages that do not start with {username}.
 // These conflict with the username wild card.
 // Seed the DB on start to prevent these from being registered.
 // Important that these routes are setup first so that registerRoutes only sees these.
@@ -29,6 +29,7 @@ func staticRoutes(r *mux.Router, secure bool) {
 	r.HandleFunc("/settings", settingsHandler())
 	r.HandleFunc("/settings/email", emailHandler())
 	r.HandleFunc("/settings/password", passwordHandler())
+	r.HandleFunc("/api", nil) // TODO - dot push / pull will run through these routes.
 	registerRoutes(r)
 }
 
@@ -39,11 +40,12 @@ func assetRoutes(r *mux.Router) {
 }
 
 func dynamicRoutes(r *mux.Router) {
-	r.HandleFunc("/new_file/{alias}", confirmFileHandler())
-
+	r.HandleFunc("/temp_file/{alias}/create", confirmNewFileHandler())
+	r.HandleFunc("/temp_file/{alias}/commit", editFileHandler())
 	r.HandleFunc("/{username}", userHandler())
 	r.HandleFunc("/{username}/{alias}", fileHandler())
 	r.HandleFunc("/{username}/{alias}/commits", commitsHandler())
+	r.HandleFunc("/{username}/{alias}/edit", editFileHandler())
 	r.HandleFunc("/{username}/{alias}/{hash}", commitHandler())
 }
 

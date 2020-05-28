@@ -55,13 +55,7 @@ func InitFile(home, dir, path, alias string) (string, error) {
 		return "", err
 	}
 
-	if alias == "" {
-		generatedAlias, err := file.PathToAlias(convertedPath)
-		if err != nil {
-			return "", err
-		}
-		alias = generatedAlias
-	}
+	alias, err = file.GetAlias(alias, convertedPath)
 
 	s, err := newStorage(home, dir, alias)
 	if err != nil {

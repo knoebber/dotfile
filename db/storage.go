@@ -10,7 +10,7 @@ import (
 
 // Storage implements the file.Storage interface using a sqlite database.
 type Storage struct {
-	staged *stagedFile
+	Staged *stagedFile
 	tx     *sql.Tx
 }
 
@@ -24,7 +24,7 @@ func NewStorage(userID int64, alias string) (s *Storage, err error) {
 		return nil, errors.Wrap(err, "starting storage transaction")
 	}
 
-	s.staged, err = setupStagedFile(s.tx, userID, alias)
+	s.Staged, err = setupStagedFile(s.tx, userID, alias)
 	if err != nil {
 		return nil, err
 	}
@@ -36,35 +36,35 @@ func NewStorage(userID int64, alias string) (s *Storage, err error) {
 // Must be called after the storage is done being used.
 func (s *Storage) Close() error {
 	if err := s.tx.Commit(); err != nil {
-		return errors.Wrapf(err, "closing transaction for file %d", s.staged.FileID)
+		return errors.Wrapf(err, "closing transaction for file %d", s.Staged.FileID)
 	}
 	return nil
 }
 
 // HasCommit returns whether the file has a commit with hash.
 func (s *Storage) HasCommit(hash string) (exists bool, err error) {
-	return hasCommit(s.staged.FileID, hash)
+	return hasCommit(s.Staged.FileID, hash)
 }
 
 // GetContents returns the bytes from the users temp file.
 // Returns an error if the temp file is not set.
 func (s *Storage) GetContents() ([]byte, error) {
-	if len(s.staged.DirtyContent) == 0 {
+	if len(s.Staged.DirtyContent) == 0 {
 		return nil, errors.New("temp file has not content")
 	}
 
-	return s.staged.DirtyContent, nil
+	return s.Staged.DirtyContent, nil
 }
 
 // GetRevision returns a commits contents.
 func (s *Storage) GetRevision(hash string) ([]byte, error) {
-	return getRevision(s.staged.FileID, hash)
+	return getRevision(s.Staged.FileID, hash)
 }
 
 // SaveCommit saves a commit to the database.
 func (s *Storage) SaveCommit(buff *bytes.Buffer, hash, message string, timestamp time.Time) error {
 	commit := &Commit{
-		FileID:    s.staged.FileID,
+		FileID:    s.Staged.FileID,
 		Hash:      hash,
 		Message:   message,
 		Revision:  buff.Bytes(),
@@ -72,13 +72,13 @@ func (s *Storage) SaveCommit(buff *bytes.Buffer, hash, message string, timestamp
 	}
 
 	if _, err := insert(commit, s.tx); err != nil {
-		return errors.Wrapf(err, "inserting commit for file %d", s.staged.FileID)
+		return errors.Wrapf(err, "inserting commit for file %d", s.Staged.FileID)
 	}
 
-	return s.Revert(buff, hash)
+	return updateContent(s.tx, s.Staged.FileID, s.Staged.DirtyContent, hash)
 }
 
 // Revert overwrites the files current contents with bytes.
 func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
-	return updateContent(s.tx, s.staged.FileID, buff.Bytes(), hash)
+	return updateContent(s.tx, s.Staged.FileID, buff.Bytes(), hash)
 }

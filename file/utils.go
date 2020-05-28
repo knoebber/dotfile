@@ -30,12 +30,16 @@ func ErrNotTracked(alias string) error {
 	return &NotTrackedError{alias}
 }
 
-// PathToAlias creates an alias from the path of the file.
-// Works by removing leading dots and file extensions.
+// GetAlias creates an alias when the passed in alias is empty.
+// It works by removing leading dots and file extensions from the path.
 // Examples: ~/.vimrc: vimrc
 //           ~/.config/i3/config: config
 //           ~/.config/alacritty/alacritty.yml: alacritty
-func PathToAlias(path string) (string, error) {
+func GetAlias(alias, path string) (string, error) {
+	if alias != "" {
+		return alias, nil
+	}
+
 	matches := pathToAliasRegex.FindStringSubmatch(path)
 	if len(matches) < 2 {
 		return "", fmt.Errorf("creating alias for %#v", path)

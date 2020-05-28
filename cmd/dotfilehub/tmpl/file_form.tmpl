@@ -2,14 +2,16 @@
 <body>
   {{template "nav" .}}
   {{template "flash" .}}
-  <h1>Create a File</h1>
+  <h1>{{.Title}}</h1>
   <form method="post">
+    {{ if .Data.newFile }}
     <label for="name">Name:</label>
     <input id="name" name="name" placeholder="bashrc" value="{{.Data.alias}}">
-
     <label for="path">Path:</label>
     <input id="path" name="path" placeholder="~/.bashrc" value="{{.Data.path}}" required>
-
+    {{ else }}
+    <strong>{{.Data.path}}</strong>
+    {{ end }}
     <label for="contents">Contents:</label>
     <textarea
       cols="80"

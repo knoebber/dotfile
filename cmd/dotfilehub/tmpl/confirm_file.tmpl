@@ -5,10 +5,14 @@
   <h1>{{.Title}}</h1>
   {{template "file_content" .}}
   <div class="flex-between">
-    <form method="post" class="form-redirect">
+    <form method="post" class="">
+      {{ if not .Data.newFile }}
+      <label for="message">Commit Message</label>
+      <input id="message" name="message">
+      {{ end }}
       <button class="success">Create</button>
     </form>
-    <form action="/new_file" class="form-redirect">
+    <form action="/new_file?edit=true" class="form-redirect"><!-- TODO ?edit=true not working. -->
       <button class="danger">Edit</button>
     </form>
   </div>

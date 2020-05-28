@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/knoebber/dotfile/usererr"
@@ -9,19 +10,8 @@ import (
 )
 
 const (
-	fileCountQuery     = "SELECT COUNT(*) FROM files WHERE user_id = ?"
-	fileValidateQuery  = "SELECT COUNT(*) FROM files WHERE user_id = ? AND alias = ?"
-	updateCurrentQuery = "UPDATE files SET revision = ? WHERE id = ?"
-	updateContentQuery = "UPDATE files SET content = ?, revision = ? WHERE id = ?"
-	fileListQuery      = `
-SELECT alias,
-       path,
-       COUNT(commits.id) AS num_commits
-FROM files
-JOIN users on user_id = users.id
-JOIN commits on file_id = files.id
-WHERE username = ?
-GROUP BY files.id`
+	fileCountQuery    = "SELECT COUNT(*) FROM files WHERE user_id = ?"
+	fileValidateQuery = "SELECT COUNT(*) FROM files WHERE user_id = ? AND alias = ?"
 )
 
 // File models the files table.
@@ -31,11 +21,12 @@ GROUP BY files.id`
 type File struct {
 	ID        int64
 	UserID    int64  `validate:"required"`
-	Alias     string `validate:"required"` // Friendly name for a file: "bashrc"
-	Path      string `validate:"required"` // Where the file lives: "~/.bashrc"
+	Alias     string `validate:"required"` // Friendly name for a file: bashrc
+	Path      string `validate:"required"` // Where the file lives: ~/.bashrc
 	Revision  string
 	Content   []byte `validate:"required"`
 	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 // FileSummary summarizes a file.
@@ -43,6 +34,7 @@ type FileSummary struct {
 	Alias      string
 	Path       string
 	NumCommits int
+	UpdatedAt  string
 }
 
 // Unique indexes prevent a user from having duplicate alias / path.
@@ -55,7 +47,8 @@ alias      TEXT NOT NULL,
 path       TEXT NOT NULL,
 revision   TEXT NOT NULL,
 content    BLOB NOT NULL,
-created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS files_user_index ON files(user_id);
 CREATE UNIQUE INDEX IF NOT EXISTS files_user_alias_index ON files(user_id, alias);
@@ -109,7 +102,30 @@ func (f *File) scan(row *sql.Row) error {
 		&f.Revision,
 		&f.Content,
 		&f.CreatedAt,
+		&f.UpdatedAt,
 	)
+}
+
+// Update updates the alias or path if they are different.
+// TODO not using yet - unsure if allowing users to update alias / path is wise.
+func (f *File) Update(newAlias, newPath string) error {
+	if newAlias == "" || newPath == "" {
+		return fmt.Errorf("cannot update to empty value, alias: %#v, path: %#v", newAlias, newPath)
+	}
+
+	if f.Alias == newAlias && f.Path == newPath {
+		return nil
+	}
+	_, err := connection.Exec(`
+UPDATE files
+SET alias = ?, path = ?, updated_at = ?
+WHERE file_id = ?
+`, newAlias, newPath, time.Now(), f.ID)
+	if err != nil {
+		return errors.Wrapf(err, "updating file %d to %#v %#v", f.ID, newAlias, newPath)
+	}
+
+	return nil
 }
 
 func updateContent(tx *sql.Tx, fileID int64, content []byte, hash string) error {
@@ -117,8 +133,12 @@ func updateContent(tx *sql.Tx, fileID int64, content []byte, hash string) error 
 		return err
 	}
 
-	if _, err := tx.Exec(updateCurrentQuery, content, hash, fileID); err != nil {
-		return rollback(tx, errors.Wrapf(err, "updating file %d content to %#v", fileID, hash))
+	if _, err := tx.Exec(`
+UPDATE files
+SET content = ?, revision = ?, updated_at = ?
+WHERE id = ?
+`, content, hash, time.Now(), fileID); err != nil {
+		return rollback(tx, errors.Wrapf(err, "updating content in file %d", fileID))
 	}
 	return nil
 }
@@ -143,7 +163,16 @@ WHERE username = ? AND alias = ?
 // GetFilesByUsername gets a summary of all a users files.
 func GetFilesByUsername(username string) ([]FileSummary, error) {
 	result := []FileSummary{}
-	rows, err := connection.Query(fileListQuery, username)
+	rows, err := connection.Query(`
+SELECT alias,
+       path,
+       COUNT(commits.id) AS num_commits,
+       updated_at
+FROM files
+JOIN users on user_id = users.id
+JOIN commits on file_id = files.id
+WHERE username = ?
+GROUP BY files.id`, username)
 	if err != nil {
 		return nil, errors.Wrapf(err, "querying user %#v files", username)
 	}
@@ -151,14 +180,18 @@ func GetFilesByUsername(username string) ([]FileSummary, error) {
 
 	for rows.Next() {
 		f := FileSummary{}
+		updatedAt := time.Time{}
 
 		if err := rows.Scan(
 			&f.Alias,
 			&f.Path,
 			&f.NumCommits,
+			&updatedAt,
 		); err != nil {
 			return nil, errors.Wrapf(err, "scanning files for user %#v", username)
 		}
+
+		f.UpdatedAt = formatTime(updatedAt)
 		result = append(result, f)
 	}
 

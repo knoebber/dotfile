@@ -3,24 +3,26 @@
   {{template "nav" .}}
   {{template "flash" .}}
   <h1><a href="/{{.Vars.username}}/{{.Vars.alias}}">{{.Vars.alias}}</a> commits</h1>
-  <table>
-    <thead>
-      <th>Hash</th>
-      <th>Message</th>
-      <th>Timestamp</th>
-    </thead>
-    <tbody>
-      {{$username := .Vars.username}}
-      {{$alias := .Vars.alias}}
-      {{range .Data.commits}}
-      <tr>
-        <td>
-          <a href="/{{$username}}/{{$alias}}/{{.Hash}}">{{.Hash}}</a>
-        </td>
-        <td>{{.Message}}</td>
-        <td>{{.Timestamp}}</td>
-      </tr>
-      {{end}}
-    </tbody>
-  </table>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <th>Hash</th>
+        <th>Message</th>
+        <th>Timestamp</th>
+      </thead>
+      <tbody>
+        {{$username := .Vars.username}}
+        {{$alias := .Vars.alias}}
+        {{range .Data.commits}}
+        <tr>
+          <td>
+            <a href="/{{$username}}/{{$alias}}/{{.Hash}}">{{.Hash}}</a>
+          </td>
+          <td>{{.Message}}</td>
+          <td>{{.Timestamp}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
 </body>
