@@ -37,7 +37,7 @@ func TestNewStorage(t *testing.T) {
 func TestGetContents(t *testing.T) {
 	t.Run("error when no dirty content", func(t *testing.T) {
 		s := &Storage{
-			staged: new(stagedFile),
+			Staged: new(stagedFile),
 		}
 		_, err := s.GetContents()
 		assert.Error(t, err)
