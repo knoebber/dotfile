@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"time"
+
+	"github.com/knoebber/dotfile/usererr"
 )
 
 const initialCommitMessage = "Initial commit"
@@ -59,7 +61,7 @@ func NewCommit(s Storer, message string) error {
 		return err
 	}
 	if exists {
-		return fmt.Errorf("commit %#v already exists", hash)
+		return usererr.Invalid(fmt.Sprintf("Commit %#v already exists", hash))
 	}
 
 	return s.SaveCommit(compressed, hash, message, time.Now())
