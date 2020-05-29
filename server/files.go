@@ -8,7 +8,7 @@ import (
 	"github.com/knoebber/dotfile/file"
 )
 
-// Handles the new file form.
+// Handles submitting the new file form.
 func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	content := r.Form.Get("contents")
 	path := r.Form.Get("path")
@@ -33,7 +33,7 @@ func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	return true
 }
 
-// Handles the edit file form.
+// Handles submitting the edit file form.
 func editFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	content := r.Form.Get("contents")
 
@@ -61,7 +61,7 @@ func editFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	return true
 }
 
-// Handles the confirm file form.
+// Handles submitting the confirm file form.
 // Either initializes a new file or makes a commit to an existing.
 func confirmTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	var err error
@@ -108,11 +108,22 @@ func loadFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 
 // Loads the contents of a users temp file for the create/edit form.
 func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	p.Data["newFile"] = p.Vars["alias"] == ""
+	newFile := p.Vars["alias"] == ""
+	p.Data["newFile"] = newFile
 
-	action := r.URL.Query().Get("action")
-	if action != "edit" {
+	if newFile {
+		p.Title = "New File"
+	} else {
+		p.Title = "Edit File"
+	}
+
+	// Only load the previous temp file if there is an ?edit query param.
+	editing := r.URL.Query().Get("edit") == "true"
+
+	if newFile && !editing {
 		return
+	} else if !newFile && !editing {
+		return loadFile(w, r, p)
 	}
 
 	tempFile, err := db.GetTempFile(p.Session.UserID, p.Vars["alias"])
@@ -126,13 +137,14 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 	p.Data["alias"] = tempFile.Alias
 	p.Data["path"] = tempFile.Path
 	p.Data["content"] = string(tempFile.Content)
-	p.Title = tempFile.Alias + " | Edit"
 	return
 }
 
 // Loads the contents of a users temp file for the new commit page.
 func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	tempFile, err := db.GetTempFile(p.Session.UserID, p.Vars["alias"])
+	alias := p.Vars["alias"]
+
+	tempFile, err := db.GetTempFile(p.Session.UserID, alias)
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -140,6 +152,7 @@ func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bo
 	p.Data["alias"] = tempFile.Alias
 	p.Data["path"] = tempFile.Path
 	p.Data["content"] = string(tempFile.Content)
+	p.Data["editAction"] = fmt.Sprintf("/%s/%s/edit", p.Session.Username, alias)
 	p.Title = tempFile.Alias + " | Commit"
 	return
 }
@@ -155,6 +168,7 @@ func loadNewFileConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done b
 	p.Data["path"] = tempFile.Path
 	p.Data["content"] = string(tempFile.Content)
 	p.Data["newFile"] = true
+	p.Data["editAction"] = "/new_file"
 	p.Title = "New File"
 	return
 }

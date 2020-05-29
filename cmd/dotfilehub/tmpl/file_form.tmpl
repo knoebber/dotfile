@@ -2,7 +2,7 @@
 <body>
   {{template "nav" .}}
   {{template "flash" .}}
-  <h1>{{.Title}}</h1>
+  <h1>{{ .Title }}</h1>
   <form method="post">
     {{ if .Data.newFile }}
     <label for="name">Name:</label>

@@ -2,13 +2,11 @@
 <body>
   {{template "nav" .}}
   <h1>Find Dotfiles</h1>
-  <form>
+  <form method="get">
     <label for="alias">Alias</label>
-    <input id="alias" name="alias" type="text" placeholder="vimrc">
-
+    <input id="alias" name="alias" type="search" placeholder="vimrc">
     <label for="path">Path</label>
-    <input id="path" name="path" type="text" placeholder="~/.vimrc">
-
+    <input id="path" name="path" type="search" placeholder="~/.vimrc">
     <button type="submit">Search</button>
   </form>
 </body>

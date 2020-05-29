@@ -41,7 +41,7 @@ func assetRoutes(r *mux.Router) {
 
 func dynamicRoutes(r *mux.Router) {
 	r.HandleFunc("/temp_file/{alias}/create", confirmNewFileHandler())
-	r.HandleFunc("/temp_file/{alias}/commit", editFileHandler())
+	r.HandleFunc("/temp_file/{alias}/commit", confirmEditHandler())
 	r.HandleFunc("/{username}", userHandler())
 	r.HandleFunc("/{username}/{alias}", fileHandler())
 	r.HandleFunc("/{username}/{alias}/commits", commitsHandler())

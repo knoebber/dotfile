@@ -12,7 +12,8 @@
       {{ end }}
       <button class="success">Create</button>
     </form>
-    <form action="/new_file?edit=true" class="form-redirect"><!-- TODO ?edit=true not working. -->
+    <form method="get" action="{{.Data.editAction}}" class="form-redirect">
+      <input type="hidden" name="edit" value="true">
       <button class="danger">Edit</button>
     </form>
   </div>
