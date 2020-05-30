@@ -105,7 +105,6 @@ pre {
 }
 
 table {
-  table-layout: fixed;
   width: 100%;
 }
 
@@ -113,13 +112,14 @@ th, td {
   letter-spacing: 1px;
 }
 
-tbody td {
-  text-align: center;
+th {
+    text-align: left;
+    padding-bottom: 1rem;
 }
 
 .table-wrapper {
-    max-height: 60vh;
-    min-width: 1000px;
+    min-width: 800px;
+    height: 60vh;
     overflow: auto;
 }
 
