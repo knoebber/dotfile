@@ -84,7 +84,7 @@ func createTestFile(t *testing.T) {
 	}
 
 	_, err = connection.Exec(`
-INSERT INTO files(id, user_id, alias, path, revision, content)
+INSERT INTO files(id, user_id, alias, path, current_revision, content)
 VALUES(?, ?, ?, ?, ?, ?)`,
 		testFileID,
 		testUserID,

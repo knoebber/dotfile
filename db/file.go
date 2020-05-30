@@ -19,14 +19,14 @@ const (
 //
 // Both aliases and paths must be unique for each user.
 type File struct {
-	ID        int64
-	UserID    int64  `validate:"required"`
-	Alias     string `validate:"required"` // Friendly name for a file: bashrc
-	Path      string `validate:"required"` // Where the file lives: ~/.bashrc
-	Revision  string
-	Content   []byte `validate:"required"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID              int64
+	UserID          int64  `validate:"required"`
+	Alias           string `validate:"required"` // Friendly name for a file: bashrc
+	Path            string `validate:"required"` // Where the file lives: ~/.bashrc
+	CurrentRevision string
+	Content         []byte `validate:"required"`
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
 // FileSummary summarizes a file.
@@ -41,14 +41,14 @@ type FileSummary struct {
 func (*File) createStmt() string {
 	return `
 CREATE TABLE IF NOT EXISTS files(
-id         INTEGER PRIMARY KEY,
-user_id    INTEGER NOT NULL REFERENCES users,
-alias      TEXT NOT NULL,
-path       TEXT NOT NULL,
-revision   TEXT NOT NULL,
-content    BLOB NOT NULL,
-created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+id                 INTEGER PRIMARY KEY,
+user_id            INTEGER NOT NULL REFERENCES users,
+alias              TEXT NOT NULL,
+path               TEXT NOT NULL,
+current_revision   TEXT NOT NULL,
+content            BLOB NOT NULL,
+created_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS files_user_index ON files(user_id);
 CREATE UNIQUE INDEX IF NOT EXISTS files_user_alias_index ON files(user_id, alias);
@@ -84,11 +84,11 @@ func (f *File) check() error {
 
 func (f *File) insertStmt(e executor) (sql.Result, error) {
 	return e.Exec(`
-INSERT INTO files(user_id, alias, path, revision, content) VALUES(?, ?, ?, ?, ?)`,
+INSERT INTO files(user_id, alias, path, current_revision, content) VALUES(?, ?, ?, ?, ?)`,
 		f.UserID,
 		f.Alias,
 		f.Path,
-		f.Revision,
+		f.CurrentRevision,
 		f.Content,
 	)
 }
@@ -99,7 +99,7 @@ func (f *File) scan(row *sql.Row) error {
 		&f.UserID,
 		&f.Alias,
 		&f.Path,
-		&f.Revision,
+		&f.CurrentRevision,
 		&f.Content,
 		&f.CreatedAt,
 		&f.UpdatedAt,
@@ -135,7 +135,7 @@ func updateContent(tx *sql.Tx, fileID int64, content []byte, hash string) error 
 
 	if _, err := tx.Exec(`
 UPDATE files
-SET content = ?, revision = ?, updated_at = ?
+SET content = ?, current_revision = ?, updated_at = ?
 WHERE id = ?
 `, content, hash, time.Now(), fileID); err != nil {
 		return rollback(tx, errors.Wrapf(err, "updating content in file %d", fileID))

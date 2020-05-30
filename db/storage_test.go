@@ -100,7 +100,7 @@ func TestRevert(t *testing.T) {
 
 	f, err := getFileByUserID(testUserID, testAlias)
 	failIf(t, err, "getting file by user ID")
-	initialCommitHash := f.Revision
+	initialCommitHash := f.CurrentRevision
 
 	// Stage updated test content.
 	createTestTempFile(t, testUpdatedContent)

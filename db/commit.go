@@ -13,7 +13,7 @@ const (
 	commitCountQuery    = "SELECT COUNT(*) FROM commits WHERE file_id = ?"
 	commitValidateQuery = "SELECT COUNT(*) FROM commits WHERE file_id = ? AND hash = ?"
 	commitRevisionQuery = `
-SELECT commits.revision
+SELECT revision
 FROM commits
 JOIN files ON files.id = file_id
 WHERE file_id = ? AND hash = ?`
@@ -130,7 +130,7 @@ func GetCommitList(username, alias string) ([]CommitSummary, error) {
 	rows, err := connection.Query(`
 SELECT hash,
        message, 
-       hash = files.revision AS current,
+       hash = current_revision AS current,
        timestamp
 FROM commits
 JOIN files ON commits.file_id = files.id
@@ -171,8 +171,8 @@ func GetCommit(username, alias, hash string) (*CommitView, error) {
 SELECT hash,
        message,
        path,
-       hash = files.revision AS current,
-       commits.revision,
+       hash = current_revision AS current,
+       revision,
        timestamp
 FROM commits
 JOIN files ON commits.file_id = files.id
