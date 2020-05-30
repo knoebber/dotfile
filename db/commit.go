@@ -17,25 +17,6 @@ SELECT commits.revision
 FROM commits
 JOIN files ON files.id = file_id
 WHERE file_id = ? AND hash = ?`
-	commitListQuery = `
-SELECT hash,
-       message, 
-       timestamp
-FROM commits
-JOIN files ON commits.file_id = files.id
-JOIN users ON files.user_id = users.id
-WHERE username = ? AND alias = ?`
-	commitViewQuery = `
-SELECT hash,
-       message,
-       path,
-       timestamp,
-       commits.revision
-FROM commits
-JOIN files ON commits.file_id = files.id
-JOIN users ON files.user_id = users.id
-WHERE username = ? AND alias = ? AND hash = ?
-`
 )
 
 // Commit models the commits table.
@@ -52,6 +33,7 @@ type Commit struct {
 type CommitSummary struct {
 	Hash      string
 	Message   string
+	Current   bool
 	Timestamp string
 }
 
@@ -60,7 +42,6 @@ type CommitView struct {
 	CommitSummary
 	Path    string
 	Content string
-	Current bool
 }
 
 // Unique index prevents a file from having a duplicate hash.
@@ -146,7 +127,17 @@ func hasCommit(fileID int64, hash string) (bool, error) {
 // GetCommitList gets a summary of all commits for a file.
 func GetCommitList(username, alias string) ([]CommitSummary, error) {
 	result := []CommitSummary{}
-	rows, err := connection.Query(commitListQuery, username, alias)
+	rows, err := connection.Query(`
+SELECT hash,
+       message, 
+       hash = files.revision AS current,
+       timestamp
+FROM commits
+JOIN files ON commits.file_id = files.id
+JOIN users ON files.user_id = users.id
+WHERE username = ? AND alias = ?
+ORDER BY timestamp DESC
+`, username, alias)
 	if err != nil {
 		return nil, errors.Wrapf(err, "querying commits for user %#v file %#v", username, alias)
 	}
@@ -159,6 +150,7 @@ func GetCommitList(username, alias string) ([]CommitSummary, error) {
 		if err := rows.Scan(
 			&c.Hash,
 			&c.Message,
+			&c.Current,
 			&timestamp,
 		); err != nil {
 			return nil, errors.Wrapf(err, "scanning commits for user %#v file %#v", username, alias)
@@ -175,16 +167,28 @@ func GetCommit(username, alias, hash string) (*CommitView, error) {
 	timestamp := time.Time{}
 	revision := []byte{}
 
-	err := connection.QueryRow(commitViewQuery, username, alias, hash).
+	err := connection.QueryRow(`
+SELECT hash,
+       message,
+       path,
+       hash = files.revision AS current,
+       commits.revision,
+       timestamp
+FROM commits
+JOIN files ON commits.file_id = files.id
+JOIN users ON files.user_id = users.id
+WHERE username = ? AND alias = ? AND hash = ?
+`, username, alias, hash).
 		Scan(
 			&result.Hash,
 			&result.Message,
 			&result.Path,
-			&timestamp,
+			&result.Current,
 			&revision,
+			&timestamp,
 		)
 	if err != nil {
-		return nil, errors.Wrapf(err, "querying for user %v commit %#v %#v", username, alias, hash)
+		return nil, errors.Wrapf(err, "querying for %#v %#v %#v", username, alias, hash)
 	}
 	result.Timestamp = formatTime(timestamp)
 

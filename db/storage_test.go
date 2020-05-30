@@ -26,7 +26,7 @@ func TestNewStorage(t *testing.T) {
 	})
 
 	t.Run("file.Init works", func(t *testing.T) {
-		createTestTempFile(t)
+		createTestTempFile(t, testContent)
 		s, err := NewStorage(testUserID, testAlias)
 		failIf(t, err)
 		failIf(t, file.Init(s, testAlias))
@@ -92,4 +92,32 @@ func TestSaveCommit(t *testing.T) {
 		assert.Error(t, err)
 
 	})
+}
+
+func TestRevert(t *testing.T) {
+	createTestDB(t)
+	initTestFile(t)
+
+	f, err := getFileByUserID(testUserID, testAlias)
+	failIf(t, err, "getting file by user ID")
+	initialCommitHash := f.Revision
+
+	// Stage updated test content.
+	createTestTempFile(t, testUpdatedContent)
+	s := getTestStorage(t)
+
+	failIf(t, file.NewCommit(s, "Testing revert; updating to new content"), "creating test temp file")
+	failIf(t, s.Close(), "closing storage for commit setup")
+
+	f, err = getFileByUserID(testUserID, testAlias)
+	failIf(t, err, "getting file by user ID")
+	assert.Equal(t, testUpdatedContent, string(f.Content), "commit set file to updated content")
+
+	s = getTestStorage(t)
+	failIf(t, file.Checkout(s, initialCommitHash), "reverting file to", initialCommitHash)
+	failIf(t, s.Close(), "closing storage after checkout")
+
+	f, err = getFileByUserID(testUserID, testAlias)
+	assert.Equal(t, testContent, string(f.Content), "reverted to content from initial commit")
+
 }

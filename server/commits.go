@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/knoebber/dotfile/db"
+	"github.com/knoebber/dotfile/file"
 )
 
 func loadCommits(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
@@ -33,10 +34,31 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	p.Data["timestamp"] = commit.Timestamp
 	p.Data["content"] = commit.Content
 	p.Data["path"] = commit.Path
+	p.Data["current"] = commit.Current
 
 	p.Title = fmt.Sprintf("%s@%s", alias, hash)
 
 	return
+}
+
+func restoreFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+	alias := p.Vars["alias"]
+	hash := p.Vars["hash"]
+	storage, err := db.NewStorage(p.Session.UserID, alias)
+	if err != nil {
+		return p.setError(w, err)
+	}
+
+	if err := file.Checkout(storage, hash); err != nil {
+		return p.setError(w, err)
+	}
+
+	if err := storage.Close(); err != nil {
+		return p.setError(w, err)
+	}
+
+	return
+
 }
 
 func commitsHandler() http.HandlerFunc {
@@ -50,5 +72,6 @@ func commitHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "commit.tmpl",
 		loadData:     loadCommit,
+		handleForm:   restoreFile,
 	})
 }

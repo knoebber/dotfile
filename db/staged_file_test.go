@@ -35,7 +35,7 @@ func TestSetupStagedFile(t *testing.T) {
 
 	t.Run("ok", func(t *testing.T) {
 		tx := getTestTransaction(t)
-		createTestTempFile(t)
+		createTestTempFile(t, testContent)
 		_, err := setupStagedFile(tx, testUserID, testAlias)
 		assert.NoError(t, err)
 	})

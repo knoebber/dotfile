@@ -9,6 +9,7 @@
         <th>Hash</th>
         <th>Message</th>
         <th>Timestamp</th>
+        <th></th>
       </thead>
       <tbody>
         {{$username := .Vars.username}}
@@ -20,6 +21,9 @@
           </td>
           <td>{{.Message}}</td>
           <td>{{.Timestamp}}</td>
+          {{ if .Current }}
+          <td><em>Current</em></td>
+          {{ end }}
         </tr>
         {{end}}
       </tbody>

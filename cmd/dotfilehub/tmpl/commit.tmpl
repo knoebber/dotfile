@@ -9,7 +9,11 @@
   <br>
   <em>{{.Data.timestamp}}</em>
   {{template "file_content" .}}
-  <form class="form-redirect">
+  {{ if .Data.current }}
+  <strong>Current revision</strong>
+  {{ else }}
+  <form method="post" class="form-redirect">
     <button class="success">Restore</button>
   </form>
+  {{ end }}
 </body>

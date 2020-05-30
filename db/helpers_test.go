@@ -7,23 +7,25 @@ import (
 	"testing"
 	"time"
 
+	"github.com/knoebber/dotfile/file"
 	"golang.org/x/crypto/bcrypt"
 )
 
 const (
-	testDir      = "testdata/"
-	testAlias    = "testalias"
-	testPath     = "~/dotfile/test-file.txt"
-	testFileID   = 1
-	testUserID   = 1
-	testContent  = "Testing content. Stored as a blob."
-	testRevision = "Commit revision contents"
-	testHash     = "9abdbcf4ea4e2c1c077c21b8c2f2470ff36c31ce"
-	testMessage  = "commit message"
-	testUsername = "dotfile_user"
-	testPassword = "ilovecatS!"
-	testEmail    = "dot@dotfilehub.com"
-	testCliToken = "12345678"
+	testDir            = "testdata/"
+	testAlias          = "testalias"
+	testPath           = "~/dotfile/test-file.txt"
+	testFileID         = 1
+	testUserID         = 1
+	testContent        = "Testing content. Stored as a blob."
+	testUpdatedContent = testContent + "\n New content!\n"
+	testRevision       = "Commit revision contents"
+	testHash           = "9abdbcf4ea4e2c1c077c21b8c2f2470ff36c31ce"
+	testMessage        = "commit message"
+	testUsername       = "dotfile_user"
+	testPassword       = "ilovecatS!"
+	testEmail          = "dot@dotfilehub.com"
+	testCliToken       = "12345678"
 )
 
 func createTestDB(t *testing.T) {
@@ -96,14 +98,14 @@ VALUES(?, ?, ?, ?, ?, ?)`,
 	}
 }
 
-func createTestTempFile(t *testing.T) *TempFile {
+func createTestTempFile(t *testing.T, content string) *TempFile {
 	createTestUser(t)
 
 	testTempFile := &TempFile{
 		UserID:  testUserID,
 		Alias:   testAlias,
 		Path:    testPath,
-		Content: []byte(testContent),
+		Content: []byte(content),
 	}
 	id, err := insert(testTempFile, nil)
 	if err != nil {
@@ -161,4 +163,13 @@ func getTestTransaction(t *testing.T) *sql.Tx {
 	tx, err := connection.Begin()
 	failIf(t, err)
 	return tx
+}
+
+func initTestFile(t *testing.T) {
+	createTestTempFile(t, testContent)
+
+	s, err := NewStorage(testUserID, testAlias)
+	failIf(t, err, "initializing test file")
+	file.Init(s, testAlias)
+	failIf(t, s.Close(), "closing storage in init test file")
 }

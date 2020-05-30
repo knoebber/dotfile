@@ -50,7 +50,7 @@ func (s *Storage) HasCommit(hash string) (exists bool, err error) {
 // Returns an error if the temp file is not set.
 func (s *Storage) GetContents() ([]byte, error) {
 	if len(s.Staged.DirtyContent) == 0 {
-		return nil, errors.New("temp file has not content")
+		return nil, errors.New("temp file has no content")
 	}
 
 	return s.Staged.DirtyContent, nil
