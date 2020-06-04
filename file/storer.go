@@ -6,9 +6,15 @@ import (
 	"time"
 
 	"github.com/knoebber/dotfile/usererr"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-const initialCommitMessage = "Initial commit"
+const (
+	diffCmd              = "diff"
+	diffType             = "-u" // unified view
+	colorOption          = "--color"
+	initialCommitMessage = "Initial commit"
+)
 
 // Storer is an interface that encapsulates the I/O that is required for dotfile.
 type Storer interface {
@@ -87,4 +93,33 @@ func Checkout(s Storer, hash string) error {
 	}
 
 	return nil
+}
+
+// Diff runs a diff on the revision at hash1 against the revision at hash2.
+// If hash2 is empty, compares the current contents of the file.
+func Diff(s Storer, hash1, hash2 string) ([]diffmatchpatch.Diff, error) {
+	var text1, text2 string
+
+	revision1, err := UncompressRevision(s, hash1)
+	if err != nil {
+		return nil, err
+	}
+
+	text1 = revision1.String()
+
+	if hash2 == "" {
+		contents, err := s.GetContents()
+		if err != nil {
+			return nil, err
+		}
+		text2 = string(contents)
+	} else {
+		revision2, err := UncompressRevision(s, hash2)
+		if err != nil {
+			return nil, err
+		}
+		text2 = revision2.String()
+	}
+
+	return diffmatchpatch.New().DiffMain(text1, text2, false), nil
 }

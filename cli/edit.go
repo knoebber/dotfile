@@ -2,10 +2,14 @@ package cli
 
 import (
 	"os"
+	"os/exec"
 
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
+
+// Allows for easy unit tests.
+var execCommand = exec.Command
 
 type editCommand struct {
 	fileName string

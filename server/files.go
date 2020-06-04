@@ -2,11 +2,19 @@ package server
 
 import (
 	"fmt"
+	"html"
+	"html/template"
 	"net/http"
 
 	"github.com/knoebber/dotfile/db"
 	"github.com/knoebber/dotfile/file"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
+
+type diff struct {
+	Text template.HTML
+	Type diffmatchpatch.Operation
+}
 
 // Handles submitting the new file form.
 func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
@@ -143,21 +151,33 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 // Loads the contents of a users temp file for the new commit page.
 func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	alias := p.Vars["alias"]
-
-	tempFile, err := db.GetTempFile(p.Session.UserID, alias)
+	storage, err := db.NewStorage(p.Session.UserID, alias)
 	if err != nil {
 		return p.setError(w, err)
 	}
 
-	p.Data["alias"] = tempFile.Alias
-	p.Data["path"] = tempFile.Path
-	p.Data["content"] = string(tempFile.Content)
+	diffs, err := file.Diff(storage, storage.Staged.CurrentRevision, "")
+	if err != nil {
+		return p.setError(w, err)
+	}
+
+	result := make([]diff, len(diffs))
+	for i, d := range diffs {
+		result[i] = diff{
+			Text: template.HTML(html.EscapeString(d.Text)),
+			Type: d.Type,
+		}
+	}
+
+	p.Data["diffs"] = result
+	p.Data["alias"] = storage.Staged.Alias
+	p.Data["path"] = storage.Staged.Path
 	p.Data["editAction"] = fmt.Sprintf("/%s/%s/edit", p.Session.Username, alias)
-	p.Title = tempFile.Alias + " | Commit"
+	p.Title = storage.Staged.Alias + " | Commit"
 	return
 }
 
-// Loads the contents of a users temp file for the new commit page.
+// Loads the contents of a users temp file for the new file page.
 func loadNewFileConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	tempFile, err := db.GetTempFile(p.Session.UserID, p.Vars["alias"])
 	if err != nil {
@@ -167,7 +187,6 @@ func loadNewFileConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done b
 	p.Data["alias"] = tempFile.Alias
 	p.Data["path"] = tempFile.Path
 	p.Data["content"] = string(tempFile.Content)
-	p.Data["newFile"] = true
 	p.Data["editAction"] = "/new_file"
 	p.Title = "New File"
 	return
@@ -203,7 +222,7 @@ func confirmNewFileHandler() http.HandlerFunc {
 
 func confirmEditHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
-		templateName: "confirm_file.tmpl",
+		templateName: "confirm_edit.tmpl",
 		handleForm:   confirmTempFile,
 		loadData:     loadCommitConfirm,
 		protected:    true,

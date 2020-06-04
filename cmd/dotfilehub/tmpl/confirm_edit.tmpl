@@ -3,9 +3,11 @@
   {{template "nav" .}}
   {{template "flash" .}}
   <h1>{{.Title}}</h1>
-  {{template "file_content" .}}
+  {{template "diff" .}}
   <div class="flex-between">
     <form method="post" class="">
+      <label for="message">Commit Message</label>
+      <input id="message" name="message">
       <button class="success">Create</button>
     </form>
     <form method="get" action="{{.Data.editAction}}" class="form-redirect">

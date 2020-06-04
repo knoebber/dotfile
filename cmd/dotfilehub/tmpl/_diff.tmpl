@@ -1,0 +1,16 @@
+{{define "diff"}}
+<div>
+  <strong>{{.Data.path}}</strong>
+  <pre><code>
+    {{- range .Data.diffs -}}
+    {{- if eq .Type 1 -}}
+    <ins>{{- .Text -}}</ins>
+    {{- else if eq .Type 0 -}}
+    <span>{{- .Text -}}</span>
+    {{- else if eq .Type -1 -}}
+    <del>{{- .Text -}}</del>
+    {{- end }}
+    {{- end }}
+  </pre></code>
+</div>
+{{end}}

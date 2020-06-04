@@ -3,19 +3,20 @@ package db
 import "database/sql"
 
 type stagedFile struct {
-	FileID       int64
-	UserID       int64
-	Alias        string
-	Path         string
-	DirtyContent []byte
-	New          bool
+	FileID          int64
+	UserID          int64
+	Alias           string
+	Path            string
+	CurrentRevision string
+	DirtyContent    []byte
+	New             bool
 }
 
-// TODO test transaction logic more.
 func setupStagedFile(tx *sql.Tx, userID int64, alias string) (*stagedFile, error) {
 	var (
-		dirtyContent []byte
-		new          bool
+		dirtyContent    []byte
+		new             bool
+		currentRevision string
 	)
 
 	file, err := getFileByUserID(userID, alias)
@@ -39,6 +40,8 @@ func setupStagedFile(tx *sql.Tx, userID int64, alias string) (*stagedFile, error
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		currentRevision = file.CurrentRevision
 	}
 
 	if tempFile != nil {
@@ -46,11 +49,12 @@ func setupStagedFile(tx *sql.Tx, userID int64, alias string) (*stagedFile, error
 	}
 
 	return &stagedFile{
-		New:          new,
-		FileID:       file.ID,
-		UserID:       file.UserID,
-		Alias:        file.Alias,
-		Path:         file.Path,
-		DirtyContent: dirtyContent,
+		New:             new,
+		CurrentRevision: currentRevision,
+		FileID:          file.ID,
+		UserID:          file.UserID,
+		Alias:           file.Alias,
+		Path:            file.Path,
+		DirtyContent:    dirtyContent,
 	}, nil
 }

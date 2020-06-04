@@ -1,19 +1,13 @@
 package cli
 
 import (
+	"bytes"
 	"fmt"
-	"os"
-	"os/exec"
+	"strings"
 
 	"github.com/knoebber/dotfile/file"
-	"github.com/knoebber/dotfile/local"
+	"github.com/sergi/go-diff/diffmatchpatch"
 	"gopkg.in/alecthomas/kingpin.v2"
-)
-
-const (
-	diffCmd     = "diff"
-	diffType    = "-u" // unified view
-	colorOption = "--color"
 )
 
 type diffCommand struct {
@@ -22,6 +16,8 @@ type diffCommand struct {
 }
 
 func (d *diffCommand) run(ctx *kingpin.ParseContext) error {
+	var buff bytes.Buffer
+
 	s, err := loadFile(d.fileName)
 	if err != nil {
 		return err
@@ -31,64 +27,41 @@ func (d *diffCommand) run(ctx *kingpin.ParseContext) error {
 		d.commitHash = s.Tracking.Revision
 	}
 
-	if _, err := exec.LookPath(diffCmd); err != nil {
-		return fmt.Errorf("%s not found in $PATH", diffCmd)
-	}
-
-	return diff(s, d.fileName, d.commitHash)
-}
-
-// Color is supported by GNU diff utilities 3.4 and greater.
-// https://savannah.gnu.org/forum/forum.php?forum_id=8639
-func diffSupportsColor() bool {
-	return execCommand(diffCmd, colorOption, "/dev/null", "/dev/null").Run() == nil
-}
-
-func diff(s *local.Storage, fileName, hash string) error {
-	var cmd *exec.Cmd
-
-	path, err := s.GetPath()
+	diffs, err := file.Diff(s, d.commitHash, "")
 	if err != nil {
 		return err
 	}
 
-	lastRevision, err := file.UncompressRevision(s, hash)
-	if err != nil {
-		return err
+	for _, diff := range diffs {
+		text := diff.Text
+
+		switch diff.Type {
+		case diffmatchpatch.DiffInsert:
+			_, _ = buff.WriteString("\x1b[32m")
+			_, _ = buff.WriteString(text)
+			_, _ = buff.WriteString("\x1b[0m")
+		case diffmatchpatch.DiffDelete:
+			_, _ = buff.WriteString("\x1b[31m")
+			_, _ = buff.WriteString(text)
+			_, _ = buff.WriteString("\x1b[0m")
+		case diffmatchpatch.DiffEqual:
+			_, _ = buff.WriteString(shortenEqualText(text))
+		}
 	}
 
-	if diffSupportsColor() {
-		cmd = execCommand(diffCmd, diffType, colorOption, "-", path)
-	} else {
-		cmd = execCommand(diffCmd, diffType, "-", path)
-	}
-
-	cmd.Stdin = lastRevision
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err = cmd.Run()
-
-	if err == nil {
-		fmt.Println("No changes")
-		return nil
-	}
-
-	exitErr, ok := err.(*exec.ExitError)
-	if !ok {
-		return err
-	}
-
-	exitCode := exitErr.ExitCode()
-
-	// diff returns 1 when file has changes.
-	if exitCode == 1 {
-		return nil
-	} else if exitCode > 1 {
-		return err
-	}
-
+	fmt.Println(buff.String())
 	return nil
+}
+
+func shortenEqualText(text string) string {
+	lines := strings.Split(text, "\n")
+	if len(lines) <= 3 {
+		return text
+	}
+
+	// There are atleast 4 lines.
+	// Take the first and last two lines; discard the rest.
+	return strings.Join(lines[:2], "\n") + "\n" + strings.Join(lines[len(lines)-2:], "\n")
 }
 
 func addDiffSubCommandToApplication(app *kingpin.Application) {

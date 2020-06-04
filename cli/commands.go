@@ -2,7 +2,6 @@ package cli
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/knoebber/dotfile/local"
@@ -15,13 +14,7 @@ type cliConfig struct {
 	home       string
 }
 
-var (
-	config cliConfig
-
-	// Used for edit and diff.
-	// Allows for easy unit tests.
-	execCommand = exec.Command
-)
+var config cliConfig
 
 func getHome() (string, error) {
 	home, err := os.UserHomeDir()

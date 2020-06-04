@@ -117,6 +117,14 @@ th {
     padding-bottom: 1rem;
 }
 
+ins {
+    color: green;
+}
+
+del {
+    color: red;
+}
+
 .table-wrapper {
     min-width: 800px;
     height: 60vh;
