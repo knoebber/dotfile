@@ -95,7 +95,7 @@ func (s *Storage) GetRevision(hash string) ([]byte, error) {
 
 	bytes, err := ioutil.ReadFile(revisionPath)
 	if err != nil {
-		return nil, errors.Wrap(err, "reading revision")
+		return nil, errors.Wrapf(err, "reading revision %#v", hash)
 	}
 
 	return bytes, nil
