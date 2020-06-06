@@ -6,7 +6,7 @@
     {{- if eq .Type 1 -}}
     <ins>{{- .Text -}}</ins>
     {{- else if eq .Type 0 -}}
-    <span>{{- .Text -}}</span>
+    <span>{{- shortenEqualText .Text -}}</span>
     {{- else if eq .Type -1 -}}
     <del>{{- .Text -}}</del>
     {{- end }}

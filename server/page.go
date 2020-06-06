@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/knoebber/dotfile/db"
+	"github.com/knoebber/dotfile/file"
 	"github.com/knoebber/dotfile/usererr"
 	"github.com/pkg/errors"
 )
@@ -136,6 +137,10 @@ func newPage(w http.ResponseWriter, r *http.Request, templateName, title string,
 }
 
 func loadTemplates() (err error) {
-	templates, err = template.ParseGlob("tmpl/*.tmpl")
+	templates, err = template.New("dotfilehub").Funcs(template.FuncMap{
+		// Global functions that templates can call.
+		"shortenEqualText": file.ShortenEqualText,
+	}).ParseGlob("tmpl/*.tmpl")
+
 	return
 }

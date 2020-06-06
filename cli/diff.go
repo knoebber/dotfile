@@ -3,7 +3,6 @@ package cli
 import (
 	"bytes"
 	"fmt"
-	"strings"
 
 	"github.com/knoebber/dotfile/file"
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -45,23 +44,12 @@ func (d *diffCommand) run(ctx *kingpin.ParseContext) error {
 			_, _ = buff.WriteString(text)
 			_, _ = buff.WriteString("\x1b[0m")
 		case diffmatchpatch.DiffEqual:
-			_, _ = buff.WriteString(shortenEqualText(text))
+			_, _ = buff.WriteString(file.ShortenEqualText(text))
 		}
 	}
 
 	fmt.Println(buff.String())
 	return nil
-}
-
-func shortenEqualText(text string) string {
-	lines := strings.Split(text, "\n")
-	if len(lines) <= 3 {
-		return text
-	}
-
-	// There are atleast 4 lines.
-	// Take the first and last two lines; discard the rest.
-	return strings.Join(lines[:2], "\n") + "\n" + strings.Join(lines[len(lines)-2:], "\n")
 }
 
 func addDiffSubCommandToApplication(app *kingpin.Application) {

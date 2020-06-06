@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"strings"
 
 	"github.com/knoebber/dotfile/usererr"
 	"github.com/pkg/errors"
@@ -86,4 +87,18 @@ func Uncompress(compressed []byte) (*bytes.Buffer, error) {
 	}
 
 	return uncompressed, nil
+}
+
+// ShortenEqualText splits text into newlines and discards everything in the middle.
+// Used for removing equal text in a diff that is not near any changes.
+//
+// When there are less than 4 lines returns text unchanged.
+// Otherwise takes the first/last two lines and discards the rest.
+func ShortenEqualText(text string) string {
+	lines := strings.Split(text, "\n")
+	if len(lines) <= 3 {
+		return text
+	}
+
+	return strings.Join(lines[:2], "\n") + "\n" + strings.Join(lines[len(lines)-2:], "\n")
 }

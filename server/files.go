@@ -2,19 +2,11 @@ package server
 
 import (
 	"fmt"
-	"html"
-	"html/template"
 	"net/http"
 
 	"github.com/knoebber/dotfile/db"
 	"github.com/knoebber/dotfile/file"
-	"github.com/sergi/go-diff/diffmatchpatch"
 )
-
-type diff struct {
-	Text template.HTML
-	Type diffmatchpatch.Operation
-}
 
 // Handles submitting the new file form.
 func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
@@ -148,7 +140,7 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 	return
 }
 
-// Loads the contents of a users temp file for the new commit page.
+// Loads the contents of a users temp file for the confirm edit page.
 func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	alias := p.Vars["alias"]
 	storage, err := db.NewStorage(p.Session.UserID, alias)
@@ -156,24 +148,18 @@ func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bo
 		return p.setError(w, err)
 	}
 
+	// TODO show user when there are no changes. Currently shows the first and last
+	// two lines of the unchanged file which is user friendly.
 	diffs, err := file.Diff(storage, storage.Staged.CurrentRevision, "")
 	if err != nil {
 		return p.setError(w, err)
 	}
 
-	result := make([]diff, len(diffs))
-	for i, d := range diffs {
-		result[i] = diff{
-			Text: template.HTML(html.EscapeString(d.Text)),
-			Type: d.Type,
-		}
-	}
-
-	p.Data["diffs"] = result
+	p.Data["diffs"] = diffs
 	p.Data["alias"] = storage.Staged.Alias
 	p.Data["path"] = storage.Staged.Path
 	p.Data["editAction"] = fmt.Sprintf("/%s/%s/edit", p.Session.Username, alias)
-	p.Title = storage.Staged.Alias + " | Commit"
+	p.Title = "Edit " + storage.Staged.Alias
 	return
 }
 

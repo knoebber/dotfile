@@ -14,6 +14,7 @@ html {
     background: var(--background);
     line-height: 1.6;
     font-family: Roboto, Arial, sans-serif;
+    padding-bottom: 1rem;
 }
 
 body {
