@@ -22,6 +22,7 @@ func setupRoutes(r *mux.Router, secure bool) {
 func staticRoutes(r *mux.Router, secure bool) {
 	r.HandleFunc("/", getIndexHandler())
 	r.HandleFunc("/about", getAboutHandler())
+	r.HandleFunc("/acknowledgments", getAcknowledgmentsHander())
 	r.HandleFunc("/signup", signupHandler(secure))
 	r.HandleFunc("/login", loginHandler(secure))
 	r.HandleFunc("/logout", logoutHandler())

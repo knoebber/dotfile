@@ -15,3 +15,10 @@ func getAboutHandler() http.HandlerFunc {
 		title:        aboutTitle,
 	})
 }
+
+func getAcknowledgmentsHander() http.HandlerFunc {
+	return createHandler(&pageDescription{
+		templateName: "acknowledgments.tmpl",
+		title:        "Acknowledgments",
+	})
+}
