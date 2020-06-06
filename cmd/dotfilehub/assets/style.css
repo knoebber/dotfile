@@ -161,11 +161,21 @@ del {
     margin-right: 2rem;
 }
 
+@media (min-width: 1051px) {
+    /* Break point for desktop views */
+
+    html {
+        /* Create a margin the size of the scroll bar.
+         * Prevents layout from jumping between pages with and without vertical scroll bar */
+        margin-left: calc(100vw - 100%);
+    }
+}
+
+
 @media (max-width: 1050px) {
     /* Break point of when nav bar takes most of the screen up */
-    /* Kind of hacky layout, would like to come back to this */
     body {
-        margin: 3rem;
+        margin: 0 3rem 3rem 3rem;
     }
     section {
         margin: unset;
@@ -173,6 +183,7 @@ del {
 }
 
 @media (max-width: 600px) {
+    /* Break point for mobile views */
     body {
         margin: .5rem;
     }
@@ -195,3 +206,4 @@ del {
         margin-left: unset;
     }
 }
+
