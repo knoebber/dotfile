@@ -2,7 +2,13 @@
 <body>
   {{template "nav" .}}
   {{template "flash" .}}
-  <h1>{{ .Title }}</h1>
+  <h1>
+    {{ if .Data.newFile }}
+    {{ .Title }}
+    {{ else }}
+    <a href="/{{.Session.Username}}/{{.Vars.alias}}">{{.Vars.alias}}</a> - Edit
+    {{ end }}
+  </h1>
   <form method="post">
     {{ if .Data.newFile }}
     <label for="name">Name:</label>
@@ -18,6 +24,7 @@
       rows="30"
       id="contents"
       name="contents"
+      spellcheck="false"
       required
     >{{.Data.content}}</textarea>
     <button>Submit</button>

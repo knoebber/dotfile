@@ -41,7 +41,9 @@ type Page struct {
 
 // Owned returns whether the current logged in user owns the page.
 func (p *Page) Owned() bool {
-	return p.Session != nil && p.Session.Username == p.Vars["username"]
+	pageOwner := p.Vars["username"]
+
+	return pageOwner == "" || (p.Session != nil && p.Session.Username == pageOwner)
 }
 
 func (p *Page) flashSuccess(msg string) {

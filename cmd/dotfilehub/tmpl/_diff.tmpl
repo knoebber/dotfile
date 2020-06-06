@@ -1,6 +1,8 @@
 {{define "diff"}}
 <div>
-  <strong>{{.Data.path}}</strong>
+  <div class="file-controls flex-between">
+    <strong>{{.Data.path}}</strong>
+  </div>
   <pre><code>
     {{- range .Data.diffs -}}
     {{- if eq .Type 1 -}}

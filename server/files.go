@@ -159,7 +159,7 @@ func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bo
 	p.Data["alias"] = storage.Staged.Alias
 	p.Data["path"] = storage.Staged.Path
 	p.Data["editAction"] = fmt.Sprintf("/%s/%s/edit", p.Session.Username, alias)
-	p.Title = "Edit " + storage.Staged.Alias
+	p.Title = storage.Staged.Alias + " - edit"
 	return
 }
 

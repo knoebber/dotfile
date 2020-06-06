@@ -21,6 +21,7 @@ type pageDescription struct {
 	loadData   pageBuilder
 	handleForm pageBuilder
 
+	// When true, the user must be logged in and the {username} var has to match the user.
 	protected bool
 }
 
@@ -33,9 +34,14 @@ func createHandler(desc *pageDescription) http.HandlerFunc {
 			return
 		}
 
-		if page.protected && page.Session == nil {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			return
+		if page.protected {
+			if page.Session == nil {
+				http.Redirect(w, r, "/login", http.StatusSeeOther)
+				return
+			} else if !page.Owned() {
+				permissionDenied(w, page.Session.Username, page.Vars["username"])
+				return
+			}
 		}
 
 		// Optionally handle a form.
@@ -48,7 +54,7 @@ func createHandler(desc *pageDescription) http.HandlerFunc {
 			if desc.handleForm(w, r, page) {
 				// Returns true when the form handler wrote the response writer.
 				// Common case is the form set a redirect.
-				// No need to load more data or render the template in this case.
+				// Don't render the template in this case.
 				return
 			}
 		}
@@ -80,6 +86,11 @@ func templateError(w http.ResponseWriter, title string, err error) {
 
 func badRequest(w http.ResponseWriter, err error) {
 	setError(w, err, "Request is invalid", http.StatusBadRequest)
+}
+
+func permissionDenied(w http.ResponseWriter, user, owner string) {
+	err := fmt.Errorf("%#v attempted to modify user %#v resource", user, owner)
+	setError(w, err, "Permission denied", http.StatusForbidden)
 }
 
 func setError(w http.ResponseWriter, err error, errMsg string, status int) {

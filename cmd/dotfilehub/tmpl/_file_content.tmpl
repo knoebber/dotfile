@@ -1,6 +1,21 @@
 {{define "file_content"}}
-<div class="file-content">
-  <strong>{{.Data.path}}</strong>
-  <pre><code>{{.Data.content}}</pre></code>
+<div class="file-content-wrapper">
+  <div class="file-controls flex-between">
+    <strong>{{.Data.path}}</strong>
+    <a href="/{{.Vars.username}}/{{.Vars.alias}}/commits">Commits</a>
+    {{ if not .Data.editAction | and .Owned }}
+    <a href="/{{.Vars.username}}/{{.Vars.alias}}/edit">Edit</a>
+    {{ end }}
+    <form method="get" class="flex-between">
+      <select name="hash">
+        <option value="">Current</option>
+        <option value="hash1">12332443</option>
+        <option value="hash2">sdfdslf4</option>
+        <option value="hash3">3435sd4r</option>
+      </select>
+      <button>Diff</button>
+    </form>
+  </div>
+  <pre class=""><code>{{.Data.content}}</pre></code>
 </div>
 {{end}}

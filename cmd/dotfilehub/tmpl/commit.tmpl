@@ -10,8 +10,8 @@
   <p><em>{{.Data.message}}</em></p>
   {{ if .Data.current }}
   <strong>Current revision</strong>
-  {{ else }}
-  <form method="post" class="form-redirect">
+  {{ else if .Owned }}
+  <form method="post" class="empty">
     <button class="success">Restore</button>
   </form>
   {{ end }}

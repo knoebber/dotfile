@@ -1,9 +1,9 @@
 :root {
-    --main: #f2eef5;
     --background: #fffffe;
     --headline: #181818;
     --paragraph: #2e2e2e;
     --highlight: #4fc4cf;
+    --main: #f2eef5;
     --secondary: #994ff3;
     --tertiary: #fbdd74;
 }
@@ -34,6 +34,10 @@ section {
 
 button, a, h1, h2, h3, h4, label {
     color: var(--headline);
+}
+
+p {
+    color: var(--paragraph);
 }
 
 a:hover, .active {
@@ -75,7 +79,7 @@ label:hover {
     text-decoration: underline;
 }
 
-form:not(.form-redirect) {
+form[method="post"]:not(.empty), .grid-form {
     display: grid;
     max-width: 500px;
     gap: 1rem;
@@ -94,15 +98,20 @@ input {
     font-size: 1.1rem;
 }
 
+input, textarea {
+    background-color: var(--main);
+}
+
 pre {
     padding: 10px;
     margin-top: 0;
     font-family: source-code-pro,Menlo,Monaco,Consolas,Courier New,monospace;
-    background: var(--paragraph);
-    border-radius: 3px;
+    background: var(--main);
+    border-radius: 0 0 3px 3px;
     overflow: auto;
-    color: var(--background);
+    color: var(--paragraph);
     max-height: 60vh;
+    border: solid 1px var(--paragraph);
 }
 
 table {
@@ -126,16 +135,6 @@ del {
     color: red;
 }
 
-.table-wrapper {
-    min-width: 800px;
-    height: 60vh;
-    overflow: auto;
-}
-
-.file-content {
-    margin-top: 1rem;
-}
-
 .flash-error, .flash-success {
     padding: 1rem;
     border-radius: 3px;
@@ -156,9 +155,34 @@ del {
     justify-content: space-between;
     align-items: end;
 }
+.table-wrapper {
+    min-width: 800px;
+    height: 60vh;
+    overflow: auto;
+}
 
-.file-nav > a {
-    margin-right: 2rem;
+.file-content-wrapper {
+    margin-top: 1rem;
+}
+
+.file-controls {
+    /* Applied to div placed above a <pre> element */
+    border-top: solid 1px var(--paragraph);
+    border-left: solid 1px var(--paragraph);
+    border-right: solid 1px var(--paragraph);
+    border-radius: 3px 3px 0 0;
+    align-items: center;
+}
+
+.file-controls > form {
+    margin: 0;
+    align-items: center;
+}
+
+.file-controls button {
+    min-width: unset;
+    padding: 0 1rem 0 1rem;
+    margin: 0 1rem 0 1rem;
 }
 
 @media (min-width: 1051px) {

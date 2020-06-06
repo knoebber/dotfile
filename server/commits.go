@@ -41,7 +41,19 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	return
 }
 
+// Handles submitting the restore form on the commits page.
+// This route isn't protected because any user can view any commit.
+// Adds permission checks so only an owner can restore their file.
 func restoreFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+	if p.Session == nil {
+		permissionDenied(w, "", p.Vars["username"])
+		return true
+	}
+	if !p.Owned() {
+		permissionDenied(w, p.Session.Username, p.Vars["username"])
+		return true
+	}
+
 	alias := p.Vars["alias"]
 	hash := p.Vars["hash"]
 	storage, err := db.NewStorage(p.Session.UserID, alias)
