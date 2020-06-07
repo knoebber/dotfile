@@ -37,15 +37,18 @@ type Page struct {
 
 	Session      *db.Session
 	templateName string
-	protected    bool // If true, redirect user to login when session is nil.
+
+	// When true restrict page access to logged in page owners.
+	protected bool
 }
 
-// Owned returns whether the current logged in user owns the page.
+// Owned returns whether the logged in user owns the page.
+// Pages without the {username} var are owned by every user.
 func (p *Page) Owned() bool {
-	pageOwner := strings.ToLower(p.Vars["username"])
+	pageOwner := p.Vars["username"]
 
 	return pageOwner == "" ||
-		(p.Session != nil && strings.ToLower(p.Session.Username) == pageOwner)
+		(p.Session != nil && strings.EqualFold(p.Session.Username, pageOwner))
 }
 
 func (p *Page) flashSuccess(msg string) {
