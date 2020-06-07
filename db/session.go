@@ -8,20 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	sessionLength = 24
-	sessionQuery  = `
-SELECT sessions.id,
-       session,
-       users.id,
-       username,
-       sessions.created_at,
-       session_locations.ip
-FROM sessions
-JOIN users ON users.id = user_id 
-LEFT JOIN session_locations ON session_id = sessions.id AND last = 1
-`
-)
+const sessionLength = 24
 
 // Session is the model for the sessions table.
 // It tracks a user's active sessions.
@@ -89,12 +76,23 @@ func session() (string, error) {
 	return base64.URLEncoding.EncodeToString(buff), nil
 }
 
-// CheckSession checks if session exists, and adds a new row to session_locations if the IP is new.
+// CheckSession checks if session is valid.
+// Adds a new row to session_locations if the IP is different than the last time it was checked.
 func CheckSession(session, ip string) (*Session, error) {
 	s := new(Session)
 
 	err := connection.
-		QueryRow(sessionQuery+" WHERE deleted_at IS NULL AND session = ?", session).
+		QueryRow(`
+SELECT sessions.id,
+       session,
+       users.id,
+       username,
+       sessions.created_at,
+       session_locations.ip
+FROM sessions
+JOIN users ON users.id = user_id
+LEFT JOIN session_locations ON session_id = sessions.id AND last = 1
+WHERE deleted_at IS NULL AND session = ?`, session).
 		Scan(
 			&s.ID,
 			&s.Session,

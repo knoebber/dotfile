@@ -166,15 +166,20 @@ WHERE username = ? AND alias = ?
 
 // GetFilesByUsername gets a summary of all a users files.
 func GetFilesByUsername(username string) ([]FileSummary, error) {
+	var alias, path *string
+	f := FileSummary{}
+	updatedAt := new(time.Time)
+
 	result := []FileSummary{}
 	rows, err := connection.Query(`
-SELECT alias,
+SELECT 
+       alias,
        path,
        COUNT(commits.id) AS num_commits,
        updated_at
-FROM files
-JOIN users on user_id = users.id
-JOIN commits on file_id = files.id
+FROM users
+LEFT JOIN files ON user_id = users.id
+LEFT JOIN commits ON file_id = files.id
 WHERE username = ?
 GROUP BY files.id`, username)
 	if err != nil {
@@ -183,20 +188,29 @@ GROUP BY files.id`, username)
 	defer rows.Close()
 
 	for rows.Next() {
-		f := FileSummary{}
-		updatedAt := time.Time{}
-
 		if err := rows.Scan(
-			&f.Alias,
-			&f.Path,
+			&alias,
+			&path,
 			&f.NumCommits,
 			&updatedAt,
 		); err != nil {
 			return nil, errors.Wrapf(err, "scanning files for user %#v", username)
 		}
 
-		f.UpdatedAt = formatTime(updatedAt)
+		// These are nil when no files are found but user exists.
+		if alias == nil || path == nil || updatedAt == nil {
+			return result, nil
+		}
+
+		f.UpdatedAt = formatTime(*updatedAt)
+		f.Alias = *alias
+		f.Path = *path
+
 		result = append(result, f)
+	}
+	if len(result) == 0 {
+		// User doesn't exist.
+		return nil, sql.ErrNoRows
 	}
 
 	return result, nil
