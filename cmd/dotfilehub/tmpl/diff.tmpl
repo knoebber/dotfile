@@ -1,0 +1,13 @@
+{{ template "head" . }}
+<body>
+  {{ template "nav" . }}
+  {{ template "flash" . }}
+  <h1>
+    {{ $on := .Data.hash }}
+    {{ $against := .Data.against }}
+    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a> @
+    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/{{ $on }}">{{ slice $on 0 7 }}</a> against
+    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/{{ $against }}">{{ slice $against 0 7 }}</a>
+  </h1>
+  {{ template "diff" . }}
+</body>

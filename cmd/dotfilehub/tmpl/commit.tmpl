@@ -3,7 +3,10 @@
   {{ template "nav" . }}
   {{ template "flash" . }}
   <h1>
-    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a>@{{ .Vars.hash }}
+    {{ $hash := .Data.hash }}
+    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}">
+      {{ .Vars.alias -}}
+    </a> @ {{ slice $hash 0 7 }}
   </h1>
   {{ template "file_content" . }}
   <p>{{ .Data.timestamp }}</p>

@@ -93,12 +93,22 @@ func confirmTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool
 
 // Loads the contents of a file by its alias.
 func loadFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	file, err := db.GetFileByUsername(p.Vars["username"], p.Vars["alias"])
+	username := p.Vars["username"]
+	alias := p.Vars["alias"]
+
+	file, err := db.GetFileByUsername(username, alias)
 	if err != nil {
 		return p.setError(w, err)
 	}
 
+	commits, err := db.GetCommitList(username, alias)
+	if err != nil {
+		return p.setError(w, err)
+	}
+
+	p.Data["commits"] = commits
 	p.Data["path"] = file.Path
+	p.Data["hash"] = file.CurrentRevision
 	p.Data["content"] = string(file.Content)
 
 	p.Title = file.Alias
@@ -106,42 +116,34 @@ func loadFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	return
 }
 
-// Sets the contents of file to response writer.
-func loadRawFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	file, err := db.GetFileByUsername(p.Vars["username"], p.Vars["alias"])
-	if err != nil {
-		return p.setError(w, err)
-	}
-
-	_, err = w.Write(file.Content)
-	if err != nil {
-		return p.setError(w, err)
-	}
-
-	return true
-}
-
-// Loads the contents of a users temp file for the create/edit form.
+// Loads data into the create/edit form.
 func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	newFile := p.Vars["alias"] == ""
+	pageAlias := p.Vars["alias"]
+	newFile := pageAlias == ""
 	p.Data["newFile"] = newFile
 
 	if newFile {
 		p.Title = "New File"
 	} else {
-		p.Title = "Edit File"
+		p.Title = pageAlias + " - Edit"
 	}
 
-	// Only load the previous temp file if there is an ?edit query param.
+	// Load the user's temp file if there is an ?edit query param.
 	editing := r.URL.Query().Get("edit") == "true"
 
 	if newFile && !editing {
 		return
 	} else if !newFile && !editing {
-		return loadFile(w, r, p)
+		file, err := db.GetFileByUsername(p.Vars["username"], pageAlias)
+		if err != nil {
+			return p.setError(w, err)
+		}
+		p.Data["path"] = file.Path
+		p.Data["content"] = string(file.Content)
+		return
 	}
 
-	tempFile, err := db.GetTempFile(p.Session.UserID, p.Vars["alias"])
+	tempFile, err := db.GetTempFile(p.Session.UserID, pageAlias)
 	if err != nil && !db.NotFound(err) {
 		return p.setError(w, err)
 	}
@@ -164,7 +166,7 @@ func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bo
 	}
 
 	// TODO show user when there are no changes. Currently shows the first and last
-	// two lines of the unchanged file which is user friendly.
+	// two lines of the unchanged file which isn't user friendly.
 	diffs, err := file.Diff(storage, storage.Staged.CurrentRevision, "")
 	if err != nil {
 		return p.setError(w, err)
@@ -234,11 +236,5 @@ func fileHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "file.tmpl",
 		loadData:     loadFile,
-	})
-}
-
-func rawFileHandler() http.HandlerFunc {
-	return createHandler(&pageDescription{
-		loadData: loadRawFile,
 	})
 }

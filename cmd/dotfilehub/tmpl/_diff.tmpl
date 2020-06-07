@@ -2,6 +2,9 @@
 <div>
   <div class="file-controls flex-between">
     <strong>{{ .Data.path }}</strong>
+    {{ if and .Data.commits .Data.hash }}
+    {{ template "commit_picker" . }}
+    {{ end }}
   </div>
   <pre><code>
     {{- range .Data.diffs -}}

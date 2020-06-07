@@ -6,7 +6,7 @@
     {{ if .Data.newFile }}
     {{ .Title }}
     {{ else }}
-    <a href="/{{ .Session.Username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a> - Edit
+    <a href="/{{ .Session.Username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a> - edit
     {{ end }}
   </h1>
   <form method="post">

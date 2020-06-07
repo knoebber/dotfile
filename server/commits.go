@@ -16,7 +16,6 @@ func loadCommits(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	}
 
 	p.Data["commits"] = commits
-	p.Title = "Commits"
 	p.Title = fmt.Sprintf("%s commits", alias)
 	return
 }
@@ -24,16 +23,23 @@ func loadCommits(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	alias := p.Vars["alias"]
 	hash := p.Vars["hash"]
+	username := p.Vars["username"]
 
-	commit, err := db.GetCommit(p.Vars["username"], alias, hash)
+	commit, err := db.GetCommit(username, alias, hash)
+	if err != nil {
+		return p.setError(w, err)
+	}
+	commits, err := db.GetCommitList(username, alias)
 	if err != nil {
 		return p.setError(w, err)
 	}
 
+	p.Data["commits"] = commits
 	p.Data["message"] = commit.Message
 	p.Data["timestamp"] = commit.Timestamp
 	p.Data["content"] = string(commit.Content)
 	p.Data["path"] = commit.Path
+	p.Data["hash"] = commit.Hash
 	p.Data["current"] = commit.Current
 
 	p.Title = fmt.Sprintf("%s@%s", alias, hash)

@@ -146,6 +146,7 @@ func newPage(w http.ResponseWriter, r *http.Request, templateName, title string,
 func loadTemplates() (err error) {
 	templates, err = template.New("dotfilehub").Funcs(template.FuncMap{
 		// Global functions that templates can call.
+		// TODO function for shortening commit hash instead of repetitive splice calls.
 		"shortenEqualText": file.ShortenEqualText,
 	}).ParseGlob("tmpl/*.tmpl")
 

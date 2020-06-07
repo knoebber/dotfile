@@ -9,6 +9,8 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
+// TODO commitHash should match on first 7 characters as well.
+// Same for checkout
 type diffCommand struct {
 	fileName   string
 	commitHash string

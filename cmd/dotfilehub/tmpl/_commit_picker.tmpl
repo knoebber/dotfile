@@ -1,0 +1,20 @@
+{{ define "commit_picker" }}
+<form
+  action="/{{ .Vars.username }}/{{ .Vars.alias }}/diff"
+  method="get"
+  class="flex-between"
+>
+  {{ $pageHash := .Data.hash }}
+  <input type="hidden" name="on" value="{{ $pageHash }}">
+  <select name="against">
+    {{ range .Data.commits }}
+    {{ if eq .Hash $pageHash | not }}
+    <option value="{{ .Hash }}">
+      {{ slice .Hash 0 7 }} "{{ .Message }}"
+    </option>
+    {{ end }}
+    {{ end }}
+  </select>
+  <button>Diff</button>
+</form>
+{{ end }}
