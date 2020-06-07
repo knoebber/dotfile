@@ -1,7 +1,7 @@
-{{define "diff"}}
+{{ define "diff" }}
 <div>
   <div class="file-controls flex-between">
-    <strong>{{.Data.path}}</strong>
+    <strong>{{ .Data.path }}</strong>
   </div>
   <pre><code>
     {{- range .Data.diffs -}}
@@ -15,4 +15,4 @@
     {{- end }}
   </pre></code>
 </div>
-{{end}}
+{{ end }}

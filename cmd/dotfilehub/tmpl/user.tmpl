@@ -1,13 +1,13 @@
-{{template "head" .}}
+{{ template "head" . }}
 <body>
-  {{template "nav" .}}
-  {{template "flash" .}}
+  {{ template "nav" . }}
+  {{ template "flash" . }}
   <section>
-    <h1>{{.Title}}</h1>
+    <h1>{{ .Title }}</h1>
     {{ if .Owned }}
     <p><a href="/new_file">Add a new file</a></p>
     {{ end }}
-    {{if .Data.files }}
+    {{ if .Data.files  }}
     <div class="table-wrapper">
       <table>
         <thead>
@@ -17,22 +17,22 @@
           <th>Updated At</th>
         </thead>
         <tbody>
-          {{$username := .Vars.username}}
-          {{range .Data.files}}
+          {{ $username := .Vars.username }}
+          {{ range .Data.files }}
           <tr>
             <td>
-              <a href="/{{$username}}/{{.Alias}}">{{.Alias}}</a>
+              <a href="/{{ $username }}/{{ .Alias }}">{{ .Alias }}</a>
             </td>
-            <td>{{.Path}}</td>
-            <td>{{.NumCommits}}</td>
-            <td>{{.UpdatedAt}}</td>
+            <td>{{ .Path }}</td>
+            <td>{{ .NumCommits }}</td>
+            <td>{{ .UpdatedAt }}</td>
           </tr>
-          {{end}}
+          {{ end }}
         </tbody>
       </table>
     </div>
-    {{else}}
+    {{ else }}
     No files uploaded.
-    {{end}}
+    {{ end }}
   </section>
 </body>

@@ -1,12 +1,12 @@
-{{define "flash"}}
-{{if .SuccessMessage}}
+{{ define "flash" }}
+{{ if .SuccessMessage }}
 <div class="flash-success">
-  {{.SuccessMessage}}
+  {{ .SuccessMessage }}
 </div>
-{{end}}
-{{if .ErrorMessage}}
+{{ end }}
+{{ if .ErrorMessage }}
 <div class="flash-error">
-  {{.ErrorMessage}}
+  {{ .ErrorMessage }}
 </div>
-{{end}}
-{{end}}
+{{ end }}
+{{ end }}

@@ -1,22 +1,22 @@
-{{template "head" .}}
+{{ template "head" . }}
 <body>
-  {{template "nav" .}}
-  {{template "flash" .}}
+  {{ template "nav" . }}
+  {{ template "flash" . }}
   <h1>
     {{ if .Data.newFile }}
     {{ .Title }}
     {{ else }}
-    <a href="/{{.Session.Username}}/{{.Vars.alias}}">{{.Vars.alias}}</a> - Edit
+    <a href="/{{ .Session.Username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a> - Edit
     {{ end }}
   </h1>
   <form method="post">
     {{ if .Data.newFile }}
     <label for="name">Name:</label>
-    <input id="name" name="name" placeholder="bashrc" value="{{.Data.alias}}">
+    <input id="name" name="name" placeholder="bashrc" value="{{ .Data.alias }}">
     <label for="path">Path:</label>
-    <input id="path" name="path" placeholder="~/.bashrc" value="{{.Data.path}}" required>
+    <input id="path" name="path" placeholder="~/.bashrc" value="{{ .Data.path }}" required>
     {{ else }}
-    <strong>{{.Data.path}}</strong>
+    <strong>{{ .Data.path }}</strong>
     {{ end }}
     <label for="contents">Contents:</label>
     <textarea
@@ -26,7 +26,7 @@
       name="contents"
       spellcheck="false"
       required
-    >{{.Data.content}}</textarea>
+    >{{ .Data.content }}</textarea>
     <button>Submit</button>
   </form>
 </body>

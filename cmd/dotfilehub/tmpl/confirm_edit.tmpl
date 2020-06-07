@@ -1,18 +1,18 @@
-{{template "head" .}}
+{{ template "head" . }}
 <body>
-  {{template "nav" .}}
-  {{template "flash" .}}
+  {{ template "nav" . }}
+  {{ template "flash" . }}
   <h1>
-    <a href="/{{.Session.Username}}/{{.Vars.alias}}">{{.Vars.alias}}</a> - Confirm Changes
+    <a href="/{{ .Session.Username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a> - Confirm Changes
   </h1>
-  {{template "diff" .}}
+  {{ template "diff" . }}
   <div class="flex-between">
     <form method="post" class="">
       <label for="message">Commit Message</label>
       <input id="message" name="message">
       <button class="success">Create</button>
     </form>
-    <form method="get" action="{{.Data.editAction}}">
+    <form method="get" action="{{ .Data.editAction }}">
       <input type="hidden" name="edit" value="true">
       <button class="danger">Edit</button>
     </form>

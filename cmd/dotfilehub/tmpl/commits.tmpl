@@ -1,8 +1,8 @@
-{{template "head" .}}
+{{ template "head" . }}
 <body>
-  {{template "nav" .}}
-  {{template "flash" .}}
-  <h1><a href="/{{.Vars.username}}/{{.Vars.alias}}">{{.Vars.alias}}</a> commits</h1>
+  {{ template "nav" . }}
+  {{ template "flash" . }}
+  <h1><a href="/{{ .Vars.username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a> commits</h1>
   <div class="table-wrapper">
     <table>
       <thead>
@@ -12,20 +12,20 @@
         <th></th>
       </thead>
       <tbody>
-        {{$username := .Vars.username}}
-        {{$alias := .Vars.alias}}
-        {{range .Data.commits}}
+        {{ $username := .Vars.username }}
+        {{ $alias := .Vars.alias }}
+        {{ range .Data.commits }}
         <tr>
           <td>
-            <a href="/{{$username}}/{{$alias}}/{{.Hash}}">{{.Hash}}</a>
+            <a href="/{{ $username }}/{{ $alias }}/{{ .Hash }}">{{ .Hash }}</a>
           </td>
-          <td>{{.Message}}</td>
-          <td>{{.Timestamp}}</td>
+          <td>{{ .Message }}</td>
+          <td>{{ .Timestamp }}</td>
           {{ if .Current }}
           <td><em>Current</em></td>
           {{ end }}
         </tr>
-        {{end}}
+        {{ end }}
       </tbody>
     </table>
   </div>

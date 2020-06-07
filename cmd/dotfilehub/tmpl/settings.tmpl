@@ -1,16 +1,16 @@
-{{template "head" .}}
+{{ template "head" . }}
 <body>
-  {{template "nav" .}}
-  {{template "flash" .}}
+  {{ template "nav" . }}
+  {{ template "flash" . }}
   <section>
-    <h1>{{.Title}}</h1>
-    <p>Joined: <strong>{{.Data.joined}}</strong></p>
-    {{if .Data.email}}
-    <p>Email: <strong>{{.Data.email}}</strong></p>
+    <h1>{{ .Title }}</h1>
+    <p>Joined: <strong>{{ .Data.joined }}</strong></p>
+    {{ if .Data.email }}
+    <p>Email: <strong>{{ .Data.email }}</strong></p>
     <p><a href="/settings/email">Update email</a></p>
-    {{else}}
+    {{ else }}
     <p><a href="/settings/email">Enable account recovery</a></p>
-    {{end}}
+    {{ end }}
     <p><a href="/settings/password">Update password</a></p>
     <form action="/logout" method="post" class="empty">
       <button class="danger">Logout</button>

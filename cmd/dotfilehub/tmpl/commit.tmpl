@@ -1,13 +1,13 @@
-{{template "head" .}}
+{{ template "head" . }}
 <body>
-  {{template "nav" .}}
-  {{template "flash" .}}
+  {{ template "nav" . }}
+  {{ template "flash" . }}
   <h1>
-    <a href="/{{.Vars.username}}/{{.Vars.alias}}">{{.Vars.alias}}</a>@{{.Vars.hash}}
+    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a>@{{ .Vars.hash }}
   </h1>
-  {{template "file_content" .}}
-  <p>{{.Data.timestamp}}</p>
-  <p><em>{{.Data.message}}</em></p>
+  {{ template "file_content" . }}
+  <p>{{ .Data.timestamp }}</p>
+  <p><em>{{ .Data.message }}</em></p>
   {{ if .Data.current }}
   <strong>Current revision</strong>
   {{ else if .Owned }}

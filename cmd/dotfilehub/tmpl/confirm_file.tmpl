@@ -1,14 +1,14 @@
-{{template "head" .}}
+{{ template "head" . }}
 <body>
-  {{template "nav" .}}
-  {{template "flash" .}}
-  <h1>{{.Title}}</h1>
-  {{template "file_content" .}}
+  {{ template "nav" . }}
+  {{ template "flash" . }}
+  <h1>{{ .Title }}</h1>
+  {{ template "file_content" . }}
   <div class="flex-between">
     <form method="post" class="">
       <button class="success">Create</button>
     </form>
-    <form method="get" action="{{.Data.editAction}}">
+    <form method="get" action="{{ .Data.editAction }}">
       <input type="hidden" name="edit" value="true">
       <button class="danger">Edit</button>
     </form>
