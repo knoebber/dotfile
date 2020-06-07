@@ -1,13 +1,15 @@
 {{template "head" .}}
 <body>
   {{template "nav" .}}
-  <h1>Find Dotfiles</h1>
-  <form method="get" class="grid-form">
-    <label for="alias">Alias</label>
-    <input id="alias" name="alias" type="search" placeholder="vimrc">
-    <strong>OR</strong>
-    <label for="path">Path</label>
-    <input id="path" name="path" type="search" placeholder="~/.vimrc">
-    <button type="submit">Search</button>
-  </form>
+  <section>
+    <h1>Find Dotfiles</h1>
+    <form method="get" class="grid-form">
+      <label for="alias">Alias</label>
+      <input id="alias" name="alias" type="search" placeholder="vimrc">
+      <strong>OR</strong>
+      <label for="path">Path</label>
+      <input id="path" name="path" type="search" placeholder="~/.vimrc">
+      <button type="submit">Search</button>
+    </form>
+  </section>
 </body>
