@@ -4,7 +4,9 @@
   {{template "flash" .}}
   <section>
     <h1>{{.Title}}</h1>
+    {{ if .Owned }}
     <p><a href="/new_file">Add a new file</a></p>
+    {{ end }}
     {{if .Data.files }}
     <div class="table-wrapper">
       <table>

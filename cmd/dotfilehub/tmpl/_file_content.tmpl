@@ -2,8 +2,9 @@
 <div class="file-content-wrapper">
   <div class="file-controls flex-between">
     <strong>{{.Data.path}}</strong>
+    {{ if not .Data.editAction }}
     <a href="/{{.Vars.username}}/{{.Vars.alias}}/commits">Commits</a>
-    {{ if not .Data.editAction | and .Owned }}
+    {{ if .Owned }}
     <a href="/{{.Vars.username}}/{{.Vars.alias}}/edit">Edit</a>
     {{ end }}
     <form method="get" class="flex-between">
@@ -15,6 +16,7 @@
       </select>
       <button>Diff</button>
     </form>
+    {{ end }}
   </div>
   <pre class=""><code>{{.Data.content}}</pre></code>
 </div>
