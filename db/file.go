@@ -43,8 +43,8 @@ func (*File) createStmt() string {
 CREATE TABLE IF NOT EXISTS files(
 id                 INTEGER PRIMARY KEY,
 user_id            INTEGER NOT NULL REFERENCES users,
-alias              TEXT NOT NULL,
-path               TEXT NOT NULL,
+alias              TEXT NOT NULL COLLATE NOCASE,
+path               TEXT NOT NULL COLLATE NOCASE,
 current_revision   TEXT NOT NULL,
 content            BLOB NOT NULL,
 created_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -57,6 +57,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS files_user_path_index ON files(user_id, path);
 }
 
 func (f *File) check() error {
+	// TODO path should either start with '/' or '~'.
+	// Path should be allowed to be empty.
+	// When path is empty the templates should display it as 'web-only', and
+	// be disallowed from being pulled.
 	var count int
 
 	exists, err := fileExists(f.UserID, f.Alias)

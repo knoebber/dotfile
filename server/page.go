@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/knoebber/dotfile/db"
@@ -41,9 +42,10 @@ type Page struct {
 
 // Owned returns whether the current logged in user owns the page.
 func (p *Page) Owned() bool {
-	pageOwner := p.Vars["username"]
+	pageOwner := strings.ToLower(p.Vars["username"])
 
-	return pageOwner == "" || (p.Session != nil && p.Session.Username == pageOwner)
+	return pageOwner == "" ||
+		(p.Session != nil && strings.ToLower(p.Session.Username) == pageOwner)
 }
 
 func (p *Page) flashSuccess(msg string) {
@@ -101,7 +103,7 @@ func (p *Page) setLinks() {
 
 	if p.Session != nil {
 		username := p.Session.Username
-		userLink = newLink("/"+username, "Profile", p.Title)
+		userLink = newLink("/"+username, username, p.Title)
 		settingsLink = newLink("/settings", settingsTitle, p.Title)
 	} else {
 		userLink = newLink("/login", loginTitle, p.Title)
@@ -110,9 +112,9 @@ func (p *Page) setLinks() {
 
 	p.Links = []Link{
 		newLink("/", indexTitle, p.Title),
+		userLink,
 		newLink("/about", aboutTitle, p.Title),
 		settingsLink,
-		userLink,
 	}
 }
 

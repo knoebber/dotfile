@@ -22,7 +22,7 @@ const (
 	testRevision       = "Commit revision contents"
 	testHash           = "9abdbcf4ea4e2c1c077c21b8c2f2470ff36c31ce"
 	testMessage        = "commit message"
-	testUsername       = "dotfile_user"
+	testUsername       = "genericusername"
 	testPassword       = "ilovecatS!"
 	testEmail          = "dot@dotfilehub.com"
 	testCliToken       = "12345678"

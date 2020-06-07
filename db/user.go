@@ -13,9 +13,10 @@ import (
 const cliTokenLength = 24
 
 // User is the model for a dotfilehub user.
+// TODO add theme column, possible values = 'default', 'light', 'dark'.
 type User struct {
 	ID             int64
-	Username       string  `validate:"alphanum"`
+	Username       string  `validate:"alphanum"`        // TODO make regex, usernames should be allowed to have underscores etc.
 	Email          *string `validate:"omitempty,email"` // Not required; users may opt in to enable account recovery.
 	EmailConfirmed bool
 	PasswordHash   []byte
@@ -32,11 +33,11 @@ func (*User) createStmt() string {
 	return `
 CREATE TABLE IF NOT EXISTS users(
 id              INTEGER PRIMARY KEY,
-username        TEXT NOT NULL UNIQUE,
+username        TEXT NOT NULL UNIQUE COLLATE NOCASE,
 email           TEXT UNIQUE,
 email_confirmed INTEGER NOT NULL DEFAULT 0,
 password_hash   BLOB NOT NULL,
-cli_token       TEXT NOT NULL UNIQUE,
+cli_token       TEXT NOT NULL,
 created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS users_username_index ON users(username);`
