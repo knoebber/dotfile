@@ -106,6 +106,21 @@ func loadFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	return
 }
 
+// Sets the contents of file to response writer.
+func loadRawFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+	file, err := db.GetFileByUsername(p.Vars["username"], p.Vars["alias"])
+	if err != nil {
+		return p.setError(w, err)
+	}
+
+	_, err = w.Write(file.Content)
+	if err != nil {
+		return p.setError(w, err)
+	}
+
+	return true
+}
+
 // Loads the contents of a users temp file for the create/edit form.
 func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	newFile := p.Vars["alias"] == ""
@@ -219,5 +234,11 @@ func fileHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "file.tmpl",
 		loadData:     loadFile,
+	})
+}
+
+func rawFileHandler() http.HandlerFunc {
+	return createHandler(&pageDescription{
+		loadData: loadRawFile,
 	})
 }

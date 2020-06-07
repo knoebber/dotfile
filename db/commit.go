@@ -41,7 +41,7 @@ type CommitSummary struct {
 type CommitView struct {
 	CommitSummary
 	Path    string
-	Content string
+	Content []byte
 }
 
 // Unique index prevents a file from having a duplicate hash.
@@ -196,7 +196,7 @@ WHERE username = ? AND alias = ? AND hash = ?
 	if err != nil {
 		return nil, err
 	}
-	result.Content = string(uncompressed.Bytes())
+	result.Content = uncompressed.Bytes()
 
 	return result, nil
 }

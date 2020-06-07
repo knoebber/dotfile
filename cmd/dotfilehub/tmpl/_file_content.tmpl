@@ -1,11 +1,16 @@
 {{define "file_content"}}
 <div class="file-content-wrapper">
   <div class="file-controls flex-between">
-    <strong>{{.Data.path}}</strong>
+    <strong>{{ .Data.path }}</strong>
     {{ if not .Data.editAction }}
-    <a href="/{{.Vars.username}}/{{.Vars.alias}}/commits">Commits</a>
+    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/commits">Commits</a>
+    {{ if .Vars.hash }}
+    <a href="{{ .Vars.hash }}/raw">Raw</a>
+    {{ else }}
+    <a href="{{ .Vars.alias }}/raw">Raw</a>
+    {{ end }}
     {{ if .Owned }}
-    <a href="/{{.Vars.username}}/{{.Vars.alias}}/edit">Edit</a>
+    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/edit">Edit</a>
     {{ end }}
     <form method="get" class="flex-between">
       <select name="hash">
@@ -18,6 +23,6 @@
     </form>
     {{ end }}
   </div>
-  <pre class=""><code>{{.Data.content}}</pre></code>
+  <pre class=""><code>{{ .Data.content }}</pre></code>
 </div>
 {{end}}
