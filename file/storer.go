@@ -121,5 +121,14 @@ func Diff(s Storer, hash1, hash2 string) ([]diffmatchpatch.Diff, error) {
 		text2 = revision2.String()
 	}
 
-	return diffmatchpatch.New().DiffMain(text1, text2, false), nil
+	diffs := diffmatchpatch.New().DiffMain(text1, text2, false)
+
+	for _, diff := range diffs {
+		if diff.Type == diffmatchpatch.DiffInsert ||
+			diff.Type == diffmatchpatch.DiffDelete {
+			return diffs, nil
+		}
+	}
+
+	return nil, usererr.Invalid("No changes")
 }
