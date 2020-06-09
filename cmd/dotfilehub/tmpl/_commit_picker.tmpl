@@ -1,4 +1,5 @@
 {{ define "commit_picker" }}
+{{ if gt (len .Data.commits) 1 }}
 <form
   action="/{{ .Vars.username }}/{{ .Vars.alias }}/diff"
   method="get"
@@ -17,4 +18,5 @@
   </select>
   <button>Diff</button>
 </form>
+{{ end }}
 {{ end }}
