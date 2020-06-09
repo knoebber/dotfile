@@ -17,8 +17,8 @@ func TestDiff(t *testing.T) {
 		assert.Error(t, diffCommand.run(nil))
 	})
 
-	t.Run("ok", func(t *testing.T) {
+	t.Run("error when file has no differences", func(t *testing.T) {
 		diffCommand.fileName = trackedFileAlias
-		assert.NoError(t, diffCommand.run(nil))
+		assert.Error(t, diffCommand.run(nil))
 	})
 }
