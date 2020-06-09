@@ -8,6 +8,20 @@
     --tertiary: #fbdd74;
 }
 
+/*
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #16161a;
+        --headline: #fffffe;
+        --paragraph: #a7a9be;
+        --highlight: #7f5af0;
+        --main: #0f0e17;
+        --secondary: #72757e;
+        --tertiary: #e16162;
+    }
+}
+*/
+
 html {
     box-sizing: border-box;
     font-size: 18px;
@@ -32,11 +46,11 @@ section {
     box-sizing: inherit;
 }
 
-button, a, h1, h2, h3, h4, label {
+button, a, h1, h2, h3, h4, label, strong, th {
     color: var(--headline);
 }
 
-p {
+p, li, pre, td, textarea, input {
     color: var(--paragraph);
 }
 
@@ -109,7 +123,6 @@ pre {
     background: var(--main);
     border-radius: 0 0 3px 3px;
     overflow: auto;
-    color: var(--paragraph);
     max-height: 60vh;
     border: solid 1px var(--paragraph);
 }
