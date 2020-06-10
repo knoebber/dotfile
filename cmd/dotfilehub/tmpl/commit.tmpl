@@ -1,12 +1,6 @@
 {{ template "head" . }}
 <body>
   {{ template "nav" . }}
-  <h1>
-    {{ $hash := .Data.hash }}
-    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}">
-      {{ .Vars.alias -}}
-    </a> @ {{ slice $hash 0 7 }}
-  </h1>
   {{ template "file_content" . }}
   <p>{{ .Data.timestamp }}</p>
   <p><em>{{ .Data.message }}</em></p>

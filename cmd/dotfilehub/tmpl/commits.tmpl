@@ -1,7 +1,14 @@
 {{ template "head" . }}
 <body>
   {{ template "nav" . }}
-  <h1><a href="/{{ .Vars.username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a> commits</h1>
+
+  <h1>
+    {{ if not .Owned }}
+    <a href="/{{ .Vars.username }}">{{ .Vars.username -}}</a> / 
+    {{ end }}
+    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a>
+    commits
+  </h1>
   <div class="table-wrapper">
     <table>
       <thead>

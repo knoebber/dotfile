@@ -1,4 +1,14 @@
 {{ define "file_content" }}
+  <h1>
+    {{ $hash := .Vars.hash }}
+    {{ if not .Owned }}
+    <a href="/{{ .Vars.username }}">{{ .Vars.username }}</a> / 
+    {{ end }}
+    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a>
+    {{ if $hash }}
+    @ {{ slice $hash 0 7 }}
+    {{ end }}
+  </h1>
 <div class="file-content-wrapper">
   <div class="file-controls flex-between">
     <strong>{{ .Data.path }}</strong>
