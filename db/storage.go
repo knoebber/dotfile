@@ -32,6 +32,26 @@ func NewStorage(userID int64, alias string) (s *Storage, err error) {
 	return s, nil
 }
 
+// NewReadOnlyStorage returns a storage for read operations.
+// Panics if writes are attempted.
+func NewReadOnlyStorage(username, alias string) (s *Storage, err error) {
+	file, err := GetFileByUsername(username, alias)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &Storage{
+		Staged: &stagedFile{
+			CurrentRevision: file.CurrentRevision,
+			FileID:          file.ID,
+			UserID:          file.UserID,
+			Alias:           file.Alias,
+			Path:            file.Path,
+		},
+	}, nil
+}
+
 // Close commits the current transaction.
 // Must be called after the storage is done being used.
 func (s *Storage) Close() error {

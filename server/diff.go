@@ -11,7 +11,7 @@ import (
 func loadDiff(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	alias := p.Vars["alias"]
 
-	storage, err := db.NewStorage(p.Session.UserID, alias)
+	storage, err := db.NewReadOnlyStorage(p.Vars["username"], alias)
 	if err != nil {
 		return p.setError(w, err)
 	}
