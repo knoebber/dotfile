@@ -92,6 +92,24 @@ func confirmTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool
 }
 
 // Loads the contents of a file by its alias.
+func searchFiles(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		return
+	}
+
+	result, err := db.Search(query)
+	if err != nil {
+		return p.setError(w, err)
+	}
+
+	p.Data["files"] = result
+	p.Data["query"] = query
+
+	return
+}
+
+// Loads the contents of a file by its alias.
 func loadFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	username := p.Vars["username"]
 	alias := p.Vars["alias"]
@@ -208,7 +226,15 @@ func loadNewFileConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done b
 	return
 }
 
-func createFileHandler() http.HandlerFunc {
+func indexHandler() http.HandlerFunc {
+	return createHandler(&pageDescription{
+		templateName: "index.tmpl",
+		title:        "Dotfilehub",
+		loadData:     searchFiles,
+	})
+}
+
+func newFileHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "file_form.tmpl",
 		title:        "New File",

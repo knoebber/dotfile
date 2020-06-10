@@ -20,13 +20,13 @@ func setupRoutes(r *mux.Router, secure bool) {
 // Seed the DB on start to prevent these from being registered.
 // Important that these routes are setup first so that registerRoutes only sees these.
 func staticRoutes(r *mux.Router, secure bool) {
-	r.HandleFunc("/", getIndexHandler())
-	r.HandleFunc("/about", getAboutHandler())
-	r.HandleFunc("/acknowledgments", getAcknowledgmentsHander())
+	r.HandleFunc("/", indexHandler())
+	r.HandleFunc("/about", aboutHandler())
+	r.HandleFunc("/acknowledgments", acknowledgmentsHander())
 	r.HandleFunc("/signup", signupHandler(secure))
 	r.HandleFunc("/login", loginHandler(secure))
 	r.HandleFunc("/logout", logoutHandler())
-	r.HandleFunc("/new_file", createFileHandler())
+	r.HandleFunc("/new_file", newFileHandler())
 	r.HandleFunc("/settings", settingsHandler())
 	r.HandleFunc("/settings/email", emailHandler())
 	r.HandleFunc("/settings/password", passwordHandler())
