@@ -47,7 +47,7 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	return
 }
 
-// Sets the contents of file to response writer.
+// Sets the contents of file at hash to response writer.
 func loadRawCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	alias := p.Vars["alias"]
 	hash := p.Vars["hash"]

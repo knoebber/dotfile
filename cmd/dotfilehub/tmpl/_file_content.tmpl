@@ -4,7 +4,11 @@
     <strong>{{ .Data.path }}</strong>
     {{ if not .Data.editAction }}
     <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/commits">Commits</a>
-    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/{{ .Data.hash }}/raw">Raw</a>
+    {{ if .Vars.hash }}
+    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/{{ .Vars.hash }}/raw">Raw</a>
+    {{ else }}
+    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/raw">Raw</a>
+    {{ end }}
     {{ if .Owned }}
     <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/edit">Edit</a>
     {{ end }}
