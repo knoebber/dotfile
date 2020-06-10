@@ -121,7 +121,9 @@ func Diff(s Storer, hash1, hash2 string) ([]diffmatchpatch.Diff, error) {
 		text2 = revision2.String()
 	}
 
-	diffs := diffmatchpatch.New().DiffMain(text1, text2, false)
+	dmp := diffmatchpatch.New()
+
+	diffs := dmp.DiffCleanupSemantic(dmp.DiffMain(text1, text2, false))
 
 	for _, diff := range diffs {
 		if diff.Type == diffmatchpatch.DiffInsert ||
