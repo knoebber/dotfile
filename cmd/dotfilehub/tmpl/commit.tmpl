@@ -1,7 +1,6 @@
 {{ template "head" . }}
 <body>
   {{ template "nav" . }}
-  {{ template "flash" . }}
   <h1>
     {{ $hash := .Data.hash }}
     <a href="/{{ .Vars.username }}/{{ .Vars.alias }}">

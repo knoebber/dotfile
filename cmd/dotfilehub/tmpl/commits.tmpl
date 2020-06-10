@@ -1,7 +1,6 @@
 {{ template "head" . }}
 <body>
   {{ template "nav" . }}
-  {{ template "flash" . }}
   <h1><a href="/{{ .Vars.username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a> commits</h1>
   <div class="table-wrapper">
     <table>

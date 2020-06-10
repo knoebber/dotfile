@@ -1,7 +1,6 @@
 {{ template "head" . }}
 <body>
   {{ template "nav" . }}
-  {{ template "flash" . }}
   <h1>
     <a href="/{{ .Session.Username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a> - confirm changes
   </h1>
