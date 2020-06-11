@@ -1,12 +1,18 @@
 {{ define "file_content" }}
   <h1>
+    {{ $username := .Vars.username }}
+    {{ $alias := .Vars.alias }}
     {{ $hash := .Vars.hash }}
+    {{ if $username }}
     {{ if not .Owned }}
-    <a href="/{{ .Vars.username }}">{{ .Vars.username }}</a> / 
+    <a href="/{{ $username }}">{{ $username }}</a> / 
     {{ end }}
-    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a>
+    <a href="/{{ $username }}/{{ $alias }}">{{ $alias }}</a>
     {{ if $hash }}
     @ {{ slice $hash 0 7 }}
+    {{ end }}
+    {{ else }}
+    {{ $alias }}
     {{ end }}
   </h1>
 <div class="file-content-wrapper">
