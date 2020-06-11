@@ -21,20 +21,22 @@ WHERE file_id = ? AND hash = ?`
 
 // Commit models the commits table.
 type Commit struct {
-	ID        int64
-	FileID    int64  `validate:"required"`
-	Hash      string `validate:"required"` // Hash of the uncompressed file.
-	Message   string
-	Revision  []byte    `validate:"required"` // Compressed version of file at hash.
-	Timestamp time.Time `validate:"required"`
+	ID         int64
+	ForkedFrom *int64 // A commit id.
+	FileID     int64  `validate:"required"`
+	Hash       string `validate:"required"` // Hash of the uncompressed file.
+	Message    string
+	Revision   []byte    `validate:"required"` // Compressed version of file at hash.
+	Timestamp  time.Time `validate:"required"`
 }
 
 // CommitSummary summarizes a commit.
 type CommitSummary struct {
-	Hash      string
-	Message   string
-	Current   bool
-	Timestamp string
+	ForkedFrom *int64
+	Hash       string
+	Message    string
+	Current    bool
+	Timestamp  string
 }
 
 // CommitView is used for an individual commit view.
@@ -48,14 +50,16 @@ type CommitView struct {
 func (*Commit) createStmt() string {
 	return `
 CREATE TABLE IF NOT EXISTS commits(
-id        INTEGER PRIMARY KEY,
-file_id   INTEGER NOT NULL REFERENCES files,
-hash      TEXT NOT NULL,
-message   TEXT NOT NULL,
-revision  BLOB NOT NULL,
-timestamp DATETIME NOT NULL
+id          INTEGER PRIMARY KEY,
+forked_from INTEGER REFERENCES commits,
+file_id     INTEGER NOT NULL REFERENCES files,
+hash        TEXT NOT NULL,
+message     TEXT NOT NULL,
+revision    BLOB NOT NULL,
+timestamp   DATETIME NOT NULL
 );
 CREATE INDEX IF NOT EXISTS commits_file_index ON commits(file_id);
+CREATE INDEX IF NOT EXISTS commits_forked_from_index ON commits(forked_from);
 CREATE UNIQUE INDEX IF NOT EXISTS commits_file_hash_index ON commits(file_id, hash);`
 }
 
@@ -86,7 +90,8 @@ func (c *Commit) check() error {
 
 func (c *Commit) insertStmt(e executor) (sql.Result, error) {
 	return e.Exec(`
-INSERT INTO commits(file_id, hash, message, revision, timestamp) VALUES(?, ?, ?, ?, ?)`,
+INSERT INTO commits(forked_from, file_id, hash, message, revision, timestamp) VALUES(?, ?, ?, ?, ?, ?)`,
+		c.ForkedFrom,
 		c.FileID,
 		c.Hash,
 		c.Message,
@@ -169,6 +174,7 @@ func GetCommit(username, alias, hash string) (*CommitView, error) {
 
 	err := connection.QueryRow(`
 SELECT hash,
+       forked_from,
        message,
        path,
        hash = current_revision AS current,
@@ -181,6 +187,7 @@ WHERE username = ? AND alias = ? AND hash = ?
 `, username, alias, hash).
 		Scan(
 			&result.Hash,
+			&result.ForkedFrom,
 			&result.Message,
 			&result.Path,
 			&result.Current,
