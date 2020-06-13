@@ -30,6 +30,7 @@ func staticRoutes(r *mux.Router, secure bool) {
 	r.HandleFunc("/settings", settingsHandler())
 	r.HandleFunc("/settings/email", emailHandler())
 	r.HandleFunc("/settings/password", passwordHandler())
+	r.HandleFunc("/settings/theme", themeHandler())
 	r.HandleFunc("/api", nil) // TODO - dot push / pull will run through these routes.
 	registerRoutes(r)
 }

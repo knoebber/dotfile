@@ -15,7 +15,7 @@ func handleEmail(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	p.Data["email"] = r.Form.Get("email")
 
 	p.flashSuccess("Updated email")
-	return false
+	return
 }
 
 func handlePassword(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
@@ -37,7 +37,18 @@ func handlePassword(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 	}
 
 	p.flashSuccess("Updated password")
-	return false
+	return
+}
+
+func handleTheme(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+	newTheme := db.UserTheme(r.Form.Get("theme"))
+
+	if err := db.UpdateTheme(p.Session.Username, newTheme); err != nil {
+		return p.setError(w, err)
+	}
+	p.Session.Theme = newTheme
+
+	return
 }
 
 func loadUserSettings(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
@@ -53,18 +64,36 @@ func loadUserSettings(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 	if user.Email != nil {
 		email = *user.Email
 	}
-	p.Title = username
 
 	p.Data["email"] = email
 	p.Data["joined"] = user.JoinDate()
 	return
 }
 
+func loadThemes(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+	p.Data["themes"] = []db.UserTheme{
+		db.UserThemeLight,
+		db.UserThemeDark,
+	}
+	return
+}
+
 func settingsHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "settings.tmpl",
+		title:        settingsTitle,
 		loadData:     loadUserSettings,
 		handleForm:   handleEmail,
+		protected:    true,
+	})
+}
+
+func themeHandler() http.HandlerFunc {
+	return createHandler(&pageDescription{
+		templateName: "theme.tmpl",
+		title:        "Set Theme",
+		loadData:     loadThemes,
+		handleForm:   handleTheme,
 		protected:    true,
 	})
 }

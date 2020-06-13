@@ -17,6 +17,7 @@ type Session struct {
 	Session   string `validate:"required"`
 	UserID    int64  `validate:"required"`
 	Username  string
+	Theme     UserTheme
 	LastIP    *string
 	CreatedAt time.Time
 	DeletedAt *time.Time
@@ -87,6 +88,7 @@ SELECT sessions.id,
        session,
        users.id,
        username,
+       theme,
        sessions.created_at,
        session_locations.ip
 FROM sessions
@@ -98,6 +100,7 @@ WHERE deleted_at IS NULL AND session = ?`, session).
 			&s.Session,
 			&s.UserID,
 			&s.Username,
+			&s.Theme,
 			&s.CreatedAt,
 			&s.LastIP,
 		)

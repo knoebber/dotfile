@@ -10,10 +10,18 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// UserTheme is a users theme preference.
+type UserTheme string
+
+// Valid values for UserTheme.
+const (
+	UserThemeLight UserTheme = "Light"
+	UserThemeDark  UserTheme = "Dark"
+)
+
 const cliTokenLength = 24
 
 // User is the model for a dotfilehub user.
-// TODO add theme column, possible values = 'default', 'light', 'dark'.
 type User struct {
 	ID             int64
 	Username       string  `validate:"alphanum"`        // TODO make regex, usernames should be allowed to have underscores etc.
@@ -21,6 +29,7 @@ type User struct {
 	EmailConfirmed bool
 	PasswordHash   []byte
 	CLIToken       string `validate:"required"` // Allows CLI to write to server.
+	Theme          string
 	CreatedAt      time.Time
 }
 
@@ -38,6 +47,7 @@ email           TEXT UNIQUE,
 email_confirmed INTEGER NOT NULL DEFAULT 0,
 password_hash   BLOB NOT NULL,
 cli_token       TEXT NOT NULL,
+theme           TEXT NOT NULL DEFAULT "Light",
 created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS users_username_index ON users(username);`
@@ -203,6 +213,16 @@ func UpdatePassword(username string, currentPass, newPass string) error {
 
 	_, err = connection.Exec("UPDATE users SET password_hash = ? WHERE username = ?", hashed, username)
 	return err
+}
+
+// UpdateTheme updates a users theme setting.
+func UpdateTheme(username string, theme UserTheme) error {
+	_, err := connection.Exec("UPDATE users SET theme = ? WHERE username = ?", theme, username)
+	if err != nil {
+		return errors.Wrapf(err, "updating %#v to theme %#v", username, theme)
+	}
+
+	return nil
 }
 
 // UserLogin checks a username / password.

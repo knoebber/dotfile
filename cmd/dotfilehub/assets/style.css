@@ -1,26 +1,4 @@
-:root {
-    --background: #fffffe;
-    --headline: #181818;
-    --paragraph: #2e2e2e;
-    --highlight: #4fc4cf;
-    --main: #f2eef5;
-    --secondary: #994ff3;
-    --tertiary: #fbdd74;
-}
-
-/*
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background: #16161a;
-        --headline: #fffffe;
-        --paragraph: #a7a9be;
-        --highlight: #7f5af0;
-        --main: #0f0e17;
-        --secondary: #72757e;
-        --tertiary: #e16162;
-    }
-}
-*/
+/* See _head.tmpl for variables */
 
 html {
     box-sizing: border-box;
@@ -104,7 +82,7 @@ form > label, form > button {
     grid-column: 1;
 }
 
-form > input, form > textarea {
+form > input, form > textarea, form > select {
     grid-column: 2 / 4;
 }
 
@@ -227,12 +205,10 @@ del {
         margin: .5rem;
     }
 
-    form > input {
+    form > input, form > textarea, form > select {
         grid-column: 1;
     }
-    form > textarea {
-        grid-column: 1;
-    }
+
     nav {
         flex-direction: column;
         align-items: center;

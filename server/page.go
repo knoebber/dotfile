@@ -37,9 +37,13 @@ type Page struct {
 
 	Session      *db.Session
 	templateName string
-
 	// When true restrict page access to logged in page owners.
 	protected bool
+}
+
+// Dark returns whether dark mode is turned on.
+func (p *Page) Dark() bool {
+	return p.Session != nil && p.Session.Theme == db.UserThemeDark
 }
 
 // Owned returns whether the logged in user owns the page.
@@ -122,6 +126,7 @@ func (p *Page) setLinks() {
 }
 
 func (p *Page) render(w http.ResponseWriter) error {
+	p.setLinks()
 	return templates.ExecuteTemplate(w, p.templateName, p)
 }
 
@@ -137,8 +142,6 @@ func newPage(w http.ResponseWriter, r *http.Request, templateName, title string,
 	if err := p.setSession(w, r); err != nil {
 		return nil, err
 	}
-
-	p.setLinks()
 
 	return p, nil
 }
