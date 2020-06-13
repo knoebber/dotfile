@@ -1,8 +1,0 @@
-{{ define "nav" }}
-<nav>
-  {{ range .Links }}
-  <a class="{{.GetClass}}" href="{{.URL}}">{{ .Title }}</a>
-  {{ end }}
-</nav>
-{{ template "flash" . }}
-{{ end }}

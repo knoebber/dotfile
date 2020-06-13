@@ -1,0 +1,35 @@
+{{ define "file_content" }}
+<h1>
+  {{ $username := .Vars.username }}
+  {{ $alias := .Vars.alias }}
+  {{ $hash := .Vars.hash }}
+  {{ if $username }}
+  {{ if not .Owned }}
+  <a href="/{{ $username }}">{{ $username }}</a> / 
+  {{ end }}
+  <a href="/{{ $username }}/{{ $alias }}">{{ $alias }}</a>
+  {{ if $hash }}
+  @ {{ slice $hash 0 7 }}
+  {{ end }}
+  {{ else }}
+  {{ $alias }}
+  {{ end }}
+</h1>
+<div class="file-controls flex-between">
+  <strong>{{ .Data.path }}</strong>
+  {{ if not .Data.editAction }}
+  <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/commits">Commits</a>
+  {{ if .Vars.hash }}
+  <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/{{ .Vars.hash }}/raw">Raw</a>
+  {{ else }}
+  <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/raw">Raw</a>
+  {{ end }}
+  {{ if .Owned }}
+  <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/edit">Edit</a>
+  {{ end }}
+  {{ template "commit_picker" . }}
+  {{ end }}
+</div>
+<pre><code>{{ .Data.content }}</pre></code>
+</div>
+{{end}}

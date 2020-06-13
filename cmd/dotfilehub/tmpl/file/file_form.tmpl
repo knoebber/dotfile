@@ -1,6 +1,4 @@
-{{ template "head" . }}
-<body>
-  {{ template "nav" . }}
+<section>
   <h1>
     {{ if .Data.newFile }}
     {{ .Title }}
@@ -26,4 +24,4 @@
     >{{ .Data.content }}</textarea>
     <button>Submit</button>
   </form>
-</body>
+</section>

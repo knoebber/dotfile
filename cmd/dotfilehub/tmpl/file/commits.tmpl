@@ -1,7 +1,4 @@
-{{ template "head" . }}
-<body>
-  {{ template "nav" . }}
-
+<section>
   <h1>
     {{ if not .Owned }}
     <a href="/{{ .Vars.username }}">{{ .Vars.username -}}</a> / 
@@ -9,7 +6,7 @@
     <a href="/{{ .Vars.username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a>
     commits
   </h1>
-  <div class="table-wrapper">
+  <div class="table-wrapper"><!-- TODO make table scroll; needs more css -->
     <table>
       <thead>
         <th>Hash</th>
@@ -35,4 +32,4 @@
       </tbody>
     </table>
   </div>
-</body>
+</section>

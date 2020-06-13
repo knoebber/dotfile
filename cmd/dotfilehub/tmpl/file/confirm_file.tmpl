@@ -1,7 +1,4 @@
-{{ template "head" . }}
-<body>
-  {{ template "nav" . }}
-  <h1>{{ .Title }}</h1>
+<section>
   {{ template "file_content" . }}
   <div class="flex-between">
     <form method="post" class="">
@@ -12,4 +9,4 @@
       <button class="danger">Edit</button>
     </form>
   </div>
-</body>
+</section>

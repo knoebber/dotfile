@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"html/template"
 	"log"
 	"net/http"
@@ -23,7 +24,15 @@ const (
 	loginTitle    = "Login"
 )
 
-var templates *template.Template
+var (
+	baseTemplate  *template.Template
+	pageTemplates *template.Template
+	pageFunctions = template.FuncMap{
+		// Global functions that templates can call.
+		// TODO function for shortening commit hash instead of repetitive splice calls.
+		"shortenEqualText": file.ShortenEqualText,
+	}
+)
 
 // Page is used for rendering pages and tracking request state.
 // Exported fields/methods may be used within templates.
@@ -127,7 +136,22 @@ func (p *Page) setLinks() {
 
 func (p *Page) render(w http.ResponseWriter) error {
 	p.setLinks()
-	return templates.ExecuteTemplate(w, p.templateName, p)
+
+	// Clone the base template and add a content function that returns template content.
+	baseClone, err := baseTemplate.Clone()
+	if err != nil {
+		return err
+	}
+
+	baseClone.Funcs(template.FuncMap{
+		"content": func() (template.HTML, error) {
+			buf := new(bytes.Buffer)
+			err := pageTemplates.ExecuteTemplate(buf, p.templateName, p)
+			return template.HTML(buf.String()), err
+		},
+	})
+
+	return baseClone.Execute(w, p)
 }
 
 func newPage(w http.ResponseWriter, r *http.Request, templateName, title string, protected bool) (*Page, error) {
@@ -147,11 +171,25 @@ func newPage(w http.ResponseWriter, r *http.Request, templateName, title string,
 }
 
 func loadTemplates() (err error) {
-	templates, err = template.New("dotfilehub").Funcs(template.FuncMap{
-		// Global functions that templates can call.
-		// TODO function for shortening commit hash instead of repetitive splice calls.
-		"shortenEqualText": file.ShortenEqualText,
-	}).ParseGlob("tmpl/*.tmpl")
+	defaultContentFunction := template.FuncMap{
+		"content": func() (string, error) {
+			return "", errors.New("content is not set")
+		},
+	}
 
+	baseTemplate, err = template.
+		New("base").
+		Funcs(defaultContentFunction).
+		ParseFiles("tmpl/base.tmpl")
+
+	if err != nil {
+		return
+	}
+
+	pageTemplates, err = template.
+		New("pages").
+		Funcs(pageFunctions).
+		ParseGlob("tmpl/*/*.tmpl")
 	return
+
 }

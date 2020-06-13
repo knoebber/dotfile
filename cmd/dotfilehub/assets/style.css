@@ -1,4 +1,4 @@
-/* See _head.tmpl for variables */
+/* See base.tmpl for variables */
 
 html {
     box-sizing: border-box;
@@ -152,10 +152,6 @@ del {
     overflow: auto;
 }
 
-.file-content-wrapper {
-    margin-top: 1rem;
-}
-
 .file-controls {
     /* Applied to div placed above a <pre> element */
     border-top: solid 1px var(--paragraph);
@@ -221,4 +217,3 @@ del {
         margin-left: unset;
     }
 }
-

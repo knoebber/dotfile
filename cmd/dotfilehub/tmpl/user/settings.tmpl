@@ -1,0 +1,15 @@
+<section>
+  <h1>{{ .Title }}</h1>
+  <p>Joined: <strong>{{ .Data.joined }}</strong></p>
+  {{ if .Data.email }}
+  <p>Email: <strong>{{ .Data.email }}</strong></p>
+  <p><a href="/settings/email">Update email</a></p>
+  {{ else }}
+  <p><a href="/settings/email">Enable account recovery</a></p>
+  {{ end }}
+  <p><a href="/settings/password">Update password</a></p>
+  <p><a href="/settings/theme">Change theme</a></p>
+  <form action="/logout" method="post" class="empty">
+    <button class="danger">Logout</button>
+  </form>
+</section>
