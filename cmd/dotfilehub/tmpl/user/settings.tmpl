@@ -1,4 +1,4 @@
-<section>
+<main>
   <h1>{{ .Title }}</h1>
   <p>Joined: <strong>{{ .Data.joined }}</strong></p>
   {{ if .Data.email }}
@@ -12,4 +12,4 @@
   <form action="/logout" method="post" class="empty">
     <button class="danger">Logout</button>
   </form>
-</section>
+</main>

@@ -1,4 +1,4 @@
-<section>
+<main>
   <h1>Find Dotfiles</h1>
   <form method="get">
     <input value="{{ .Data.query }}" id="q" name="q" type="search" placeholder="~/.vimrc">
@@ -34,4 +34,4 @@
   {{ else if and (not .Data.files) .Data.query }}
   <strong>No results</strong>
   {{ end }}
-</section>
+</main>

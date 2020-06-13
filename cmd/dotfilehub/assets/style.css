@@ -14,7 +14,7 @@ body {
     margin: auto;
 }
 
-section {
+main {
     margin: 3rem;
 }
 
@@ -190,7 +190,7 @@ del {
     body {
         margin: 0 3rem 3rem 3rem;
     }
-    section {
+    main {
         margin: unset;
     }
 }
