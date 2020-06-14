@@ -105,6 +105,5 @@ func randomBytes(n int) ([]byte, error) {
 }
 
 func formatTime(t time.Time) string {
-	return t.Format(timestampDisplayFormat)
-
+	return t.Format(timestampDisplayFormat) + " (UTC)"
 }

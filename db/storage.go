@@ -88,7 +88,7 @@ func (s *Storage) SaveCommit(buff *bytes.Buffer, hash, message string, timestamp
 		Hash:      hash,
 		Message:   message,
 		Revision:  buff.Bytes(),
-		Timestamp: timestamp,
+		Timestamp: timestamp.UTC(), // Save commits on the server in UTC time.
 	}
 
 	if _, err := insert(commit, s.tx); err != nil {
