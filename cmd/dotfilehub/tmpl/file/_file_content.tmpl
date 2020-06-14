@@ -9,7 +9,7 @@
   {{ end }}
   <a href="/{{ $username }}/{{ $alias }}">{{ $alias }}</a>
   {{ if $hash }}
-  @ {{ slice $hash 0 7 }}
+  @ {{ shortenHash $hash }}
   {{ end }}
   {{ else }}
   {{ $alias }}

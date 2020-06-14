@@ -20,7 +20,7 @@
         {{ range .Data.commits }}
         <tr>
           <td>
-            <a href="/{{ $username }}/{{ $alias }}/{{ .Hash }}">{{ .Hash }}</a>
+            <a href="/{{ $username }}/{{ $alias }}/{{ .Hash }}">{{ shortenHash .Hash }}</a>
           </td>
           <td>{{ .Message }}</td>
           <td>{{ .Timestamp }}</td>

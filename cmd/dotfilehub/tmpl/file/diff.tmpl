@@ -6,8 +6,8 @@
     <a href="/{{ .Vars.username }}">{{ .Vars.username }}</a> / 
     {{ end }}
     <a href="/{{ .Vars.username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a> @
-    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/{{ $on }}">{{ slice $on 0 7 }}</a> against
-    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/{{ $against }}">{{ slice $against 0 7 }}</a>
+    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/{{ $on }}">{{ shortenHash $on }}</a> against
+    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/{{ $against }}">{{ shortenHash $against }}</a>
   </h1>
   {{ template "diff" . }}
 </main>

@@ -27,11 +27,6 @@ const (
 var (
 	baseTemplate  *template.Template
 	pageTemplates *template.Template
-	pageFunctions = template.FuncMap{
-		// Global functions that templates can call.
-		// TODO function for shortening commit hash instead of repetitive splice calls.
-		"shortenEqualText": file.ShortenEqualText,
-	}
 )
 
 // Page is used for rendering pages and tracking request state.
@@ -137,7 +132,7 @@ func (p *Page) setLinks() {
 func (p *Page) render(w http.ResponseWriter) error {
 	p.setLinks()
 
-	// Clone the base template and add a content function that returns template content.
+	// Clone the base template and add a function that executes the page's template.
 	baseClone, err := baseTemplate.Clone()
 	if err != nil {
 		return err
@@ -184,6 +179,12 @@ func loadTemplates() (err error) {
 
 	if err != nil {
 		return
+	}
+
+	pageFunctions := template.FuncMap{
+		// Global functions that page templates can call.
+		"shortenHash":      file.ShortenHash,
+		"shortenEqualText": file.ShortenEqualText,
 	}
 
 	pageTemplates, err = template.

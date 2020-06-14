@@ -102,3 +102,8 @@ func ShortenEqualText(text string) string {
 
 	return strings.Join(lines[:2], "\n") + "\n" + strings.Join(lines[len(lines)-2:], "\n")
 }
+
+// ShortenHash shortens a hash to a more friendly size.
+func ShortenHash(hash string) string {
+	return hash[0:7]
+}

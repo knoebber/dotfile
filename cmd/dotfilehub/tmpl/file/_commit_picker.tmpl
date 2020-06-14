@@ -11,7 +11,7 @@
     {{ range .Data.commits }}
     {{ if eq .Hash $pageHash | not }}
     <option value="{{ .Hash }}">
-      {{ slice .Hash 0 7 }} "{{ .Message }}"
+      {{ shortenHash .Hash }} "{{ .Message }}"
     </option>
     {{ end }}
     {{ end }}
