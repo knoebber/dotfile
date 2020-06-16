@@ -1,7 +1,5 @@
 <main>
   {{ template "file_content" . }}
-  <p>{{ .Data.timestamp }}</p>
-  <p><em>{{ .Data.message }}</em></p>
   {{ if .Data.current }}
   <strong>Current revision</strong>
   {{ else if .Owned }}
@@ -9,4 +7,8 @@
     <button class="success">Restore</button>
   </form>
   {{ end }}
+  <div class="commit-info">
+    <p>{{ .Data.timestamp }}</p>
+    <p><em>{{ .Data.message }}</em></p>
+  </div>
 </main>

@@ -23,7 +23,7 @@ type File struct {
 	UserID          int64  `validate:"required"`
 	Alias           string `validate:"required"` // Friendly name for a file: bashrc
 	Path            string `validate:"required"` // Where the file lives: ~/.bashrc
-	CurrentRevision string
+	CurrentRevision string // The current hash that the file is at.
 	Content         []byte `validate:"required"`
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
@@ -214,6 +214,54 @@ GROUP BY files.id`, username)
 	}
 
 	return result, nil
+}
+
+// ForkFile creates a copy of username/alias/hash for the user newUserID.
+func ForkFile(host, username, alias, hash string, newUserID int64) error {
+	tx, err := connection.Begin()
+	if err != nil {
+		return errors.Wrap(err, "starting fork file transaction")
+	}
+
+	fileForkee, err := GetFileByUsername(username, alias)
+	if err != nil {
+		return err
+	}
+
+	commitForkee, err := getCommit(username, alias, hash)
+	if err != nil {
+		return err
+	}
+
+	newFile := &File{
+		UserID:          newUserID,
+		Alias:           alias,
+		Path:            fileForkee.Path,
+		CurrentRevision: hash,
+		Content:         fileForkee.Content,
+	}
+
+	newFileID, err := insert(newFile, tx)
+	if err != nil {
+		return err
+	}
+
+	newCommit := commitForkee
+
+	newCommit.FileID = newFileID
+	newCommit.ForkedFrom = &commitForkee.ID
+	newCommit.Message = fmt.Sprintf("%s/%s/%s/%s", host, username, alias, hash)
+
+	_, err = insert(newCommit, tx)
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return errors.Wrap(err, "closing fork file transaction")
+	}
+
+	return nil
 }
 
 func getFileByUserID(userID int64, alias string) (*File, error) {

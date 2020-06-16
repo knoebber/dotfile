@@ -1,23 +1,21 @@
 {{ define "file_content" }}
+{{ $owned := .Owned }}
+{{ $saved := not .Data.editAction }}
+{{ $username := .Vars.username }}
+{{ $alias := .Vars.alias }}
+{{ $hash := .Vars.hash }}
 <h1>
-  {{ $username := .Vars.username }}
-  {{ $alias := .Vars.alias }}
-  {{ $hash := .Vars.hash }}
   {{ if $username }}
-  {{ if not .Owned }}
+  {{ if not $owned }}
   <a href="/{{ $username }}">{{ $username }}</a> / 
   {{ end }}
   <a href="/{{ $username }}/{{ $alias }}">{{ $alias }}</a>
-  {{ if $hash }}
-  @ {{ shortenHash $hash }}
-  {{ end }}
-  {{ else }}
-  {{ $alias }}
-  {{ end }}
+  {{ if $hash }} @ {{ shortenHash $hash }} {{ end }}
+  {{ else }} {{ $alias }} {{ end }}
 </h1>
 <div class="file-controls flex-between">
   <strong>{{ .Data.path }}</strong>
-  {{ if not .Data.editAction }}
+  {{ if $saved }}
   <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/commits">Commits</a>
   {{ if .Vars.hash }}
   <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/{{ .Vars.hash }}/raw">Raw</a>
@@ -31,5 +29,12 @@
   {{ end }}
 </div>
 <pre><code>{{ .Data.content }}</pre></code>
-</div>
-{{end}}
+{{ if and (not $owned) .Session }}
+<form method="post" class="empty" action="/{{ .Session.Username }}/{{ $alias }}">
+  <input type="hidden" name="username" value="{{ $username }}">
+  <input type="hidden" name="alias" value="{{ $alias }}">
+  <input type="hidden" name="hash" value="{{ .Data.hash }}">
+  <button class="success">Fork</button>
+</form>
+{{ end }}
+{{ end }}

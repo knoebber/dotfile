@@ -12,7 +12,6 @@
         <th>Hash</th>
         <th>Message</th>
         <th>Timestamp</th>
-        <th></th>
       </thead>
       <tbody>
         {{ $username := .Vars.username }}
@@ -20,13 +19,16 @@
         {{ range .Data.commits }}
         <tr>
           <td>
-            <a href="/{{ $username }}/{{ $alias }}/{{ .Hash }}">{{ shortenHash .Hash }}</a>
+            <a {{ if .Current }}class="active"{{ end }} href="/{{ $username }}/{{ $alias }}/{{ .Hash }}">{{ shortenHash .Hash }}</a>
           </td>
-          <td>{{ .Message }}</td>
+          <td>
+            {{ if .ForkedFrom }}
+            <a href="http://{{ .Message }}">Forked from</a>
+            {{ else }}
+            {{ .Message }}
+            {{ end }}
+          </td>
           <td>{{ .Timestamp }}</td>
-          {{ if .Current }}
-          <td><em>Current</em></td>
-          {{ end }}
         </tr>
         {{ end }}
       </tbody>

@@ -91,6 +91,20 @@ func confirmTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool
 	return true
 }
 
+// Forks another user's file at hash.
+func forkFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+	username := r.Form.Get("username")
+	alias := r.Form.Get("alias")
+	hash := r.Form.Get("hash")
+
+	err := db.ForkFile(r.Host, username, alias, hash, p.Session.UserID)
+	if err != nil {
+		return p.setError(w, err)
+	}
+
+	return
+}
+
 // Loads the contents of a file by its alias.
 func searchFiles(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	query := r.URL.Query().Get("q")
@@ -274,6 +288,7 @@ func confirmEditHandler() http.HandlerFunc {
 func fileHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "file.tmpl",
+		handleForm:   forkFile,
 		loadData:     loadFile,
 	})
 }

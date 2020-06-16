@@ -134,6 +134,7 @@ func GetCommitList(username, alias string) ([]CommitSummary, error) {
 	result := []CommitSummary{}
 	rows, err := connection.Query(`
 SELECT hash,
+       forked_from,
        message, 
        hash = current_revision AS current,
        timestamp
@@ -154,6 +155,7 @@ ORDER BY timestamp DESC
 
 		if err := rows.Scan(
 			&c.Hash,
+			&c.ForkedFrom,
 			&c.Message,
 			&c.Current,
 			&timestamp,
@@ -163,6 +165,32 @@ ORDER BY timestamp DESC
 		c.Timestamp = formatTime(timestamp)
 		result = append(result, c)
 	}
+	return result, nil
+}
+
+// Returns the commit record.
+func getCommit(username, alias, hash string) (*Commit, error) {
+	result := new(Commit)
+
+	err := connection.QueryRow(`
+SELECT commits.*
+FROM commits
+JOIN files ON commits.file_id = files.id
+JOIN users ON files.user_id = users.id
+WHERE username = ? AND alias = ? AND hash = ?`, username, alias, hash).
+		Scan(
+			&result.ID,
+			&result.ForkedFrom,
+			&result.FileID,
+			&result.Hash,
+			&result.Message,
+			&result.Revision,
+			&result.Timestamp,
+		)
+	if err != nil {
+		return nil, errors.Wrapf(err, "get commit: %#v %#v %#v", username, alias, hash)
+	}
+
 	return result, nil
 }
 
