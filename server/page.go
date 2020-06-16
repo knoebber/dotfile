@@ -65,8 +65,12 @@ func (p *Page) flashSuccess(msg string) {
 
 func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
 	if db.NotFound(err) {
-		// TODO create not found template.
-		setError(w, err, "Not found", http.StatusNotFound)
+		w.WriteHeader(http.StatusNotFound)
+		p.templateName = "not_found.tmpl"
+		if err := p.render(w); err != nil {
+			templateError(w, "404", err)
+		}
+
 		return true
 	}
 
