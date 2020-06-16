@@ -15,7 +15,7 @@ body {
 }
 
 main {
-    margin: 3rem;
+    margin-top: 2rem;
 }
 
 *,
@@ -188,7 +188,7 @@ del {
 @media (max-width: 1050px) {
     /* Break point of when nav bar takes most of the screen up */
     body {
-        margin: 0 3rem 3rem 3rem;
+        margin: 0 2rem 1rem 2rem;
     }
     main {
         margin: unset;
