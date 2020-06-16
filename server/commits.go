@@ -41,6 +41,7 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	p.Data["path"] = commit.Path
 	p.Data["hash"] = commit.Hash
 	p.Data["current"] = commit.Current
+	p.Data["forkedFrom"] = commit.ForkedFrom
 
 	p.Title = fmt.Sprintf("%s@%s", alias, hash)
 

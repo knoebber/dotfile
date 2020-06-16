@@ -97,7 +97,7 @@ func forkFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	alias := r.Form.Get("alias")
 	hash := r.Form.Get("hash")
 
-	err := db.ForkFile(r.Host, username, alias, hash, p.Session.UserID)
+	err := db.ForkFile(username, alias, hash, p.Session.UserID)
 	if err != nil {
 		return p.setError(w, err)
 	}

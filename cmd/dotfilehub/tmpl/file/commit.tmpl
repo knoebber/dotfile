@@ -9,6 +9,12 @@
   {{ end }}
   <div class="commit-info">
     <p>{{ .Data.timestamp }}</p>
-    <p><em>{{ .Data.message }}</em></p>
+    <p>
+      {{ if .Data.forkedFrom }}
+      <a href="{{ .Data.message }}">Forked from</a>
+      {{ else }}
+      <em>{{ .Data.message }}</em>
+      {{ end }}
+    </p>
   </div>
 </main>

@@ -217,7 +217,7 @@ GROUP BY files.id`, username)
 }
 
 // ForkFile creates a copy of username/alias/hash for the user newUserID.
-func ForkFile(host, username, alias, hash string, newUserID int64) error {
+func ForkFile(username, alias, hash string, newUserID int64) error {
 	tx, err := connection.Begin()
 	if err != nil {
 		return errors.Wrap(err, "starting fork file transaction")
@@ -250,7 +250,7 @@ func ForkFile(host, username, alias, hash string, newUserID int64) error {
 
 	newCommit.FileID = newFileID
 	newCommit.ForkedFrom = &commitForkee.ID
-	newCommit.Message = fmt.Sprintf("%s/%s/%s/%s", host, username, alias, hash)
+	newCommit.Message = fmt.Sprintf("/%s/%s/%s", username, alias, hash)
 
 	_, err = insert(newCommit, tx)
 	if err != nil {
