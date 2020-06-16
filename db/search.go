@@ -29,7 +29,8 @@ FROM users
 JOIN files ON user_id = users.id
 JOIN commits ON file_id = files.id
 WHERE alias LIKE ? OR path LIKE ?
-GROUP BY files.id`, q, q)
+GROUP BY files.id
+ORDER BY username, alias`, q, q)
 	if err != nil {
 		return nil, errors.Wrapf(err, "querying for files LIKE %#v", q)
 	}
