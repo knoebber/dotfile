@@ -36,6 +36,10 @@ a:hover, .active {
     color: var(--highlight);
 }
 
+h1 > a {
+    text-decoration: none;
+}
+
 nav {
     display: flex;
     flex-direction: row;

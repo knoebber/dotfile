@@ -6,9 +6,7 @@
 {{ $hash := .Vars.hash }}
 <h1>
   {{ if $username }}
-  {{ if not $owned }}
   <a href="/{{ $username }}">{{ $username }}</a> / 
-  {{ end }}
   <a href="/{{ $username }}/{{ $alias }}">{{ $alias }}</a>
   {{ if $hash }} @ {{ shortenHash $hash }} {{ end }}
   {{ else }} {{ $alias }} {{ end }}
@@ -16,14 +14,14 @@
 <div class="file-controls flex-between">
   <strong>{{ .Data.path }}</strong>
   {{ if $saved }}
-  <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/commits">Commits</a>
-  {{ if .Vars.hash }}
-  <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/{{ .Vars.hash }}/raw">Raw</a>
+  <a href="/{{ $username }}/{{ $alias }}/commits">Commits</a>
+  {{ if $hash }}
+  <a href="/{{ $username }}/{{ $alias }}/{{ $hash }}/raw">Raw</a>
   {{ else }}
-  <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/raw">Raw</a>
+  <a href="/{{ $username }}/{{ $alias }}/raw">Raw</a>
   {{ end }}
   {{ if .Owned }}
-  <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/edit">Edit</a>
+  <a href="/{{ $username }}/{{ $alias }}/edit">Edit</a>
   {{ end }}
   {{ template "commit_picker" . }}
   {{ end }}
