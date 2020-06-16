@@ -37,7 +37,6 @@ func TestFilesTable(t *testing.T) {
 	createTestDB(t)
 
 	t.Run("alias must be unique between users", func(t *testing.T) {
-		createTestUser(t)
 		createTestFile(t)
 
 		// Fails because alias already exists.
