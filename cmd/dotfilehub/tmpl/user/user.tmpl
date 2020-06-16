@@ -7,10 +7,12 @@
   <div class="table-wrapper">
     <table>
       <thead>
-        <th>Alias</th>
-        <th>Path</th>
-        <th># Commits</th>
-        <th>Updated At</th>
+        <tr>
+          <th>Alias</th>
+          <th>Path</th>
+          <th># Commits</th>
+          <th>Updated At</th>
+        </tr>
       </thead>
       <tbody>
         {{ $username := .Vars.username }}
@@ -28,6 +30,6 @@
     </table>
   </div>
   {{ else }}
-  No files uploaded.
+  <p>No files uploaded</p>
   {{ end }}
 </main>
