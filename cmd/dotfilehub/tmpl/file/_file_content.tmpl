@@ -9,7 +9,8 @@
   <a href="/{{ $username }}">{{ $username }}</a> / 
   <a href="/{{ $username }}/{{ $alias }}">{{ $alias }}</a>
   {{ if $hash }} @ {{ shortenHash $hash }} {{ end }}
-  {{ else }} {{ $alias }} {{ end }}
+  {{ else }} {{ $alias }}
+  {{ end }}
 </h1>
 <div class="file-controls flex-between">
   <strong>{{ .Data.path }}</strong>
@@ -23,16 +24,22 @@
   {{ if .Owned }}
   <a href="/{{ $username }}/{{ $alias }}/edit">Edit</a>
   {{ end }}
-  {{ template "commit_picker" . }}
+  {{ if .Data.current }}
+  <strong>Current revision</strong>
+  {{ else if and .Owned $hash }}
+  <form method="post" class="empty">
+    <button class="success">Restore</button>
+  </form>
+  {{ end }}
+  {{ if and (not $owned) .Session }}
+  <form method="post" class="empty" action="/{{ .Session.Username }}/{{ $alias }}">
+    <input type="hidden" name="username" value="{{ $username }}">
+    <input type="hidden" name="alias" value="{{ $alias }}">
+    <input type="hidden" name="hash" value="{{ .Data.hash }}">
+    <button class="success">Fork</button>
+  </form>
+  {{ end }}
   {{ end }}
 </div>
 <pre><code>{{ .Data.content }}</pre></code>
-{{ if and (not $owned) .Session }}
-<form method="post" class="empty" action="/{{ .Session.Username }}/{{ $alias }}">
-  <input type="hidden" name="username" value="{{ $username }}">
-  <input type="hidden" name="alias" value="{{ $alias }}">
-  <input type="hidden" name="hash" value="{{ .Data.hash }}">
-  <button class="success">Fork</button>
-</form>
-{{ end }}
 {{ end }}
