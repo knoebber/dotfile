@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/knoebber/dotfile/db"
 	"github.com/knoebber/dotfile/file"
@@ -21,6 +22,10 @@ func loadCommits(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 }
 
 func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+	if !strings.Contains(r.Header.Get("Accept"), "text/html") {
+		return loadRawCommit(w, r, p)
+	}
+
 	alias := p.Vars["alias"]
 	hash := p.Vars["hash"]
 	username := p.Vars["username"]

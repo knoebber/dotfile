@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/knoebber/dotfile/db"
 	"github.com/knoebber/dotfile/file"
@@ -125,6 +126,10 @@ func searchFiles(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 
 // Loads the contents of a file by its alias.
 func loadFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+	if !strings.Contains(r.Header.Get("Accept"), "text/html") {
+		return loadRawFile(w, r, p)
+	}
+
 	username := p.Vars["username"]
 	alias := p.Vars["alias"]
 
