@@ -22,7 +22,7 @@ func TestFilesTable(t *testing.T) {
 		_, err := insert(f, nil)
 		assert.Error(t, err)
 
-		createTestUser(t)
+		createTestUser(t, testUserID, testUsername, testEmail)
 
 		// User exists - ok.
 		_, err = insert(f, nil)
@@ -49,5 +49,36 @@ func TestFilesTable(t *testing.T) {
 		f2.Path = "/different/path"
 		_, err = insert(&f2, nil)
 		assert.Error(t, err)
+	})
+}
+
+func TestForkFile(t *testing.T) {
+	otherUserID := int64(testUserID + 1)
+	otherUsername := "user2"
+	otherEmail := "user2@example.com"
+
+	setup := func(t *testing.T) {
+		createTestDB(t)
+
+		createTestUser(t, otherUserID, otherUsername, otherEmail)
+	}
+
+	t.Run("forks with and without error", func(t *testing.T) {
+		setup(t)
+		f := initTestFile(t)
+		assert.NoError(t, ForkFile(testUsername, testAlias, f.CurrentRevision, otherUserID))
+
+		// Second fork is a duplicate alias error.
+		assert.Error(t, ForkFile(testUsername, testAlias, f.CurrentRevision, otherUserID))
+	})
+
+	t.Run("fork copies commit revision content", func(t *testing.T) {
+		setup(t)
+		initialCommit, _ := initTestFileAndCommit(t)
+
+		assert.NoError(t, ForkFile(testUsername, testAlias, initialCommit.Hash, otherUserID))
+		f, err := GetFileByUsername(otherUsername, testAlias)
+		failIf(t, err)
+		assert.Equal(t, testContent, string(f.Content))
 	})
 }

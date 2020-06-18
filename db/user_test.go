@@ -11,7 +11,7 @@ func TestUsersTable(t *testing.T) {
 	createTestDB(t)
 
 	t.Run("username must be unique / case insensitive", func(t *testing.T) {
-		createTestUser(t)
+		createTestUser(t, testUserID, testUsername, testEmail)
 		u := &User{
 			Username:     strings.Title(testUsername),
 			CLIToken:     testCliToken,

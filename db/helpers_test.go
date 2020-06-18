@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/knoebber/dotfile/file"
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -37,11 +38,11 @@ func createTestDB(t *testing.T) {
 	}
 }
 
-func createTestUser(t *testing.T) {
+func createTestUser(t *testing.T, userID int64, username, email string) {
 	var count int
 
 	err := connection.
-		QueryRow("SELECT COUNT(*) FROM users WHERE id = ?", testUserID).
+		QueryRow("SELECT COUNT(*) FROM users WHERE id = ?", userID).
 		Scan(&count)
 	if err != nil {
 		t.Fatalf("counting test users: %s", err)
@@ -58,9 +59,9 @@ func createTestUser(t *testing.T) {
 	_, err = connection.Exec(`
 INSERT INTO users(id, username, email, password_hash, cli_token) 
 VALUES(?, ?, ?, ?, ?)`,
-		testUserID,
-		testUsername,
-		testEmail,
+		userID,
+		username,
+		email,
 		hashed,
 		testCliToken,
 	)
@@ -70,7 +71,7 @@ VALUES(?, ?, ?, ?, ?)`,
 }
 
 func createTestFile(t *testing.T) {
-	createTestUser(t)
+	createTestUser(t, testUserID, testUsername, testEmail)
 	var count int
 
 	err := connection.
@@ -99,7 +100,7 @@ VALUES(?, ?, ?, ?, ?, ?)`,
 }
 
 func createTestTempFile(t *testing.T, content string) *TempFile {
-	createTestUser(t)
+	createTestUser(t, testUserID, testUsername, testEmail)
 
 	testTempFile := &TempFile{
 		UserID:  testUserID,
@@ -165,11 +166,45 @@ func getTestTransaction(t *testing.T) *sql.Tx {
 	return tx
 }
 
-func initTestFile(t *testing.T) {
+func initTestFile(t *testing.T) *File {
 	createTestTempFile(t, testContent)
 
 	s, err := NewStorage(testUserID, testAlias)
-	failIf(t, err, "initializing test file")
-	file.Init(s, testAlias)
+	failIf(t, err, "new storage in init test file")
+	failIf(t, file.Init(s, testAlias), "initialing test file")
 	failIf(t, s.Close(), "closing storage in init test file")
+
+	f, err := GetFileByUsername(testUsername, testAlias)
+	failIf(t, err, "getting file by username in init test file")
+	return f
+}
+
+// Creates a test file, an initial commit, and an additional commit.
+func initTestFileAndCommit(t *testing.T) (initialCommit CommitSummary, currentCommit CommitSummary) {
+	initTestFile(t)
+
+	// Latest commit will have this content.
+	createTestTempFile(t, testUpdatedContent)
+
+	s, err := NewStorage(testUserID, testAlias)
+	failIf(t, err, "initializing test file")
+
+	failIf(t, file.NewCommit(s, "Commiting test updated content"))
+	failIf(t, s.Close(), "closing storage in add test commit")
+
+	lst, err := GetCommitList(testUsername, testAlias)
+	failIf(t, err, "getting test commit")
+
+	if len(lst) != 2 {
+		t.Fatalf("expected commit list to be length 2, got %d", len(lst))
+	}
+
+	f, err := GetFileByUsername(testUsername, testAlias)
+	failIf(t, err, "initTestFileAndCommit: GetFileByUsername")
+
+	currentCommit = lst[0]
+	initialCommit = lst[1]
+
+	assert.Equal(t, currentCommit.Hash, f.CurrentRevision)
+	return
 }

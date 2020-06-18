@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/knoebber/dotfile/file"
 	"github.com/knoebber/dotfile/usererr"
 	"github.com/pkg/errors"
 )
@@ -233,12 +234,17 @@ func ForkFile(username, alias, hash string, newUserID int64) error {
 		return err
 	}
 
+	forkedContent, err := file.Uncompress(commitForkee.Revision)
+	if err != nil {
+		return errors.Wrap(err, "uncompressing for fork")
+	}
+
 	newFile := &File{
 		UserID:          newUserID,
 		Alias:           alias,
 		Path:            fileForkee.Path,
 		CurrentRevision: hash,
-		Content:         fileForkee.Content,
+		Content:         forkedContent.Bytes(),
 	}
 
 	newFileID, err := insert(newFile, tx)
