@@ -8,23 +8,21 @@
   <div class="table-wrapper">
     <table>
       <thead>
-        <th>Username</th>
         <th>Alias</th>
         <th>Path</th>
-        <th># Commits</th>
+        <th>User</th>
         <th>Updated At</th>
       </thead>
       <tbody>
         {{ range .Data.files }}
         <tr>
           <td>
-            <a href="/{{ .Username }}">{{ .Username }}</a>
-          </td>
-          <td>
             <a href="/{{ .Username }}/{{ .Alias }}">{{ .Alias }}</a>
           </td>
           <td>{{ .Path }}</td>
-          <td>{{ .NumCommits }}</td>
+          <td>
+            <a href="/{{ .Username }}">{{ .Username }}</a>
+          </td>
           <td>{{ .UpdatedAt }}</td>
         </tr>
         {{ end }}
