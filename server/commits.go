@@ -34,17 +34,11 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	if err != nil {
 		return p.setError(w, err)
 	}
-	commits, err := db.GetCommitList(username, alias)
-	if err != nil {
-		return p.setError(w, err)
-	}
 
-	p.Data["commits"] = commits
 	p.Data["message"] = commit.Message
 	p.Data["timestamp"] = commit.Timestamp
 	p.Data["content"] = string(commit.Content)
 	p.Data["path"] = commit.Path
-	p.Data["hash"] = commit.Hash
 	p.Data["current"] = commit.Current
 	p.Data["forkedFrom"] = commit.ForkedFrom
 

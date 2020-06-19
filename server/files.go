@@ -138,14 +138,7 @@ func loadFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, err)
 	}
 
-	commits, err := db.GetCommitList(username, alias)
-	if err != nil {
-		return p.setError(w, err)
-	}
-
-	p.Data["commits"] = commits
 	p.Data["path"] = file.Path
-	p.Data["hash"] = file.CurrentRevision
 	p.Data["content"] = string(file.Content)
 
 	p.Title = file.Alias

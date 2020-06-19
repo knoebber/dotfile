@@ -2,8 +2,27 @@
 <div>
   <div class="file-controls flex-between">
     <strong>{{ .Data.path }}</strong>
-    {{ if and .Data.commits .Data.hash }}
-    {{ template "commit_picker" . }}
+    {{ if .Data.commits }}
+    {{ $on := .Data.on }}
+    {{ $against := .Data.against }}
+    <form>
+      <select name="on">
+        {{ range .Data.commits }}
+        <option{{ if eq .Hash $on }} selected="selected"{{ end }} value="{{ .Hash }}" >
+          {{ shortenHash .Hash }} "{{ .Message }}"
+        </option>
+        {{ end }}
+      </select>
+      <em>against</em>
+      <select name="against" id="against">
+        {{ range .Data.commits }}
+        <option{{ if eq .Hash $against }} selected="selected"{{ end }} value="{{ .Hash }}">
+          {{ shortenHash .Hash }} "{{ .Message }}"
+        </option>
+        {{ end }}
+      </select>
+      <button>Diff</button>
+    </form>
     {{ end }}
   </div>
   <pre><code>

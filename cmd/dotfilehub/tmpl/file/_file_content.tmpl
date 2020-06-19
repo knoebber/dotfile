@@ -16,6 +16,7 @@
   <strong>{{ .Data.path }}</strong>
   {{ if $saved }}
   <a href="/{{ $username }}/{{ $alias }}/commits">Commits</a>
+  <a href="/{{ $username }}/{{ $alias }}/diff">Diff</a>
   {{ if $hash }}
   <a href="/{{ $username }}/{{ $alias }}/{{ $hash }}/raw">Raw</a>
   {{ else }}

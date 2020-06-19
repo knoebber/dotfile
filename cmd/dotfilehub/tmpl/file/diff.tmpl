@@ -1,13 +1,16 @@
 <main>
   <h1>
-    {{ $on := .Data.hash }}
+    {{ $username := .Vars.username }}
+    {{ $alias := .Vars.alias }}
+    {{ $on := .Data.on }}
     {{ $against := .Data.against }}
-    {{ if not .Owned }}
-    <a href="/{{ .Vars.username }}">{{ .Vars.username }}</a> / 
+    <a href="/{{ $username }}">{{ $username }}</a> /
+    <a href="/{{ $username }}/{{ $alias }}">{{ $alias }}</a>
+    {{ if and $on $against }}
+    @
+    <a href="/{{ $username }}/{{ $alias }}/{{ $on }}">{{ shortenHash $on }}</a> against
+    <a href="/{{ $username }}/{{ $alias }}/{{ $against }}">{{ shortenHash $against }}</a>
     {{ end }}
-    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a> @
-    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/{{ $on }}">{{ shortenHash $on }}</a> against
-    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}/{{ $against }}">{{ shortenHash $against }}</a>
   </h1>
   {{ template "diff" . }}
 </main>
