@@ -3,27 +3,28 @@
 {{ $saved := not .Data.editAction }}
 {{ $username := .Vars.username }}
 {{ $alias := .Vars.alias }}
-{{ $hash := .Vars.hash }}
+{{ $hash := .Data.hash }}
+{{ $fileLink := printf "/%s/%s" $username $alias }}
 <h1>
   {{ if $username }}
   <a href="/{{ $username }}">{{ $username }}</a> / 
   <a href="/{{ $username }}/{{ $alias }}">{{ $alias }}</a>
-  {{ if $hash }} @ {{ shortenHash $hash }} {{ end }}
+  {{ if .Vars.hash }} @ {{ shortenHash $hash }} {{ end }}
   {{ else }} {{ $alias }}
   {{ end }}
 </h1>
 <div class="file-controls flex-between">
   <strong>{{ .Data.path }}</strong>
   {{ if $saved }}
-  <a href="/{{ $username }}/{{ $alias }}/commits">Commits</a>
-  <a href="/{{ $username }}/{{ $alias }}/diff">Diff</a>
+  <a href="{{ $fileLink }}/commits">Commits</a>
+  <a href="{{ $fileLink }}/diff?against={{ $hash }}">Diff</a>
   {{ if $hash }}
-  <a href="/{{ $username }}/{{ $alias }}/{{ $hash }}/raw">Raw</a>
+  <a href="{{ $fileLink }}/{{ $hash }}/raw">Raw</a>
   {{ else }}
-  <a href="/{{ $username }}/{{ $alias }}/raw">Raw</a>
+  <a href="{{ $fileLink }}/raw">Raw</a>
   {{ end }}
   {{ if .Owned }}
-  <a href="/{{ $username }}/{{ $alias }}/edit">Edit</a>
+  <a href="{{ $fileLink }}/edit">Edit</a>
   {{ end }}
   {{ if .Data.current }}
   <strong>Current revision</strong>

@@ -140,6 +140,7 @@ func loadFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 
 	p.Data["path"] = file.Path
 	p.Data["content"] = string(file.Content)
+	p.Data["hash"] = file.CurrentRevision
 
 	p.Title = file.Alias
 

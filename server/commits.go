@@ -35,6 +35,7 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, err)
 	}
 
+	p.Data["hash"] = hash
 	p.Data["message"] = commit.Message
 	p.Data["timestamp"] = commit.Timestamp
 	p.Data["content"] = string(commit.Content)
