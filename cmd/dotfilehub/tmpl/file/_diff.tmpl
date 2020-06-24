@@ -9,7 +9,12 @@
       <select name="on">
         {{ range .Data.commits }}
         <option{{ if eq .Hash $on }} selected="selected"{{ end }} value="{{ .Hash }}" >
-          {{ shortenHash .Hash }} "{{ .Message }}"
+          {{ shortenHash .Hash }}
+          {{ if .ForkedFrom }}
+          Fork commit
+          {{ else }}
+          "{{ .Message }}"
+          {{ end }}
         </option>
         {{ end }}
       </select>
@@ -17,7 +22,12 @@
       <select name="against" id="against">
         {{ range .Data.commits }}
         <option{{ if eq .Hash $against }} selected="selected"{{ end }} value="{{ .Hash }}">
-          {{ shortenHash .Hash }} "{{ .Message }}"
+          {{ shortenHash .Hash }}
+          {{ if .ForkedFrom }}
+          Fork commit
+          {{ else }}
+          "{{ .Message }}"
+          {{ end }}
         </option>
         {{ end }}
       </select>
