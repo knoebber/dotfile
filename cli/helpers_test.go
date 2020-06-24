@@ -3,6 +3,7 @@ package cli
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -33,8 +34,13 @@ func init() {
 func initTestFile(t *testing.T) {
 	os.Mkdir(testDir, 0755)
 	writeTestFile(t, []byte(initialTestFileContents))
-	initCommand := &initCommand{path: trackedFile}
-	err := initCommand.run(nil)
+	fullPath, err := filepath.Abs(trackedFile)
+	if err != nil {
+		t.Fatalf("getting full path for %#v: %v", trackedFile, err)
+	}
+
+	initCommand := &initCommand{path: fullPath}
+	err = initCommand.run(nil)
 	assert.NoError(t, err)
 }
 

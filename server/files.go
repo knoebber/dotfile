@@ -74,7 +74,7 @@ func confirmTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool
 	}
 
 	if storage.Staged.New {
-		err = file.Init(storage, alias)
+		err = file.Init(storage, storage.Staged.Path, alias)
 	} else {
 		err = file.NewCommit(storage, r.Form.Get("message"))
 	}

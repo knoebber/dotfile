@@ -3,6 +3,7 @@ package local
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -38,7 +39,12 @@ func setupTestFile(t *testing.T) *Storage {
 	os.Mkdir(testDir, 0755)
 	writeTestFile(t, []byte(testContent))
 
-	_, err := InitFile(testHome, testDir, testTrackedFile, testAlias)
+	fullPath, err := filepath.Abs(testTrackedFile)
+	if err != nil {
+		t.Fatalf("getting full path for %#v: %v", testTrackedFile, err)
+	}
+
+	_, err = InitFile(testHome, testDir, fullPath, testAlias)
 	if err != nil {
 		t.Fatalf("initializing test file: %s", err)
 	}

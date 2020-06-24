@@ -171,7 +171,7 @@ func initTestFile(t *testing.T) *File {
 
 	s, err := NewStorage(testUserID, testAlias)
 	failIf(t, err, "new storage in init test file")
-	failIf(t, file.Init(s, testAlias), "initialing test file")
+	failIf(t, file.Init(s, testPath, testAlias), "initialing test file")
 	failIf(t, s.Close(), "closing storage in init test file")
 
 	f, err := GetFileByUsername(testUsername, testAlias)

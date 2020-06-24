@@ -75,7 +75,7 @@ func InitFile(home, dir, path, alias string) (string, error) {
 		Path:    convertedPath,
 		Commits: []commit{},
 	}
-	if err := file.Init(s, alias); err != nil {
+	if err := file.Init(s, convertedPath, alias); err != nil {
 		return "", err
 	}
 

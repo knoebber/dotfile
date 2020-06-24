@@ -29,13 +29,18 @@ func TestUncompressRevision(t *testing.T) {
 
 func TestInit(t *testing.T) {
 	t.Run("error on invalid alias", func(t *testing.T) {
-		s := &MockStorer{saveCommitErr: true}
-		assert.Error(t, Init(s, "alias cannot have spaces"))
+		s := &MockStorer{}
+		assert.Error(t, Init(s, "/valid/path", "alias cannot have spaces"))
+	})
+
+	t.Run("error on invalid path", func(t *testing.T) {
+		s := &MockStorer{}
+		assert.Error(t, Init(s, "/cant-be-directory/", "test"))
 	})
 
 	t.Run("error on new commit", func(t *testing.T) {
 		s := &MockStorer{saveCommitErr: true}
-		assert.Error(t, Init(s, "test"))
+		assert.Error(t, Init(s, "/valid/path", "test"))
 	})
 }
 
