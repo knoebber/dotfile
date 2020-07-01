@@ -24,7 +24,7 @@ type commit struct {
 func convertPath(path, home string) (string, error) {
 	var err error
 
-	if !Exists(path) {
+	if !exists(path) {
 		return "", fmt.Errorf("%#v not found", path)
 	}
 
@@ -51,8 +51,8 @@ func fullPath(path, home string) string {
 	return strings.Replace(path, "~", home, 1)
 }
 
-// Exists returns whether the file or directory exists.
-func Exists(path string) bool {
+// Returns whether the file or directory exists.
+func exists(path string) bool {
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		return false
@@ -61,9 +61,9 @@ func Exists(path string) bool {
 	return true
 }
 
-// Creates a director if it does not exist.
+// Creates a directory if it does not exist.
 func createDir(dir string) error {
-	if Exists(dir) {
+	if exists(dir) {
 		return nil
 	}
 

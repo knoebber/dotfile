@@ -2,10 +2,31 @@ package local
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/knoebber/dotfile/file"
 	"github.com/pkg/errors"
-	"path/filepath"
 )
+
+// GetDefaultStorageDir returns the default location for storing dotfile information.
+// Creates the location when it does not exist.
+func GetDefaultStorageDir(home string) (storageDir string, err error) {
+	localSharePath := filepath.Join(home, ".local/share/")
+	if exists(localSharePath) {
+		// Priority one : ~/.local/share/dotfile
+		storageDir = filepath.Join(localSharePath, "dotfile/")
+	} else {
+		// Priority two: ~/.dotfile/
+		storageDir = filepath.Join(home, ".dotfile/")
+	}
+
+	if !exists(storageDir) {
+		err = os.Mkdir(storageDir, 0755)
+	}
+
+	return
+}
 
 func newStorage(home, dir, alias string) (*Storage, error) {
 	s := new(Storage)
@@ -36,7 +57,7 @@ func LoadFile(home, dir, alias string) (*Storage, error) {
 		return nil, err
 	}
 
-	if !Exists(s.jsonPath) {
+	if !exists(s.jsonPath) {
 		return nil, file.ErrNotTracked(alias)
 	}
 
@@ -62,7 +83,7 @@ func InitFile(home, dir, path, alias string) (string, error) {
 		return "", nil
 	}
 
-	if Exists(s.jsonPath) {
+	if exists(s.jsonPath) {
 		return "", fmt.Errorf("%#v is already tracked", alias)
 	}
 

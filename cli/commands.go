@@ -2,7 +2,6 @@ package cli
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/knoebber/dotfile/local"
 	"github.com/pkg/errors"
@@ -11,7 +10,9 @@ import (
 
 type cliConfig struct {
 	storageDir string
+	configDir  string
 	home       string
+	user       *local.UserConfig
 }
 
 var config cliConfig
@@ -24,23 +25,6 @@ func getHome() (string, error) {
 	return home, nil
 }
 
-// Gets the default location for storing dotfile information.
-func getDefaultStorageDir(home string) (storageDir string, err error) {
-	configDir := filepath.Join(home, ".local/share/")
-	if local.Exists(configDir) {
-		// Priority one : ~/.local/share/dotfile
-		storageDir = filepath.Join(configDir, "dotfile/")
-	} else {
-		// Priority two: ~/.dotfile/
-		storageDir = filepath.Join(home, ".dotfile/")
-	}
-
-	if !local.Exists(storageDir) {
-		err = os.Mkdir(storageDir, 0755)
-	}
-	return
-}
-
 func loadFile(alias string) (*local.Storage, error) {
 	storage, err := local.LoadFile(config.home, config.storageDir, alias)
 
@@ -51,12 +35,19 @@ func loadFile(alias string) (*local.Storage, error) {
 	return storage, nil
 }
 
-func addFlagsToApplication(app *kingpin.Application) (err error) {
-	config.home, err = getHome()
+func setConfig(app *kingpin.Application) error {
+	home, err := getHome()
 	if err != nil {
 		return err
 	}
-	defaultStorageDir, err := getDefaultStorageDir(config.home)
+	config.home = home
+
+	defaultStorageDir, err := local.GetDefaultStorageDir(config.home)
+	if err != nil {
+		return err
+	}
+
+	config.user, err = local.GetUserConfig(config.home)
 	if err != nil {
 		return err
 	}
@@ -67,12 +58,12 @@ func addFlagsToApplication(app *kingpin.Application) (err error) {
 		Default(defaultStorageDir).
 		ExistingDirVar(&config.storageDir)
 
-	return
+	return nil
 }
 
 // AddCommandsToApplication initializes the cli.
 func AddCommandsToApplication(app *kingpin.Application) error {
-	if err := addFlagsToApplication(app); err != nil {
+	if err := setConfig(app); err != nil {
 		return err
 	}
 
@@ -84,6 +75,7 @@ func AddCommandsToApplication(app *kingpin.Application) error {
 	addCommitSubCommandToApplication(app)
 	addPushSubCommandToApplication(app)
 	addPullSubCommandToApplication(app)
+	addConfigSubCommandToApplication(app)
 
 	return nil
 }
