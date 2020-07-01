@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+const jsonIndent = "  "
+
 type trackedFile struct {
 	Path     string   `json:"path"`
 	Revision string   `json:"revision"`

@@ -64,7 +64,7 @@ func (s *Storage) get() error {
 
 // Updates the json file with the updated data from the tracked file.
 func (s *Storage) save() error {
-	bytes, err := json.MarshalIndent(s.Tracking, "", " ")
+	bytes, err := json.MarshalIndent(s.Tracking, "", jsonIndent)
 	if err != nil {
 		return errors.Wrap(err, "marshalling tracking data to json")
 	}

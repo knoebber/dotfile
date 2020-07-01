@@ -45,7 +45,7 @@ func getConfigPath(home string) (string, error) {
 func createDefaultConfig(path string) ([]byte, error) {
 	newCfg := UserConfig{Remote: defaultRemote}
 
-	bytes, err := json.MarshalIndent(newCfg, "", " ")
+	bytes, err := json.MarshalIndent(newCfg, "", jsonIndent)
 	if err != nil {
 		return nil, errors.Wrap(err, "marshalling new user config file")
 	}
@@ -116,7 +116,7 @@ func SetUserConfig(home string, key string, value string) error {
 
 	cfg[key] = &value
 
-	bytes, err = json.MarshalIndent(cfg, "", " ")
+	bytes, err = json.MarshalIndent(cfg, "", jsonIndent)
 	if err != nil {
 		return errors.Wrap(err, "marshalling updated config map")
 	}
