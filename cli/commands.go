@@ -10,7 +10,6 @@ import (
 
 type cliConfig struct {
 	storageDir string
-	configDir  string
 	home       string
 	user       *local.UserConfig
 }
