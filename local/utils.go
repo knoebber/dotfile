@@ -9,13 +9,15 @@ import (
 
 const jsonIndent = "  "
 
-type trackedFile struct {
+// TrackedFile represents a locally tracked file.
+type TrackedFile struct {
 	Path     string   `json:"path"`
 	Revision string   `json:"revision"`
-	Commits  []commit `json:"commits"`
+	Commits  []Commit `json:"commits"`
 }
 
-type commit struct {
+// Commit represents a tracked files revision.
+type Commit struct {
 	Hash      string `json:"hash"`
 	Message   string `json:"message"`
 	Timestamp int64  `json:"timestamp"` // Unix timestamp in nanoseconds.

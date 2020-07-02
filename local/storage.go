@@ -37,7 +37,7 @@ import (
 type Storage struct {
 	Home     string // The path to the users home directory.
 	Alias    string // A friendly name for the file that is being tracked.
-	Tracking *trackedFile
+	Tracking *TrackedFile
 
 	dir      string // The path to the folder where data will be stored.
 	jsonPath string
@@ -54,7 +54,7 @@ func (s *Storage) get() error {
 		return fmt.Errorf("%s is empty", s.jsonPath)
 	}
 
-	s.Tracking = new(trackedFile)
+	s.Tracking = new(TrackedFile)
 
 	if err := json.Unmarshal(bytes, &s.Tracking); err != nil {
 		return errors.Wrapf(err, "unmarshaling tracking data")
@@ -115,7 +115,7 @@ func (s *Storage) GetContents() ([]byte, error) {
 // Creates a new directory when its the first commit.
 // Updates the file's revision field to point to the new hash.
 func (s *Storage) SaveCommit(buff *bytes.Buffer, hash, message string, timestamp time.Time) error {
-	s.Tracking.Commits = append(s.Tracking.Commits, commit{
+	s.Tracking.Commits = append(s.Tracking.Commits, Commit{
 		Hash:      hash,
 		Message:   message,
 		Timestamp: timestamp.Unix(),

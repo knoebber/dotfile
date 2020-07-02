@@ -92,9 +92,9 @@ func InitFile(home, dir, path, alias string) (string, error) {
 		return "", nil
 	}
 
-	s.Tracking = &trackedFile{
+	s.Tracking = &TrackedFile{
 		Path:    convertedPath,
-		Commits: []commit{},
+		Commits: []Commit{},
 	}
 	if err := file.Init(s, convertedPath, alias); err != nil {
 		return "", err
