@@ -26,8 +26,8 @@ type Commit struct {
 	FileID     int64  `validate:"required"`
 	Hash       string `validate:"required"` // Hash of the uncompressed file.
 	Message    string
-	Revision   []byte    `validate:"required"` // Compressed version of file at hash.
-	Timestamp  time.Time `validate:"required"`
+	Revision   []byte `validate:"required"` // Compressed version of file at hash.
+	Timestamp  int64  `validate:"required"` // Unix time to stay synced with local commits.
 }
 
 // CommitSummary summarizes a commit.
@@ -36,7 +36,8 @@ type CommitSummary struct {
 	Hash       string
 	Message    string
 	Current    bool
-	Timestamp  string
+	Timestamp  int64
+	DateString string
 }
 
 // CommitView is used for an individual commit view.
@@ -56,7 +57,7 @@ file_id     INTEGER NOT NULL REFERENCES files,
 hash        TEXT NOT NULL,
 message     TEXT NOT NULL,
 revision    BLOB NOT NULL,
-timestamp   DATETIME NOT NULL
+timestamp   INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS commits_file_index ON commits(file_id);
 CREATE INDEX IF NOT EXISTS commits_forked_from_index ON commits(forked_from);
@@ -151,20 +152,24 @@ ORDER BY timestamp DESC
 
 	for rows.Next() {
 		c := CommitSummary{}
-		timestamp := time.Time{}
 
 		if err := rows.Scan(
 			&c.Hash,
 			&c.ForkedFrom,
 			&c.Message,
 			&c.Current,
-			&timestamp,
+			&c.Timestamp,
 		); err != nil {
 			return nil, errors.Wrapf(err, "scanning commits for user %#v file %#v", username, alias)
 		}
-		c.Timestamp = formatTime(timestamp)
+		c.DateString = formatTime(time.Unix(c.Timestamp, 0))
 		result = append(result, c)
 	}
+
+	if len(result) == 0 {
+		return nil, sql.ErrNoRows
+	}
+
 	return result, nil
 }
 
@@ -197,7 +202,6 @@ WHERE username = ? AND alias = ? AND hash = ?`, username, alias, hash).
 // GetCommit gets a commit and uncompresses its contents.
 func GetCommit(username, alias, hash string) (*CommitView, error) {
 	result := new(CommitView)
-	timestamp := time.Time{}
 	revision := []byte{}
 
 	err := connection.QueryRow(`
@@ -220,12 +224,13 @@ WHERE username = ? AND alias = ? AND hash = ?
 			&result.Path,
 			&result.Current,
 			&revision,
-			&timestamp,
+			&result.Timestamp,
 		)
 	if err != nil {
 		return nil, errors.Wrapf(err, "querying for %#v %#v %#v", username, alias, hash)
 	}
-	result.Timestamp = formatTime(timestamp)
+
+	result.DateString = formatTime(time.Unix(result.Timestamp, 0))
 
 	uncompressed, err := file.Uncompress(revision)
 	if err != nil {

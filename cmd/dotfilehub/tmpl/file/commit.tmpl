@@ -1,6 +1,6 @@
 <main>
   {{ template "file_content" . }}
-  <p>{{ .Data.timestamp }}</p>
+  <p>{{ .Data.dateString }}</p>
   <p>
     {{ if .Data.forkedFrom }}
     <a href="{{ .Data.message }}">Forked from</a>
