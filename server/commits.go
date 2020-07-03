@@ -23,7 +23,8 @@ func loadCommits(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 
 func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	if !strings.Contains(r.Header.Get("Accept"), "text/html") {
-		return loadRawCommit(w, r, p)
+		handleRawCommit(w, r)
+		return true
 	}
 
 	alias := p.Vars["alias"]
@@ -46,24 +47,6 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	p.Title = fmt.Sprintf("%s@%s", alias, hash)
 
 	return
-}
-
-// Sets the contents of file at hash to response writer.
-func loadRawCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	alias := p.Vars["alias"]
-	hash := p.Vars["hash"]
-
-	commit, err := db.GetCommit(p.Vars["username"], alias, hash)
-	if err != nil {
-		return p.setError(w, err)
-	}
-
-	_, err = w.Write(commit.Content)
-	if err != nil {
-		return p.setError(w, err)
-	}
-
-	return true
 }
 
 // Handles submitting the restore form on the commits page.
@@ -110,11 +93,5 @@ func commitHandler() http.HandlerFunc {
 		templateName: "commit.tmpl",
 		loadData:     loadCommit,
 		handleForm:   restoreFile,
-	})
-}
-
-func rawCommitHandler() http.HandlerFunc {
-	return createHandler(&pageDescription{
-		loadData: loadRawCommit,
 	})
 }

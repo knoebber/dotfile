@@ -127,7 +127,8 @@ func searchFiles(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 // Loads the contents of a file by its alias.
 func loadFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	if !strings.Contains(r.Header.Get("Accept"), "text/html") {
-		return loadRawFile(w, r, p)
+		handleRawFile(w, r)
+		return true
 	}
 
 	username := p.Vars["username"]
@@ -145,21 +146,6 @@ func loadFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	p.Title = file.Alias
 
 	return
-}
-
-// Sets the contents of file to response writer.
-func loadRawFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	file, err := db.GetFileByUsername(p.Vars["username"], p.Vars["alias"])
-	if err != nil {
-		return p.setError(w, err)
-	}
-
-	_, err = w.Write(file.Content)
-	if err != nil {
-		return p.setError(w, err)
-	}
-
-	return true
 }
 
 // Loads data into the create/edit form.
@@ -289,11 +275,5 @@ func fileHandler() http.HandlerFunc {
 		templateName: "file.tmpl",
 		handleForm:   forkFile,
 		loadData:     loadFile,
-	})
-}
-
-func rawFileHandler() http.HandlerFunc {
-	return createHandler(&pageDescription{
-		loadData: loadRawFile,
 	})
 }

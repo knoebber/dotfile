@@ -12,13 +12,14 @@ import (
 func setupRoutes(r *mux.Router, secure bool) {
 	staticRoutes(r, secure)
 	assetRoutes(r)
+	apiRoutes(r)
+	// Important to register these last so non dymaic routes take precedence.
 	dynamicRoutes(r)
+
+	createReservedUsernames(r)
 }
 
-// Pages that do not start with {username}.
-// These conflict with the username wild card.
-// Seed the DB on start to prevent these from being registered.
-// Important that these routes are setup first so that registerRoutes only sees these.
+// Pages that do not have a path variables.
 func staticRoutes(r *mux.Router, secure bool) {
 	r.HandleFunc("/", indexHandler())
 	r.HandleFunc("/about", aboutHandler())
@@ -31,8 +32,6 @@ func staticRoutes(r *mux.Router, secure bool) {
 	r.HandleFunc("/settings/email", emailHandler())
 	r.HandleFunc("/settings/password", passwordHandler())
 	r.HandleFunc("/settings/theme", themeHandler())
-	r.HandleFunc("/api/{username}/{alias}", getFileJSON).Methods("GET")
-	registerRoutes(r)
 }
 
 func assetRoutes(r *mux.Router) {
@@ -41,20 +40,28 @@ func assetRoutes(r *mux.Router) {
 	r.Path("/favicon.ico").Handler(http.FileServer(assets))
 }
 
+func apiRoutes(r *mux.Router) {
+	r.HandleFunc("/api/{username}/{alias}", handleRawFile)
+	r.HandleFunc("/api/{username}/{alias}/json", getFileJSON)
+	r.HandleFunc("/api/{username}/{alias}/{hash}", handleRawCommit)
+}
+
 func dynamicRoutes(r *mux.Router) {
 	r.HandleFunc("/temp_file/{alias}/create", confirmNewFileHandler())
 	r.HandleFunc("/temp_file/{alias}/commit", confirmEditHandler())
 	r.HandleFunc("/{username}", userHandler())
 	r.HandleFunc("/{username}/{alias}", fileHandler())
-	r.HandleFunc("/{username}/{alias}/raw", rawFileHandler())
+	r.HandleFunc("/{username}/{alias}/raw", handleRawFile)
 	r.HandleFunc("/{username}/{alias}/commits", commitsHandler())
 	r.HandleFunc("/{username}/{alias}/edit", editFileHandler())
 	r.HandleFunc("/{username}/{alias}/diff", diffHandler())
 	r.HandleFunc("/{username}/{alias}/{hash}", commitHandler())
-	r.HandleFunc("/{username}/{alias}/{hash}/raw", rawCommitHandler())
+	r.HandleFunc("/{username}/{alias}/{hash}/raw", handleRawCommit)
 }
 
-func registerRoutes(r *mux.Router) {
+// Prevent users for registering any username that conflicts with an existing route.
+// For example a user named "about" wouldn't be able to see their files.
+func createReservedUsernames(r *mux.Router) {
 	reserved := []interface{}{}
 	err := r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		pathTemplate, err := route.GetPathTemplate()
@@ -63,6 +70,10 @@ func registerRoutes(r *mux.Router) {
 		}
 
 		split := strings.Split(pathTemplate, "/")
+		if split[1] == "{username}" {
+			return nil
+		}
+
 		reserved = append(reserved, split[1])
 		return nil
 	})
