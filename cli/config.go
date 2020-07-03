@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"fmt"
+
 	"github.com/knoebber/dotfile/local"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -11,6 +13,11 @@ type configCommand struct {
 }
 
 func (cc *configCommand) run(ctx *kingpin.ParseContext) error {
+	if cc.key == "" {
+		fmt.Println(config.user)
+		return nil
+	}
+
 	return local.SetUserConfig(config.home, cc.key, cc.value)
 }
 

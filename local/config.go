@@ -20,6 +20,14 @@ type UserConfig struct {
 	Token    string `json:"token"`
 }
 
+func (uc *UserConfig) String() string {
+	return fmt.Sprintf("Remote: %#v\nUsername: %#v\nToken: %#v",
+		uc.Remote,
+		uc.Username,
+		uc.Token,
+	)
+}
+
 func getConfigPath(home string) (string, error) {
 	var configDir string
 
