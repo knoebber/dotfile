@@ -105,5 +105,6 @@ func randomBytes(n int) ([]byte, error) {
 }
 
 func formatTime(t time.Time) string {
+	// TODO save user timezone preference.
 	return t.Format(timestampDisplayFormat)
 }
