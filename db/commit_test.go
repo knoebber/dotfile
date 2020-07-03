@@ -14,7 +14,7 @@ func TestCommitsTable(t *testing.T) {
 		Hash:      testHash,
 		Message:   testMessage,
 		Revision:  []byte(testContent),
-		Timestamp: time.Now(),
+		Timestamp: time.Now().Unix(),
 	}
 
 	t.Run("has foreign key constraints", func(t *testing.T) {

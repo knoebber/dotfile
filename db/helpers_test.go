@@ -124,7 +124,7 @@ func createTestCommit(t *testing.T) {
 		Hash:      testHash,
 		Message:   testMessage,
 		Revision:  []byte(testRevision),
-		Timestamp: time.Now(),
+		Timestamp: time.Now().Unix(),
 	}
 
 	_, err := insert(testCommit, nil)
@@ -188,6 +188,9 @@ func initTestFileAndCommit(t *testing.T) (initialCommit CommitSummary, currentCo
 
 	s, err := NewStorage(testUserID, testAlias)
 	failIf(t, err, "initializing test file")
+
+	// Ensure that the new commit has a different timestamp - unix time is by the second.
+	time.Sleep(time.Second)
 
 	failIf(t, file.NewCommit(s, "Commiting test updated content"))
 	failIf(t, s.Close(), "closing storage in add test commit")

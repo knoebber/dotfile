@@ -70,8 +70,8 @@ func TestStorage_save(t *testing.T) {
 
 func TestStorage_HasCommit(t *testing.T) {
 	s := &Storage{
-		Tracking: &trackedFile{
-			Commits: []commit{{
+		Tracking: &TrackedFile{
+			Commits: []Commit{{
 				Hash: "a",
 			}},
 		}}
@@ -107,7 +107,7 @@ func TestStorage_GetRevision(t *testing.T) {
 func TestStorage_Revert(t *testing.T) {
 
 	t.Run("error when unable to write", func(t *testing.T) {
-		s := &Storage{Tracking: &trackedFile{Path: "/not/exists"}}
+		s := &Storage{Tracking: &TrackedFile{Path: "/not/exists"}}
 		assert.Error(t, s.Revert(new(bytes.Buffer), testHash))
 	})
 
@@ -122,7 +122,7 @@ func TestStorage_Revert(t *testing.T) {
 func TestStorage_SaveCommit(t *testing.T) {
 
 	t.Run("error when unable to create commit directory", func(t *testing.T) {
-		s := &Storage{dir: "/not/exist", Tracking: new(trackedFile)}
+		s := &Storage{dir: "/not/exist", Tracking: new(TrackedFile)}
 		err := s.SaveCommit(new(bytes.Buffer), testHash, "", time.Now())
 		assert.Error(t, err)
 	})
