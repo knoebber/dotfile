@@ -28,6 +28,7 @@ func Start(cfg Config) {
 		log.Panicf("starting database connection: %v", err)
 	}
 	defer db.Close()
+	log.Printf("using sqlite3 database %s", cfg.DBPath)
 
 	r := mux.NewRouter()
 
@@ -49,7 +50,7 @@ func Start(cfg Config) {
 		log.Panic(err)
 	}
 
-	log.Println("serving dotfiles at", cfg.Addr)
+	log.Print("serving dotfiles at", cfg.Addr)
 
 	log.Panicf("starting dotfile server: %v", s.ListenAndServe())
 }

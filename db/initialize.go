@@ -3,7 +3,6 @@ package db
 
 import (
 	"database/sql"
-	"log"
 
 	// Driver for sql
 	_ "github.com/mattn/go-sqlite3"
@@ -47,10 +46,8 @@ func Start(dbPath string) (err error) {
 	if err != nil {
 		return err
 	}
-	log.Printf("using sqlite3 database %s", dbPath)
 
 	validate = validator.New()
-
 	return createTables()
 }
 
