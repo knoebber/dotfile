@@ -229,7 +229,7 @@ func ForkFile(username, alias, hash string, newUserID int64) error {
 		return err
 	}
 
-	commitForkee, err := getCommit(username, alias, hash)
+	commitForkee, err := GetCommit(username, alias, hash)
 	if err != nil {
 		return err
 	}

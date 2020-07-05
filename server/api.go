@@ -11,7 +11,7 @@ import (
 )
 
 // Gathers a file/commits and marshals it into the format that package local uses.
-func getFileJSON(w http.ResponseWriter, r *http.Request) {
+func handleFileJSON(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	username := vars["username"]
@@ -42,6 +42,24 @@ func getFileJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	setJSON(w, result)
+}
+
+func handleRawCompressedCommit(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	commit, err := db.GetCommit(vars["username"], vars["alias"], vars["hash"])
+	if err != nil {
+		rawContentError(w, err)
+		return
+	}
+
+	_, err = w.Write(commit.Revision)
+	if err != nil {
+		rawContentError(w, err)
+		return
+	}
+
+	return
 }
 
 func setJSON(w http.ResponseWriter, body interface{}) {

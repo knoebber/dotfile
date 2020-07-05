@@ -41,9 +41,8 @@ func assetRoutes(r *mux.Router) {
 }
 
 func apiRoutes(r *mux.Router) {
-	r.HandleFunc("/api/{username}/{alias}", handleRawFile)
-	r.HandleFunc("/api/{username}/{alias}/json", getFileJSON)
-	r.HandleFunc("/api/{username}/{alias}/{hash}", handleRawCommit)
+	r.HandleFunc("/api/{username}/{alias}", handleFileJSON)
+	r.HandleFunc("/api/{username}/{alias}/{hash}", handleRawCompressedCommit)
 }
 
 func dynamicRoutes(r *mux.Router) {
@@ -56,7 +55,7 @@ func dynamicRoutes(r *mux.Router) {
 	r.HandleFunc("/{username}/{alias}/edit", editFileHandler())
 	r.HandleFunc("/{username}/{alias}/diff", diffHandler())
 	r.HandleFunc("/{username}/{alias}/{hash}", commitHandler())
-	r.HandleFunc("/{username}/{alias}/{hash}/raw", handleRawCommit)
+	r.HandleFunc("/{username}/{alias}/{hash}/raw", handleRawUncompressedCommit)
 }
 
 // Prevent users for registering any username that conflicts with an existing route.

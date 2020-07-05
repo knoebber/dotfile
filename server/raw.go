@@ -25,10 +25,10 @@ func handleRawFile(w http.ResponseWriter, r *http.Request) {
 }
 
 // Sets the contents of file at hash to response writer.
-func handleRawCommit(w http.ResponseWriter, r *http.Request) {
+func handleRawUncompressedCommit(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	commit, err := db.GetCommit(vars["username"], vars["alias"], vars["hash"])
+	commit, err := db.GetUncompressedCommit(vars["username"], vars["alias"], vars["hash"])
 	if err != nil {
 		rawContentError(w, err)
 		return

@@ -23,7 +23,7 @@ func loadCommits(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 
 func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	if !strings.Contains(r.Header.Get("Accept"), "text/html") {
-		handleRawCommit(w, r)
+		handleRawUncompressedCommit(w, r)
 		return true
 	}
 
@@ -31,7 +31,7 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	hash := p.Vars["hash"]
 	username := p.Vars["username"]
 
-	commit, err := db.GetCommit(username, alias, hash)
+	commit, err := db.GetUncompressedCommit(username, alias, hash)
 	if err != nil {
 		return p.setError(w, err)
 	}

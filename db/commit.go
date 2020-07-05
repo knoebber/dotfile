@@ -173,8 +173,8 @@ ORDER BY timestamp DESC
 	return result, nil
 }
 
-// Returns the commit record.
-func getCommit(username, alias, hash string) (*Commit, error) {
+// GetCommit returns the commit record.
+func GetCommit(username, alias, hash string) (*Commit, error) {
 	result := new(Commit)
 
 	err := connection.QueryRow(`
@@ -199,8 +199,8 @@ WHERE username = ? AND alias = ? AND hash = ?`, username, alias, hash).
 	return result, nil
 }
 
-// GetCommit gets a commit and uncompresses its contents.
-func GetCommit(username, alias, hash string) (*CommitView, error) {
+// GetUncompressedCommit gets a commit and uncompresses its contents.
+func GetUncompressedCommit(username, alias, hash string) (*CommitView, error) {
 	result := new(CommitView)
 	revision := []byte{}
 
