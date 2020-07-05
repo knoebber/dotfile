@@ -16,23 +16,12 @@ import (
 var (
 	pathToAliasRegex = regexp.MustCompile(`(\w+)(\.\w+)?$`)
 	validAliasRegex  = regexp.MustCompile(`^\w+$`)
-	validPathRegex   = regexp.MustCompile(`^~?/.+[^/]$`) // Must start in ~/ or /, cannot end in /
+	// Must start in ~/ or /, cannot end in /
+	validPathRegex = regexp.MustCompile(`^~?/.+[^/]$`)
+
+	// ErrNoChanges is returned when a diff operation finds no changes.
+	ErrNoChanges = usererr.Invalid("No changes")
 )
-
-// NotTrackedError is returned when a file is not tracked.
-// TODO moved to usererr
-type NotTrackedError struct {
-	alias string
-}
-
-func (e *NotTrackedError) Error() string {
-	return fmt.Sprintf("%#v is not tracked", e.alias)
-}
-
-// ErrNotTracked returns a new NotTrackedError
-func ErrNotTracked(alias string) error {
-	return &NotTrackedError{alias}
-}
 
 // GetAlias creates an alias when the passed in alias is empty.
 // It works by removing leading dots and file extensions from the path.

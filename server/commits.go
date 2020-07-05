@@ -73,10 +73,6 @@ func restoreFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, err)
 	}
 
-	if err := storage.Close(); err != nil {
-		return p.setError(w, err)
-	}
-
 	return
 
 }

@@ -28,7 +28,9 @@ func GetDefaultStorageDir(home string) (storageDir string, err error) {
 	return
 }
 
-func newStorage(home, dir, alias string) (*Storage, error) {
+// NewStorage returns a new storage.
+// Dir is the directory for storing dotfile tracking information.
+func NewStorage(home, dir string) (*Storage, error) {
 	s := new(Storage)
 
 	if home == "" {
@@ -37,33 +39,9 @@ func newStorage(home, dir, alias string) (*Storage, error) {
 	if dir == "" {
 		return nil, errors.New("dir cannot be empty")
 	}
-	if alias == "" {
-		return nil, errors.New("alias cannot be empty")
-	}
 
 	s.Home = home
 	s.dir = dir
-	s.Alias = alias
-	s.jsonPath = filepath.Join(s.dir, s.Alias+".json")
-
-	return s, nil
-}
-
-// LoadFile initializes the storage directory and loads.Alias's data.
-// Returns error when alias is not tracked.
-func LoadFile(home, dir, alias string) (*Storage, error) {
-	s, err := newStorage(home, dir, alias)
-	if err != nil {
-		return nil, err
-	}
-
-	if !exists(s.jsonPath) {
-		return nil, file.ErrNotTracked(alias)
-	}
-
-	if err := s.get(); err != nil {
-		return nil, err
-	}
 
 	return s, nil
 }
@@ -78,24 +56,25 @@ func InitFile(home, dir, path, alias string) (string, error) {
 
 	alias, err = file.GetAlias(alias, convertedPath)
 
-	s, err := newStorage(home, dir, alias)
+	s, err := NewStorage(home, dir)
 	if err != nil {
 		return "", nil
 	}
 
-	if exists(s.jsonPath) {
+	if err := s.LoadFile(alias); err != nil {
+		return "", err
+	}
+
+	if s.HasFile {
 		return "", fmt.Errorf("%#v is already tracked", alias)
 	}
 
-	// Example: ~/.config/dotfile
+	// Example: ~/.local/share/dotfile
 	if err := createDir(dir); err != nil {
 		return "", nil
 	}
+	s.Tracking.Path = convertedPath
 
-	s.Tracking = &TrackedFile{
-		Path:    convertedPath,
-		Commits: []Commit{},
-	}
 	if err := file.Init(s, convertedPath, alias); err != nil {
 		return "", err
 	}

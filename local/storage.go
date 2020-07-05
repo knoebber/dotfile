@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -35,41 +36,68 @@ import (
 // Storage implements the file.Storer interface.
 // It represents the local data storage for a file that dot is Tracking.
 type Storage struct {
-	Home     string // The path to the users home directory.
-	Alias    string // A friendly name for the file that is being tracked.
-	Tracking *TrackedFile
+	Home     string       // The path to the users home directory.
+	Alias    string       // A friendly name for the file that is being tracked.
+	Tracking *TrackedFile // The current file that storage is tracking.
+	HasFile  bool         // Whether the storage has a TrackedFile loaded.
 
 	dir      string // The path to the folder where data will be stored.
 	jsonPath string
 }
 
-// Load the tracked file.
-func (s *Storage) get() error {
-	bytes, err := ioutil.ReadFile(s.jsonPath)
+// GetJSON returns the tracked files json.
+func (s *Storage) GetJSON() ([]byte, error) {
+	jsonContent, err := ioutil.ReadFile(s.jsonPath)
 	if err != nil {
-		return errors.Wrap(err, "reading tracking data")
+		return nil, errors.Wrap(err, "reading tracking data")
 	}
 
-	if len(bytes) == 0 {
-		return fmt.Errorf("%s is empty", s.jsonPath)
+	if len(jsonContent) == 0 {
+		return nil, fmt.Errorf("%s is empty", s.jsonPath)
+	}
+
+	return jsonContent, nil
+}
+
+// LoadFile sets storage to track alias.
+// Loads the tracking data when it exists, otherwise sets an empty TrackedFile.
+func (s *Storage) LoadFile(alias string) error {
+	if alias == "" {
+		return errors.New("alias cannot be empty")
+	}
+	s.Alias = alias
+	s.jsonPath = filepath.Join(s.dir, s.Alias+".json")
+
+	if !exists(s.jsonPath) {
+		s.Tracking = new(TrackedFile)
+		s.Tracking.Commits = []Commit{}
+		s.HasFile = false
+		return nil
 	}
 
 	s.Tracking = new(TrackedFile)
 
-	if err := json.Unmarshal(bytes, &s.Tracking); err != nil {
+	jsonContent, err := s.GetJSON()
+	if err != nil {
+		return nil
+	}
+
+	if err = json.Unmarshal(jsonContent, &s.Tracking); err != nil {
 		return errors.Wrapf(err, "unmarshaling tracking data")
 	}
+
+	s.HasFile = true
 	return nil
 }
 
-// Updates the json file with the updated data from the tracked file.
-func (s *Storage) save() error {
+// Close updates the files JSON with s.Tracking.
+func (s *Storage) Close() error {
 	bytes, err := json.MarshalIndent(s.Tracking, "", jsonIndent)
 	if err != nil {
 		return errors.Wrap(err, "marshalling tracking data to json")
 	}
 
-	// Example: ~/.config/dotfile/bash_profile.json
+	// Example: ~/.local/share/dotfile/bash_profile.json
 	if err := ioutil.WriteFile(s.jsonPath, bytes, 0644); err != nil {
 		return errors.Wrap(err, "saving tracking data")
 	}
@@ -103,7 +131,7 @@ func (s *Storage) GetRevision(hash string) ([]byte, error) {
 
 // GetContents reads the contents of the file that is being tracked.
 func (s *Storage) GetContents() ([]byte, error) {
-	contents, err := ioutil.ReadFile(fullPath(s.Tracking.Path, s.Home))
+	contents, err := ioutil.ReadFile(s.GetPath())
 	if err != nil {
 		return nil, errors.Wrap(err, "reading file contents")
 	}
@@ -121,37 +149,35 @@ func (s *Storage) SaveCommit(buff *bytes.Buffer, hash, message string, timestamp
 		Timestamp: timestamp.Unix(),
 	})
 
-	// The directory for the files commits.
-	commitDir := filepath.Join(s.dir, s.Alias)
-
-	// Example: ~/.config/dotfile/bash_profile
-	if err := createDir(commitDir); err != nil {
-		return errors.Wrap(err, "creating directory for revision")
-	}
-
-	// Example: ~/.config/dotfile/bash_profile/8f94c7720a648af9cf9dab33e7f297d28b8bf7cd
-	commitPath := filepath.Join(commitDir, hash)
-
-	if err := ioutil.WriteFile(commitPath, buff.Bytes(), 0644); err != nil {
-		return errors.Wrap(err, "writing revision")
+	if err := writeCommit(buff.Bytes(), s.dir, s.Alias, hash); err != nil {
+		return err
 	}
 
 	s.Tracking.Revision = hash
-	return s.save()
+	return nil
 }
 
 // Revert overwrites a file at path with contents.
 func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
-	err := ioutil.WriteFile(fullPath(s.Tracking.Path, s.Home), buff.Bytes(), 0644)
+	err := ioutil.WriteFile(s.GetPath(), buff.Bytes(), 0644)
 	if err != nil {
 		return errors.Wrap(err, "reverting file")
 	}
 
 	s.Tracking.Revision = hash
-	return s.save()
+	return nil
 }
 
 // GetPath gets the full path to the file.
-func (s *Storage) GetPath() (string, error) {
-	return fullPath(s.Tracking.Path, s.Home), nil
+// Returns an empty string when path is not set.
+func (s *Storage) GetPath() string {
+	if s.Tracking.Path == "" {
+		return ""
+	}
+
+	if s.Tracking.Path[0] == '/' {
+		return s.Tracking.Path
+	}
+
+	return strings.Replace(s.Tracking.Path, "~", s.Home, 1)
 }

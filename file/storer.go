@@ -3,21 +3,22 @@ package file
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/knoebber/dotfile/usererr"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-const (
-	diffCmd              = "diff"
-	diffType             = "-u" // unified view
-	colorOption          = "--color"
-	initialCommitMessage = "Initial commit"
-)
+// TODO change init to take an initial commit message.
+// If the file is created on server, make message like
+// "Initial commit on https://dotfilehub.com"
+// Currently there is ambiguity when pulling a file that has two initial commits.
+const initialCommitMessage = "Initial commit"
 
 // Storer is an interface that encapsulates the I/O that is required for dotfile.
 type Storer interface {
+	io.Closer
 	HasCommit(hash string) (exists bool, err error)
 	GetContents() (contents []byte, err error)
 	GetRevision(hash string) (revision []byte, err error)
@@ -42,6 +43,7 @@ func UncompressRevision(s Storer, hash string) (*bytes.Buffer, error) {
 }
 
 // Init creates a new commit with the initial commit message.
+// Closes storage.
 func Init(s Storer, path, alias string) error {
 	if err := CheckPath(path); err != nil {
 		return err
@@ -55,6 +57,7 @@ func Init(s Storer, path, alias string) error {
 }
 
 // NewCommit saves a revision of the file at its current state.
+// Closes storage.
 func NewCommit(s Storer, message string) error {
 	contents, err := s.GetContents()
 	if err != nil {
@@ -74,10 +77,15 @@ func NewCommit(s Storer, message string) error {
 		return usererr.Invalid(fmt.Sprintf("Commit %#v already exists", hash))
 	}
 
-	return s.SaveCommit(compressed, hash, message, time.Now())
+	if err := s.SaveCommit(compressed, hash, message, time.Now()); err != nil {
+		return err
+	}
+
+	return s.Close()
 }
 
 // Checkout reverts a tracked file to its state at hash.
+// Closes storage.
 func Checkout(s Storer, hash string) error {
 	exists, err := s.HasCommit(hash)
 	if err != nil {
@@ -96,11 +104,12 @@ func Checkout(s Storer, hash string) error {
 		return err
 	}
 
-	return nil
+	return s.Close()
 }
 
 // Diff runs a diff on the revision at hash1 against the revision at hash2.
 // If hash2 is empty, compares the current contents of the file.
+// Returns an usererr when there is no difference.
 func Diff(s Storer, hash1, hash2 string) ([]diffmatchpatch.Diff, error) {
 	var text1, text2 string
 
@@ -136,5 +145,5 @@ func Diff(s Storer, hash1, hash2 string) ([]diffmatchpatch.Diff, error) {
 		}
 	}
 
-	return nil, usererr.Invalid("No changes")
+	return nil, ErrNoChanges
 }

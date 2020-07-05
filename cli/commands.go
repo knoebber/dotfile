@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/knoebber/dotfile/local"
@@ -25,10 +26,17 @@ func getHome() (string, error) {
 }
 
 func loadFile(alias string) (*local.Storage, error) {
-	storage, err := local.LoadFile(config.home, config.storageDir, alias)
-
+	storage, err := local.NewStorage(config.home, config.storageDir)
 	if err != nil {
-		return nil, errors.Wrapf(err, "loading file %#v", alias)
+		return nil, errors.Wrap(err, "getting storage")
+	}
+
+	if err := storage.LoadFile(alias); err != nil {
+		return nil, errors.Wrapf(err, "loading %#v", alias)
+	}
+
+	if !storage.HasFile {
+		return nil, fmt.Errorf("%#v is not tracked", alias)
 	}
 
 	return storage, nil
@@ -67,6 +75,7 @@ func AddCommandsToApplication(app *kingpin.Application) error {
 	}
 
 	addInitSubCommandToApplication(app)
+	addPrintSubCommandToApplication(app)
 	addEditSubCommandToApplication(app)
 	addDiffSubCommandToApplication(app)
 	addLogSubCommandToApplication(app)

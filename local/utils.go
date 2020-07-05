@@ -2,9 +2,14 @@ package local
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/usererr"
+	"github.com/pkg/errors"
 )
 
 const jsonIndent = "  "
@@ -48,13 +53,6 @@ func convertPath(path, home string) (string, error) {
 	return strings.Replace(path, home, "~", 1), nil
 }
 
-func fullPath(path, home string) string {
-	if path[0] == '/' {
-		return path
-	}
-	return strings.Replace(path, "~", home, 1)
-}
-
 // Returns whether the file or directory exists.
 func exists(path string) bool {
 	_, err := os.Stat(path)
@@ -72,4 +70,39 @@ func createDir(dir string) error {
 	}
 
 	return os.Mkdir(dir, 0755)
+}
+
+func writeCommit(contents []byte, storageDir string, alias, hash string) error {
+	// The directory for the files commits.
+	commitDir := filepath.Join(storageDir, alias)
+
+	// Example: ~/.local/share/dotfile/bash_profile
+	if err := createDir(commitDir); err != nil {
+		return errors.Wrap(err, "creating directory for revision")
+	}
+
+	// Example: ~/.local/share/dotfile/bash_profile/8f94c7720a648af9cf9dab33e7f297d28b8bf7cd
+	commitPath := filepath.Join(commitDir, hash)
+
+	if err := ioutil.WriteFile(commitPath, contents, 0644); err != nil {
+		return errors.Wrap(err, "writing revision")
+	}
+
+	return nil
+}
+
+// AssertClean returns an error when the tracked file has uncommitted changes.
+func AssertClean(s *Storage) error {
+	if !s.HasFile {
+		return nil
+	}
+
+	_, err := file.Diff(s, s.Tracking.Revision, "")
+	if errors.Is(err, file.ErrNoChanges) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	return usererr.Invalid("File has uncommited changes")
 }

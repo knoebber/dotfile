@@ -28,10 +28,7 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
-	path, err := s.GetPath()
-	if err != nil {
-		return err
-	}
+	path := s.GetPath()
 
 	cmd := execCommand(editor, path)
 	cmd.Stdout = os.Stdout

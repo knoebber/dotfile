@@ -82,10 +82,6 @@ func confirmTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool
 		return p.setError(w, err)
 	}
 
-	if err := storage.Close(); err != nil {
-		return p.setError(w, err)
-	}
-
 	path := fmt.Sprintf("/%s/%s", p.Session.Username, alias)
 
 	http.Redirect(w, r, path, http.StatusSeeOther)

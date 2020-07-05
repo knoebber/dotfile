@@ -2,14 +2,14 @@ package local
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
-	"path"
 	"time"
 
 	"github.com/pkg/errors"
 )
 
-const timeoutSeconds = 10
+const timeoutSeconds = 30
 
 func getClient() *http.Client {
 	return &http.Client{
@@ -17,19 +17,15 @@ func getClient() *http.Client {
 	}
 }
 
-func getRemoteTrackedFile(client *http.Client, apiPath string) (*TrackedFile, error) {
-	req, err := http.NewRequest("GET", apiPath+"/json", nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "creating request for remote tracked file")
-	}
-
-	resp, err := client.Do(req)
+func getRemoteTrackedFile(client *http.Client, fileURL string) (*TrackedFile, error) {
+	resp, err := client.Get(fileURL)
 	if err != nil {
 		return nil, errors.Wrap(err, "sending request for remote tracked file")
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
+		return nil, fmt.Errorf("fetching remote tracked file: %s", resp.Status)
 	}
 
 	result := new(TrackedFile)
@@ -38,20 +34,4 @@ func getRemoteTrackedFile(client *http.Client, apiPath string) (*TrackedFile, er
 	}
 
 	return result, nil
-}
-
-// Pull retrieves a file and commits from a remote dotfile server
-// and installs the contents to the local filesystem.
-func Pull(remote, username, alias string) error {
-	client := getClient()
-	apiPath := remote + path.Join("/api", username, alias)
-
-	tf, err := getRemoteTrackedFile(client, apiPath)
-	if err != nil {
-		return err
-	}
-
-	println(tf)
-
-	return nil
 }
