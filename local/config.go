@@ -21,7 +21,7 @@ type UserConfig struct {
 }
 
 func (uc *UserConfig) String() string {
-	return fmt.Sprintf("Remote: %#v\nUsername: %#v\nToken: %#v",
+	return fmt.Sprintf("remote: %#v\nusername: %#v\ntoken: %#v",
 		uc.Remote,
 		uc.Username,
 		uc.Token,
