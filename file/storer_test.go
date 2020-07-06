@@ -1,6 +1,7 @@
 package file
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -41,6 +42,16 @@ func TestInit(t *testing.T) {
 	t.Run("error on new commit", func(t *testing.T) {
 		s := &MockStorer{saveCommitErr: true}
 		assert.Error(t, Init(s, "/valid/path", "test"))
+	})
+
+	t.Run("error on close", func(t *testing.T) {
+		s := &MockStorer{closeErr: true}
+		assert.Error(t, Init(s, "/valid/path", "test"))
+	})
+
+	t.Run("ok", func(t *testing.T) {
+		s := &MockStorer{}
+		assert.NoError(t, Init(s, "/valid/path", "test"))
 	})
 }
 
@@ -94,4 +105,31 @@ func TestCheckout(t *testing.T) {
 		err := Checkout(s, testHash)
 		assert.NoError(t, err)
 	})
+
+	t.Run("error on close", func(t *testing.T) {
+		s := &MockStorer{hasCommit: true, closeErr: true}
+		err := Checkout(s, testHash)
+		assert.Error(t, err)
+	})
+}
+
+func TestDiff(t *testing.T) {
+	t.Run("uncompress error", func(t *testing.T) {
+		s := &MockStorer{uncompressErr: true}
+		_, err := Diff(s, testHash, testHash)
+		assert.Error(t, err)
+	})
+
+	t.Run("get content error", func(t *testing.T) {
+		s := &MockStorer{getContentsErr: true}
+		_, err := Diff(s, testHash, "")
+		assert.Error(t, err)
+	})
+
+	t.Run("no changes error", func(t *testing.T) {
+		s := &MockStorer{}
+		_, err := Diff(s, testHash, testHash)
+		assert.True(t, errors.Is(err, ErrNoChanges))
+	})
+
 }

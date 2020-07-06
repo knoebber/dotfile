@@ -30,7 +30,6 @@ func TestNewStorage(t *testing.T) {
 		s, err := NewStorage(testUserID, testAlias)
 		failIf(t, err)
 		failIf(t, file.Init(s, testPath, testAlias))
-		assert.NoError(t, s.Close())
 	})
 }
 
@@ -107,7 +106,6 @@ func TestRevert(t *testing.T) {
 	s := getTestStorage(t)
 
 	failIf(t, file.NewCommit(s, "Testing revert; updating to new content"), "creating test temp file")
-	failIf(t, s.Close(), "closing storage for commit setup")
 
 	f, err = getFileByUserID(testUserID, testAlias)
 	failIf(t, err, "getting file by user ID")
@@ -115,7 +113,6 @@ func TestRevert(t *testing.T) {
 
 	s = getTestStorage(t)
 	failIf(t, file.Checkout(s, initialCommitHash), "reverting file to", initialCommitHash)
-	failIf(t, s.Close(), "closing storage after checkout")
 
 	f, err = getFileByUserID(testUserID, testAlias)
 	assert.Equal(t, testContent, string(f.Content), "reverted to content from initial commit")

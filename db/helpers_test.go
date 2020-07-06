@@ -172,7 +172,6 @@ func initTestFile(t *testing.T) *File {
 	s, err := NewStorage(testUserID, testAlias)
 	failIf(t, err, "new storage in init test file")
 	failIf(t, file.Init(s, testPath, testAlias), "initialing test file")
-	failIf(t, s.Close(), "closing storage in init test file")
 
 	f, err := GetFileByUsername(testUsername, testAlias)
 	failIf(t, err, "getting file by username in init test file")
@@ -193,7 +192,6 @@ func initTestFileAndCommit(t *testing.T) (initialCommit CommitSummary, currentCo
 	time.Sleep(time.Second)
 
 	failIf(t, file.NewCommit(s, "Commiting test updated content"))
-	failIf(t, s.Close(), "closing storage in add test commit")
 
 	lst, err := GetCommitList(testUsername, testAlias)
 	failIf(t, err, "getting test commit")

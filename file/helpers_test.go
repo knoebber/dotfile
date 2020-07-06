@@ -25,6 +25,7 @@ type MockStorer struct {
 	revertErr           bool
 	hasCommit           bool
 	hasCommitErr        bool
+	closeErr            bool
 }
 
 func (ms *MockStorer) HasCommit(string) (bool, error) {
@@ -67,6 +68,14 @@ func (ms *MockStorer) SaveCommit(*bytes.Buffer, string, string, time.Time) error
 func (ms *MockStorer) Revert(*bytes.Buffer, string) error {
 	if ms.revertErr {
 		return errors.New("revert error")
+	}
+
+	return nil
+}
+
+func (ms *MockStorer) Close() error {
+	if ms.closeErr {
+		return errors.New("close error")
 	}
 
 	return nil

@@ -24,7 +24,6 @@ package local
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -50,10 +49,6 @@ func (s *Storage) GetJSON() ([]byte, error) {
 	jsonContent, err := ioutil.ReadFile(s.jsonPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "reading tracking data")
-	}
-
-	if len(jsonContent) == 0 {
-		return nil, fmt.Errorf("%s is empty", s.jsonPath)
 	}
 
 	return jsonContent, nil

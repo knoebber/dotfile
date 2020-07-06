@@ -49,8 +49,12 @@ func setupTestFile(t *testing.T) *Storage {
 		t.Fatalf("initializing test file: %s", err)
 	}
 
-	s, err := LoadFile(testHome, testDir, testAlias)
-	if err != nil {
+	s := &Storage{
+		Home: testHome,
+		dir:  testDir,
+	}
+
+	if err = s.LoadFile(testAlias); err != nil {
 		t.Fatalf("loading test file: %s", err)
 	}
 

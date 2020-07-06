@@ -11,60 +11,49 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLoadFile(t *testing.T) {
+func TestNewStorage(t *testing.T) {
 	t.Run("error when home is empty", func(t *testing.T) {
-		_, err := LoadFile("", "", "")
+		_, err := NewStorage("", "")
 		assert.Error(t, err)
 	})
 
 	t.Run("error when dir is empty", func(t *testing.T) {
-		_, err := LoadFile(testHome, "", "")
-		assert.Error(t, err)
-	})
-
-	t.Run("error when name is empty", func(t *testing.T) {
-		_, err := LoadFile(testHome, testDir, "")
-		assert.Error(t, err)
-	})
-
-	t.Run("error on failure to create storage files", func(t *testing.T) {
-		clearTestStorage()
-		_, err := LoadFile(testHome, testDir+testDir, testAlias)
-		assert.Error(t, err)
-	})
-
-	t.Run("error on failure to get", func(t *testing.T) {
-		clearTestStorage()
-		_ = os.Mkdir(testDir, 0755)
-		_ = ioutil.WriteFile(filepath.Join(testDir, testAlias), []byte("invalid json"), 0644)
-		_, err := LoadFile(testHome, testDir, testAlias)
+		_, err := NewStorage(testHome, "")
 		assert.Error(t, err)
 	})
 }
 
-func TestStorage_get(t *testing.T) {
-	t.Run("error when path does not exist", func(t *testing.T) {
-		s := &Storage{jsonPath: "/not/exist"}
-		assert.Error(t, s.get())
+func TestStorage_Loadfile(t *testing.T) {
+	t.Run("error when alias is empty", func(t *testing.T) {
+		s := new(Storage)
+		assert.Error(t, s.LoadFile(""))
 	})
 
-	t.Run("error when no content", func(t *testing.T) {
-		s := &Storage{jsonPath: testTrackedFile}
-		writeTestFile(t, []byte{})
+	t.Run("ok when alias is not tracked", func(t *testing.T) {
+		clearTestStorage()
+		s := &Storage{dir: testDir}
+		s.LoadFile(testAlias)
+		assert.False(t, s.HasFile)
+	})
 
-		assert.Error(t, s.get())
+	t.Run("error on invalid json", func(t *testing.T) {
+		clearTestStorage()
+		_ = os.Mkdir(testDir, 0755)
+		_ = ioutil.WriteFile(filepath.Join(testDir, testAlias+".json"), []byte("invalid json"), 0644)
+		s := &Storage{dir: testDir}
+		assert.Error(t, s.LoadFile(testAlias))
 	})
 
 	t.Run("ok", func(t *testing.T) {
 		s := setupTestFile(t)
-		assert.NoError(t, s.get())
+		assert.NoError(t, s.LoadFile(testAlias))
 	})
 }
 
-func TestStorage_save(t *testing.T) {
+func TestStorage_Close(t *testing.T) {
 	t.Run("error when json file does not exist", func(t *testing.T) {
 		s := &Storage{jsonPath: "/not/exist"}
-		assert.Error(t, s.save())
+		assert.Error(t, s.Close())
 	})
 }
 
