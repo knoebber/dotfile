@@ -25,7 +25,7 @@
   <a href="{{ $fileLink }}/raw">Raw</a>
   {{ end }}
   {{ if .Owned }}
-  <a href="{{ $fileLink }}/edit">Edit</a>
+  <a href="{{ $fileLink }}/edit{{ if $hash }}?at={{ $hash }}{{ end }}">Edit</a>
   {{ end }}
   {{ if .Data.current }}
   <strong>Current revision</strong>

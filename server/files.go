@@ -145,6 +145,7 @@ func loadFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 }
 
 // Loads data into the create/edit form.
+// Fills the text area with content from a tempfile or a current file depending on query params.
 func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	pageAlias := p.Vars["alias"]
 	newFile := pageAlias == ""
@@ -156,12 +157,33 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 		p.Title = pageAlias + " - Edit"
 	}
 
+	// Edit from a specific hash with the at param.
+	at := r.URL.Query().Get("at")
+
 	// Load the user's temp file if there is an ?edit query param.
 	editing := r.URL.Query().Get("edit") == "true"
 
 	if newFile && !editing {
+		// A new file that is not being edited. No content needs to be loaded.
 		return
-	} else if !newFile && !editing {
+	}
+	if editing {
+		tempFile, err := db.GetTempFile(p.Session.UserID, pageAlias)
+		if err != nil && !db.NotFound(err) {
+			return p.setError(w, err)
+		}
+		if tempFile == nil {
+			return
+		}
+
+		p.Data["alias"] = tempFile.Alias
+		p.Data["path"] = tempFile.Path
+		p.Data["content"] = string(tempFile.Content)
+		return
+	}
+
+	if at == "" {
+		// Load the current content.
 		file, err := db.GetFileByUsername(p.Vars["username"], pageAlias)
 		if err != nil {
 			return p.setError(w, err)
@@ -169,19 +191,16 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 		p.Data["path"] = file.Path
 		p.Data["content"] = string(file.Content)
 		return
+	} else if !newFile && !editing && at != "" {
+		commit, err := db.GetUncompressedCommit(p.Vars["username"], pageAlias, at)
+		if err != nil {
+			return p.setError(w, err)
+		}
+
+		p.Data["path"] = commit.Path
+		p.Data["content"] = string(commit.Content)
 	}
 
-	tempFile, err := db.GetTempFile(p.Session.UserID, pageAlias)
-	if err != nil && !db.NotFound(err) {
-		return p.setError(w, err)
-	}
-	if tempFile == nil {
-		return
-	}
-
-	p.Data["alias"] = tempFile.Alias
-	p.Data["path"] = tempFile.Path
-	p.Data["content"] = string(tempFile.Content)
 	return
 }
 
