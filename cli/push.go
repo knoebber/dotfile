@@ -1,8 +1,8 @@
 package cli
 
 import (
-	"fmt"
-
+	"github.com/knoebber/dotfile/local"
+	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -11,12 +11,12 @@ type pushCommand struct {
 }
 
 func (pc *pushCommand) run(ctx *kingpin.ParseContext) error {
-	_, err := loadFile(pc.fileName)
+	storage, err := local.NewStorage(config.home, config.storageDir)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "getting storage")
 	}
 
-	fmt.Printf("TODO: Push %#v", pc.fileName)
+	local.Push(storage, config.user, pc.fileName)
 	return nil
 }
 
