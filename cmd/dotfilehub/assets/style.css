@@ -28,7 +28,7 @@ button, a, h1, h2, h3, h4, label, strong, th {
     color: var(--headline);
 }
 
-p, li, pre, td, textarea, input {
+em, p, li, pre, td, textarea, input {
     color: var(--paragraph);
 }
 
