@@ -73,7 +73,7 @@ func InitFile(home, dir, path, alias string) (string, error) {
 	if err := createDir(dir); err != nil {
 		return "", nil
 	}
-	s.Tracking.Path = convertedPath
+	s.FileData.Path = convertedPath
 
 	if err := file.Init(s, convertedPath, alias); err != nil {
 		return "", err

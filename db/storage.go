@@ -3,8 +3,8 @@ package db
 import (
 	"bytes"
 	"database/sql"
-	"time"
 
+	"github.com/knoebber/dotfile/file"
 	"github.com/pkg/errors"
 )
 
@@ -82,20 +82,20 @@ func (s *Storage) GetRevision(hash string) ([]byte, error) {
 }
 
 // SaveCommit saves a commit to the database.
-func (s *Storage) SaveCommit(buff *bytes.Buffer, hash, message string, timestamp time.Time) error {
+func (s *Storage) SaveCommit(buff *bytes.Buffer, c *file.Commit) error {
 	commit := &Commit{
 		FileID:    s.Staged.FileID,
-		Hash:      hash,
-		Message:   message,
+		Hash:      c.Hash,
+		Message:   c.Message,
 		Revision:  buff.Bytes(),
-		Timestamp: timestamp.Unix(),
+		Timestamp: c.Timestamp,
 	}
 
 	if _, err := insert(commit, s.tx); err != nil {
 		return errors.Wrapf(err, "inserting commit for file %d", s.Staged.FileID)
 	}
 
-	return updateContent(s.tx, s.Staged.FileID, s.Staged.DirtyContent, hash)
+	return updateContent(s.tx, s.Staged.FileID, s.Staged.DirtyContent, c.Hash)
 }
 
 // Revert overwrites the files current contents with bytes.

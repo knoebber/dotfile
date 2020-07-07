@@ -14,20 +14,6 @@ import (
 
 const jsonIndent = "  "
 
-// TrackedFile represents a locally tracked file.
-type TrackedFile struct {
-	Path     string   `json:"path"`
-	Revision string   `json:"revision"`
-	Commits  []Commit `json:"commits"`
-}
-
-// Commit represents a tracked files revision.
-type Commit struct {
-	Hash      string `json:"hash"`
-	Message   string `json:"message"`
-	Timestamp int64  `json:"timestamp"` // Unix timestamp in nanoseconds.
-}
-
 // Creates a path that is reusable between machines.
 // Returns an error when path does not exist.
 func convertPath(path, home string) (string, error) {
@@ -97,7 +83,7 @@ func AssertClean(s *Storage) error {
 		return nil
 	}
 
-	_, err := file.Diff(s, s.Tracking.Revision, "")
+	_, err := file.Diff(s, s.FileData.Revision, "")
 	if errors.Is(err, file.ErrNoChanges) {
 		return nil
 	} else if err != nil {

@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
-	"sort"
 
 	"github.com/knoebber/dotfile/file"
 	"github.com/knoebber/dotfile/usererr"
@@ -82,40 +81,6 @@ func getRemoteRevisions(client *http.Client, fileURL string, hashes []string) ([
 	return result, nil
 }
 
-// Merges a local and remote tracked file.
-// Returns the new tracked file and a slices of hashes that need to be pulled.
-// Sets the current revision to what remote has.
-func mergeRemoteIntoLocal(local, remote *TrackedFile) (merged *TrackedFile, newHashes []string) {
-	merged = &TrackedFile{
-		Path:     remote.Path,
-		Revision: remote.Revision,
-		Commits:  local.Commits,
-	}
-
-	newHashes = []string{}
-
-	localMap := make(map[string]bool)
-	for _, l := range local.Commits {
-		localMap[l.Hash] = true
-	}
-
-	for _, r := range remote.Commits {
-		if _, ok := localMap[r.Hash]; ok {
-			// Local already has the remote hash.
-			continue
-		}
-
-		newHashes = append(newHashes, r.Hash)
-		merged.Commits = append(merged.Commits, r)
-	}
-
-	sort.Slice(merged.Commits, func(i, j int) bool {
-		return merged.Commits[i].Timestamp < merged.Commits[j].Timestamp
-	})
-
-	return
-}
-
 // Pull retrieves a file's commits from a dotfile server.
 // Updates the local file with the new content from remote.
 func Pull(s *Storage, cfg *UserConfig, alias string) error {
@@ -137,11 +102,10 @@ func Pull(s *Storage, cfg *UserConfig, alias string) error {
 		return err
 	}
 
-	if s.Tracking.Path != remoteTrackedFile.Path && s.Tracking.Path != "" {
-		return fmt.Errorf("local path %#v does not match remote %#v", s.Tracking.Path, remoteTrackedFile.Path)
+	s.FileData, hashesToPull, err = file.MergeTrackingData(s.FileData, remoteTrackedFile)
+	if err != nil {
+		return err
 	}
-
-	s.Tracking, hashesToPull = mergeRemoteIntoLocal(s.Tracking, remoteTrackedFile)
 
 	// If the pulled file is new and a file with the remotes path already exists.
 	if !s.HasFile && exists(s.GetPath()) {
@@ -160,5 +124,5 @@ func Pull(s *Storage, cfg *UserConfig, alias string) error {
 		}
 	}
 
-	return file.Checkout(s, s.Tracking.Revision)
+	return file.Checkout(s, s.FileData.Revision)
 }

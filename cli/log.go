@@ -23,12 +23,12 @@ func (l *logCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
-	revision := s.Tracking.Revision
+	revision := s.FileData.Revision
 	delim := strings.Repeat(delimChar, len(revision))
 
 	halfHeaderDelim := strings.Repeat(delimChar, (len(revision)-9)/2)
 	currentDelim := halfHeaderDelim + " CURRENT " + halfHeaderDelim + delimChar
-	for _, commit := range s.Tracking.Commits {
+	for _, commit := range s.FileData.Commits {
 		timeStamp := time.Unix(commit.Timestamp, 0).Format(timestampDisplayFormat)
 
 		fmt.Println("")

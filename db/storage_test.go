@@ -64,30 +64,22 @@ func TestGetRevision(t *testing.T) {
 func TestSaveCommit(t *testing.T) {
 	createTestDB(t)
 
+	testCommit := &file.Commit{
+		Hash:      testHash,
+		Message:   testMessage,
+		Timestamp: time.Now().Unix(),
+	}
+
 	t.Run("returns error on duplicate commit", func(t *testing.T) {
 		createTestCommit(t)
 		s := getTestStorage(t)
-
-		err := s.SaveCommit(
-			bytes.NewBuffer([]byte(testContent)),
-			testHash,
-			testMessage,
-			time.Now(),
-		)
-
+		err := s.SaveCommit(bytes.NewBuffer([]byte(testContent)), testCommit)
 		assert.Error(t, err)
 	})
 
 	t.Run("error when buffer is empty", func(t *testing.T) {
 		s := getTestStorage(t)
-
-		err := s.SaveCommit(
-			bytes.NewBuffer([]byte{}),
-			testHash,
-			testMessage,
-			time.Now(),
-		)
-
+		err := s.SaveCommit(bytes.NewBuffer([]byte{}), testCommit)
 		assert.Error(t, err)
 
 	})

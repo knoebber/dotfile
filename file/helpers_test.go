@@ -3,7 +3,6 @@ package file
 import (
 	"bytes"
 	"errors"
-	"time"
 )
 
 const (
@@ -58,7 +57,7 @@ func (ms *MockStorer) GetRevision(string) ([]byte, error) {
 	return compressed.Bytes(), nil
 }
 
-func (ms *MockStorer) SaveCommit(*bytes.Buffer, string, string, time.Time) error {
+func (ms *MockStorer) SaveCommit(*bytes.Buffer, *Commit) error {
 	if ms.saveCommitErr {
 		return errors.New("save revision error")
 	}

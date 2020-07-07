@@ -7,7 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/knoebber/dotfile/db"
-	"github.com/knoebber/dotfile/local"
+	"github.com/knoebber/dotfile/file"
 )
 
 // Gathers a file/commits and marshals it into the format that package local uses.
@@ -17,7 +17,7 @@ func handleFileJSON(w http.ResponseWriter, r *http.Request) {
 	username := vars["username"]
 	alias := vars["alias"]
 
-	file, err := db.GetFileByUsername(username, alias)
+	fileRecord, err := db.GetFileByUsername(username, alias)
 	if err != nil {
 		dbError(w, err)
 		return
@@ -29,10 +29,10 @@ func handleFileJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := &local.TrackedFile{
-		Path:     file.Path,
-		Revision: file.CurrentRevision,
-		Commits:  make([]local.Commit, len(commits)),
+	result := &file.TrackingData{
+		Path:     fileRecord.Path,
+		Revision: fileRecord.CurrentRevision,
+		Commits:  make([]file.Commit, len(commits)),
 	}
 
 	for i, c := range commits {

@@ -27,18 +27,18 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strings"
-	"time"
 
+	"github.com/knoebber/dotfile/file"
 	"github.com/pkg/errors"
 )
 
 // Storage implements the file.Storer interface.
-// It represents the local data storage for a file that dot is Tracking.
+// It provides methods for manipulating tracked files on the file system.
 type Storage struct {
-	Home     string       // The path to the users home directory.
-	Alias    string       // A friendly name for the file that is being tracked.
-	Tracking *TrackedFile // The current file that storage is tracking.
-	HasFile  bool         // Whether the storage has a TrackedFile loaded.
+	Home     string             // The path to the users home directory.
+	Alias    string             // A friendly name for the file that is being tracked.
+	FileData *file.TrackingData // The current file that storage is tracking.
+	HasFile  bool               // Whether the storage has a TrackedFile loaded.
 
 	dir      string // The path to the folder where data will be stored.
 	jsonPath string
@@ -62,22 +62,20 @@ func (s *Storage) LoadFile(alias string) error {
 	}
 	s.Alias = alias
 	s.jsonPath = filepath.Join(s.dir, s.Alias+".json")
+	s.FileData = new(file.TrackingData)
 
 	if !exists(s.jsonPath) {
-		s.Tracking = new(TrackedFile)
-		s.Tracking.Commits = []Commit{}
+		s.FileData.Commits = []file.Commit{}
 		s.HasFile = false
 		return nil
 	}
-
-	s.Tracking = new(TrackedFile)
 
 	jsonContent, err := s.GetJSON()
 	if err != nil {
 		return nil
 	}
 
-	if err = json.Unmarshal(jsonContent, &s.Tracking); err != nil {
+	if err = json.Unmarshal(jsonContent, &s.FileData); err != nil {
 		return errors.Wrapf(err, "unmarshaling tracking data")
 	}
 
@@ -85,9 +83,9 @@ func (s *Storage) LoadFile(alias string) error {
 	return nil
 }
 
-// Close updates the files JSON with s.Tracking.
+// Close updates the files JSON with s.FileData.
 func (s *Storage) Close() error {
-	bytes, err := json.MarshalIndent(s.Tracking, "", jsonIndent)
+	bytes, err := json.MarshalIndent(s.FileData, "", jsonIndent)
 	if err != nil {
 		return errors.Wrap(err, "marshalling tracking data to json")
 	}
@@ -103,7 +101,7 @@ func (s *Storage) Close() error {
 // HasCommit return whether the file has a commit with hash.
 // This never returns an error; it's present to satisfy a file.Storer requirement.
 func (s *Storage) HasCommit(hash string) (exists bool, err error) {
-	for _, c := range s.Tracking.Commits {
+	for _, c := range s.FileData.Commits {
 		if c.Hash == hash {
 			return true, nil
 		}
@@ -137,18 +135,13 @@ func (s *Storage) GetContents() ([]byte, error) {
 // SaveCommit saves a commit to the file system.
 // Creates a new directory when its the first commit.
 // Updates the file's revision field to point to the new hash.
-func (s *Storage) SaveCommit(buff *bytes.Buffer, hash, message string, timestamp time.Time) error {
-	s.Tracking.Commits = append(s.Tracking.Commits, Commit{
-		Hash:      hash,
-		Message:   message,
-		Timestamp: timestamp.Unix(),
-	})
-
-	if err := writeCommit(buff.Bytes(), s.dir, s.Alias, hash); err != nil {
+func (s *Storage) SaveCommit(buff *bytes.Buffer, c *file.Commit) error {
+	s.FileData.Commits = append(s.FileData.Commits, *c)
+	if err := writeCommit(buff.Bytes(), s.dir, s.Alias, c.Hash); err != nil {
 		return err
 	}
 
-	s.Tracking.Revision = hash
+	s.FileData.Revision = c.Hash
 	return nil
 }
 
@@ -159,20 +152,20 @@ func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
 		return errors.Wrap(err, "reverting file")
 	}
 
-	s.Tracking.Revision = hash
+	s.FileData.Revision = hash
 	return nil
 }
 
 // GetPath gets the full path to the file.
 // Returns an empty string when path is not set.
 func (s *Storage) GetPath() string {
-	if s.Tracking.Path == "" {
+	if s.FileData.Path == "" {
 		return ""
 	}
 
-	if s.Tracking.Path[0] == '/' {
-		return s.Tracking.Path
+	if s.FileData.Path[0] == '/' {
+		return s.FileData.Path
 	}
 
-	return strings.Replace(s.Tracking.Path, "~", s.Home, 1)
+	return strings.Replace(s.FileData.Path, "~", s.Home, 1)
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/knoebber/dotfile/file"
 	"github.com/pkg/errors"
 )
 
@@ -17,7 +18,7 @@ func getClient() *http.Client {
 	}
 }
 
-func getRemoteTrackedFile(client *http.Client, fileURL string) (*TrackedFile, error) {
+func getRemoteTrackedFile(client *http.Client, fileURL string) (*file.TrackingData, error) {
 	resp, err := client.Get(fileURL)
 	if err != nil {
 		return nil, errors.Wrap(err, "sending request for remote tracked file")
@@ -28,7 +29,7 @@ func getRemoteTrackedFile(client *http.Client, fileURL string) (*TrackedFile, er
 		return nil, fmt.Errorf("fetching remote tracked file: %s", resp.Status)
 	}
 
-	result := new(TrackedFile)
+	result := new(file.TrackingData)
 	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
 		return nil, errors.Wrap(err, "decoding remote tracked file")
 	}

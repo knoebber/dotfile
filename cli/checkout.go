@@ -16,7 +16,7 @@ func (c *checkoutCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 	if c.commitHash == "" {
-		c.commitHash = s.Tracking.Revision
+		c.commitHash = s.FileData.Revision
 	}
 
 	if err := file.Checkout(s, c.commitHash); err != nil {

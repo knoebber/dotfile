@@ -25,7 +25,7 @@ func (d *diffCommand) run(ctx *kingpin.ParseContext) error {
 	}
 
 	if d.commitHash == "" {
-		d.commitHash = s.Tracking.Revision
+		d.commitHash = s.FileData.Revision
 	}
 
 	diffs, err := file.Diff(s, d.commitHash, "")

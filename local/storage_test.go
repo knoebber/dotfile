@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/knoebber/dotfile/file"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -59,8 +60,8 @@ func TestStorage_Close(t *testing.T) {
 
 func TestStorage_HasCommit(t *testing.T) {
 	s := &Storage{
-		Tracking: &TrackedFile{
-			Commits: []Commit{{
+		FileData: &file.TrackingData{
+			Commits: []file.Commit{{
 				Hash: "a",
 			}},
 		}}
@@ -96,7 +97,7 @@ func TestStorage_GetRevision(t *testing.T) {
 func TestStorage_Revert(t *testing.T) {
 
 	t.Run("error when unable to write", func(t *testing.T) {
-		s := &Storage{Tracking: &TrackedFile{Path: "/not/exists"}}
+		s := &Storage{FileData: &file.TrackingData{Path: "/not/exists"}}
 		assert.Error(t, s.Revert(new(bytes.Buffer), testHash))
 	})
 
@@ -104,38 +105,39 @@ func TestStorage_Revert(t *testing.T) {
 		s := setupTestFile(t)
 		err := s.Revert(bytes.NewBuffer([]byte(updatedTestContent)), testUpdatedHash)
 		assert.NoError(t, err)
-		assert.Equal(t, testUpdatedHash, s.Tracking.Revision)
+		assert.Equal(t, testUpdatedHash, s.FileData.Revision)
 	})
 }
 
 func TestStorage_SaveCommit(t *testing.T) {
 
 	t.Run("error when unable to create commit directory", func(t *testing.T) {
-		s := &Storage{dir: "/not/exist", Tracking: new(TrackedFile)}
-		err := s.SaveCommit(new(bytes.Buffer), testHash, "", time.Now())
+		s := &Storage{dir: "/not/exist", FileData: new(file.TrackingData)}
+		err := s.SaveCommit(new(bytes.Buffer), new(file.Commit))
 		assert.Error(t, err)
 	})
 
 	t.Run("error when unable to create commit file", func(t *testing.T) {
 		s := setupTestFile(t)
 		s.Alias = "/not/exists"
-		err := s.SaveCommit(new(bytes.Buffer), testHash, "", time.Now())
+		err := s.SaveCommit(new(bytes.Buffer), new(file.Commit))
 		assert.Error(t, err)
 	})
 
 	t.Run("ok", func(t *testing.T) {
 		s := setupTestFile(t)
 		timestamp := time.Now()
-		err := s.SaveCommit(
-			bytes.NewBuffer([]byte(updatedTestContent)),
-			testUpdatedHash,
-			testMessage,
-			timestamp,
-		)
+		c := &file.Commit{
+			Hash:      testUpdatedHash,
+			Timestamp: time.Now().Unix(),
+			Message:   testMessage,
+		}
+
+		err := s.SaveCommit(bytes.NewBuffer([]byte(updatedTestContent)), c)
 
 		assert.NoError(t, err)
-		assert.Equal(t, testUpdatedHash, s.Tracking.Revision)
-		assert.Equal(t, testMessage, s.Tracking.Commits[1].Message)
-		assert.Equal(t, timestamp.Unix(), s.Tracking.Commits[1].Timestamp)
+		assert.Equal(t, testUpdatedHash, s.FileData.Revision)
+		assert.Equal(t, testMessage, s.FileData.Commits[1].Message)
+		assert.Equal(t, timestamp.Unix(), s.FileData.Commits[1].Timestamp)
 	})
 }

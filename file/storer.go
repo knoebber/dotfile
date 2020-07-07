@@ -22,7 +22,7 @@ type Storer interface {
 	HasCommit(hash string) (exists bool, err error)
 	GetContents() (contents []byte, err error)
 	GetRevision(hash string) (revision []byte, err error)
-	SaveCommit(buff *bytes.Buffer, hash, message string, timestamp time.Time) error
+	SaveCommit(buff *bytes.Buffer, c *Commit) error
 	Revert(buff *bytes.Buffer, hash string) (err error)
 }
 
@@ -77,7 +77,13 @@ func NewCommit(s Storer, message string) error {
 		return usererr.Invalid(fmt.Sprintf("Commit %#v already exists", hash))
 	}
 
-	if err := s.SaveCommit(compressed, hash, message, time.Now()); err != nil {
+	newCommit := &Commit{
+		Hash:      hash,
+		Message:   message,
+		Timestamp: time.Now().Unix(),
+	}
+
+	if err := s.SaveCommit(compressed, newCommit); err != nil {
 		return err
 	}
 
