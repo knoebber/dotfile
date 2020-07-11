@@ -57,12 +57,28 @@ func (s *Storage) GetJSON() ([]byte, error) {
 	return jsonContent, nil
 }
 
-// LoadFile sets storage to track alias.
-// Loads the tracking data when it exists otherwise sets an empty TrackedFile.
-func (s *Storage) LoadFile(alias string) error {
+// Close updates the files JSON with s.FileData.
+func (s *Storage) Close() error {
+	bytes, err := json.MarshalIndent(s.FileData, "", jsonIndent)
+	if err != nil {
+		return errors.Wrap(err, "marshalling tracking data to json")
+	}
+
+	// Example: ~/.local/share/dotfile/bash_profile.json
+	if err := ioutil.WriteFile(s.jsonPath, bytes, 0644); err != nil {
+		return errors.Wrapf(err, "saving tracking data to %q", s.jsonPath)
+	}
+
+	return nil
+}
+
+// SetTrackingData reads and sets FileData for alias.
+// Sets empty data and HasFile to false when alias is not tracked.
+func (s *Storage) SetTrackingData(alias string) error {
 	if alias == "" {
 		return errors.New("alias cannot be empty")
 	}
+
 	s.Alias = alias
 	s.jsonPath = filepath.Join(s.dir, s.Alias+".json")
 	s.FileData = new(file.TrackingData)
@@ -75,7 +91,7 @@ func (s *Storage) LoadFile(alias string) error {
 
 	jsonContent, err := s.GetJSON()
 	if err != nil {
-		return nil
+		return err
 	}
 
 	if err = json.Unmarshal(jsonContent, &s.FileData); err != nil {
@@ -86,19 +102,23 @@ func (s *Storage) LoadFile(alias string) error {
 	return nil
 }
 
-// Close updates the files JSON with s.FileData.
-func (s *Storage) Close() error {
-	bytes, err := json.MarshalIndent(s.FileData, "", jsonIndent)
+// InitFile sets up a new file to be tracked.
+// It will setup the storage directory if its the first use.
+// Closes storage.
+func (s *Storage) InitFile(path string) error {
+	var err error
+
+	s.FileData.Path, err = convertPath(path, s.Home)
 	if err != nil {
-		return errors.Wrap(err, "marshalling tracking data to json")
+		return err
 	}
 
-	// Example: ~/.local/share/dotfile/bash_profile.json
-	if err := ioutil.WriteFile(s.jsonPath, bytes, 0644); err != nil {
-		return errors.Wrap(err, "saving tracking data")
+	// Example: ~/.local/share/dotfile
+	if err := createDir(s.dir); err != nil {
+		return err
 	}
 
-	return nil
+	return file.Init(s, s.FileData.Path, s.Alias)
 }
 
 // HasCommit return whether the file has a commit with hash.

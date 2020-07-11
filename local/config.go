@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 
 	"github.com/knoebber/dotfile/usererr"
@@ -28,28 +27,25 @@ func (uc *UserConfig) String() string {
 	)
 }
 
-// TODO this could be a conflict with the storage dir if .config and .local do not exist.
-// Should probably use a .toml file or something.
-func getConfigPath(home string) (string, error) {
-	var configDir string
+// GetConfigPath returns the path to the dotfile user configuration.
+// Priority one: ~/.config/dotfile/config.json
+// Priority two: ~/.dotfile-config.json
+func GetConfigPath(home string) (string, error) {
+	var dotfileConfigDir string
 
-	config := filepath.Join(home, ".config/")
-
-	if exists(config) {
-		// Priority one : ~/.config/dotfile
-		configDir = filepath.Join(config, "dotfile/")
-	} else {
-		// Priority two: ~/.dotfile/
-		configDir = filepath.Join(home, ".dotfile/")
-	}
+	configDir := filepath.Join(home, ".config")
 
 	if !exists(configDir) {
-		if err := os.Mkdir(configDir, 0755); err != nil {
-			return "", errors.Wrap(err, "creating config directory")
-		}
+		return filepath.Join(home, ".dotfile-config.json"), nil
 	}
 
-	return filepath.Join(configDir, "config.json"), nil
+	dotfileConfigDir = filepath.Join(configDir, "dotfile")
+
+	if err := createDir(dotfileConfigDir); err != nil {
+		return "", errors.Wrap(err, "creating dotfile config directory")
+	}
+
+	return filepath.Join(dotfileConfigDir, "config.json"), nil
 }
 
 func createDefaultConfig(path string) ([]byte, error) {
@@ -82,13 +78,8 @@ func getConfigBytes(path string) ([]byte, error) {
 
 // GetUserConfig reads the user config.
 // Creates a default file when it doesn't yet exist.
-func GetUserConfig(home string) (*UserConfig, error) {
+func GetUserConfig(path string) (*UserConfig, error) {
 	cfg := new(UserConfig)
-
-	path, err := getConfigPath(home)
-	if err != nil {
-		return nil, err
-	}
 
 	bytes, err := getConfigBytes(path)
 	if err != nil {
@@ -106,7 +97,7 @@ func GetUserConfig(home string) (*UserConfig, error) {
 func SetUserConfig(home string, key string, value string) error {
 	cfg := make(map[string]*string)
 
-	path, err := getConfigPath(home)
+	path, err := GetConfigPath(home)
 	if err != nil {
 		return err
 	}

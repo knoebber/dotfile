@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -24,7 +25,11 @@ const (
 var sneakyTestingReference *testing.T
 
 func init() {
-	home, _ := getHome()
+	home, err := getHome()
+	if err != nil {
+		panic(fmt.Errorf("$HOME is required for cli tests: %v", err.Error()))
+	}
+
 	config = cliConfig{
 		home:       home,
 		storageDir: testDir,

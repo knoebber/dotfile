@@ -15,7 +15,7 @@ func fakeEditCommand(command string, args ...string) *exec.Cmd {
 	cs := []string{"-test.run=TestEditHelperProcess", "--", command}
 	cs = append(cs, args...)
 	cmd := exec.Command(os.Args[0], cs...)
-	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
+	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1", "HOME=" + config.home}
 	return cmd
 }
 
@@ -61,6 +61,7 @@ func TestEditHelperProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
 		return
 	}
+
 	assert.Equal(t, trackedFileAlias, os.Args[1])
 	os.Exit(0)
 }

@@ -15,4 +15,9 @@ func TestInit(t *testing.T) {
 		initCommand.path = nonExistantFile
 		assert.Error(t, initCommand.run(nil))
 	})
+
+	t.Run("ok", func(t *testing.T) {
+		initTestFile(t)
+	})
+
 }

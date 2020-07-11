@@ -25,12 +25,17 @@ func getHome() (string, error) {
 }
 
 func loadFileStorage(alias string) (*local.Storage, error) {
-	storage, err := local.NewStorage(config.home, config.storageDir)
+	configPath, err := local.GetConfigPath(config.home)
 	if err != nil {
-		return nil, errors.Wrap(err, "getting storage")
+		return nil, err
 	}
 
-	if err := storage.LoadFile(alias); err != nil {
+	storage, err := local.NewStorage(config.home, config.storageDir, configPath)
+	if err != nil {
+		return nil, errors.Wrap(err, "creating local storage")
+	}
+
+	if err := storage.SetTrackingData(alias); err != nil {
 		return nil, errors.Wrapf(err, "loading %#v", alias)
 	}
 	return storage, nil

@@ -14,26 +14,47 @@ import (
 
 func TestNewStorage(t *testing.T) {
 	t.Run("error when home is empty", func(t *testing.T) {
-		_, err := NewStorage("", "")
+		_, err := NewStorage("", "", "")
 		assert.Error(t, err)
 	})
 
-	t.Run("error when dir is empty", func(t *testing.T) {
-		_, err := NewStorage(testHome, "")
+	t.Run("error when storage dir is empty", func(t *testing.T) {
+		_, err := NewStorage(testHome, "", "")
 		assert.Error(t, err)
+	})
+
+	t.Run("error when config path is empty", func(t *testing.T) {
+		_, err := NewStorage(testHome, testDir, "")
+		assert.Error(t, err)
+	})
+
+	t.Run("error when storage dir does not exist", func(t *testing.T) {
+		_, err := NewStorage(testHome, "/does/not/exist", testDir)
+		assert.Error(t, err)
+	})
+
+	t.Run("error when config path does not exist", func(t *testing.T) {
+		_, err := NewStorage(testHome, testDir, "/does/not/exist")
+		assert.Error(t, err)
+	})
+
+	t.Run("ok", func(t *testing.T) {
+		configPath := filepath.Join(testDir, "dotfile-config.json")
+		_, err := NewStorage(testHome, testDir, configPath)
+		assert.NoError(t, err)
 	})
 }
 
-func TestStorage_Loadfile(t *testing.T) {
+func TestStorage_SetTrackingData(t *testing.T) {
 	t.Run("error when alias is empty", func(t *testing.T) {
 		s := new(Storage)
-		assert.Error(t, s.LoadFile(""))
+		assert.Error(t, s.SetTrackingData(""))
 	})
 
 	t.Run("ok when alias is not tracked", func(t *testing.T) {
 		clearTestStorage()
 		s := &Storage{dir: testDir}
-		s.LoadFile(testAlias)
+		s.SetTrackingData(testAlias)
 		assert.False(t, s.HasFile)
 	})
 
@@ -42,12 +63,7 @@ func TestStorage_Loadfile(t *testing.T) {
 		_ = os.Mkdir(testDir, 0755)
 		_ = ioutil.WriteFile(filepath.Join(testDir, testAlias+".json"), []byte("invalid json"), 0644)
 		s := &Storage{dir: testDir}
-		assert.Error(t, s.LoadFile(testAlias))
-	})
-
-	t.Run("ok", func(t *testing.T) {
-		s := setupTestFile(t)
-		assert.NoError(t, s.LoadFile(testAlias))
+		assert.Error(t, s.SetTrackingData(testAlias))
 	})
 }
 

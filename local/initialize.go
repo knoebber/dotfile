@@ -1,11 +1,8 @@
 package local
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
 
-	"github.com/knoebber/dotfile/file"
 	"github.com/pkg/errors"
 )
 
@@ -21,12 +18,8 @@ func GetDefaultStorageDir(home string) (storageDir string, err error) {
 		storageDir = filepath.Join(home, ".dotfile/")
 	}
 
-	if exists(storageDir) {
+	if err = createDir(storageDir); err != nil {
 		return
-	}
-
-	if err = os.Mkdir(storageDir, 0755); err != nil {
-		err = errors.Wrap(err, "creating storage dir")
 	}
 
 	return
@@ -34,65 +27,32 @@ func GetDefaultStorageDir(home string) (storageDir string, err error) {
 
 // NewStorage returns a new storage.
 // Dir is the directory for storing dotfile tracking information.
-func NewStorage(home, dir string) (*Storage, error) {
-	s := new(Storage)
-
-	user, err := GetUserConfig(home)
-	if err != nil {
-		return nil, err
-	}
-	s.User = user
-
+// Creates dir if it does not exist.
+func NewStorage(home, storageDir, configDir string) (*Storage, error) {
 	if home == "" {
 		return nil, errors.New("home cannot be empty")
 	}
-	if dir == "" {
+	if storageDir == "" {
 		return nil, errors.New("dir cannot be empty")
+	}
+	if configDir == "" {
+		return nil, errors.New("config dir cannot be empty")
+	}
+	s := new(Storage)
+
+	user, err := GetUserConfig(configDir)
+	if err != nil {
+		return nil, err
 	}
 
 	s.User = user
 	s.Home = home
-	s.dir = dir
-
-	return s, nil
-}
-
-// InitFile sets up a new file to be tracked.
-// It will setup the storage directory if its the first file.
-// Closes storage.
-func InitFile(home, dir, path, alias string) (string, error) {
-	convertedPath, err := convertPath(path, home)
-	if err != nil {
-		return "", err
-	}
-
-	alias, err = file.GetAlias(alias, convertedPath)
-	if err != nil {
-		return "", err
-	}
-
-	s, err := NewStorage(home, dir)
-	if err != nil {
-		return "", err
-	}
-
-	if err := s.LoadFile(alias); err != nil {
-		return "", err
-	}
-
-	if s.HasFile {
-		return "", fmt.Errorf("%#v is already tracked", alias)
-	}
+	s.dir = storageDir
 
 	// Example: ~/.local/share/dotfile
-	if err := createDir(dir); err != nil {
-		return "", nil
-	}
-	s.FileData.Path = convertedPath
-
-	if err := file.Init(s, convertedPath, alias); err != nil {
-		return "", err
+	if err := createDir(storageDir); err != nil {
+		return nil, err
 	}
 
-	return alias, nil
+	return s, nil
 }

@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/knoebber/dotfile/file"
 )
 
 const (
@@ -21,7 +23,7 @@ const (
 	updatedTestContent = testContent + "Some new content!\n"
 )
 
-func initTestdata(t *testing.T) {
+func initTestData(t *testing.T) {
 	_ = os.Mkdir(testDir, 0755)
 	writeTestFile(t, []byte(testContent))
 }
@@ -34,28 +36,43 @@ func clearTestStorage() {
 	_ = os.RemoveAll(testDir)
 }
 
+func resetTestStorage(t *testing.T) {
+	clearTestStorage()
+	initTestData(t)
+}
+
 func setupTestFile(t *testing.T) *Storage {
 	clearTestStorage()
-	os.Mkdir(testDir, 0755)
-	writeTestFile(t, []byte(testContent))
+	initTestData(t)
 
 	fullPath, err := filepath.Abs(testTrackedFile)
 	if err != nil {
 		t.Fatalf("getting full path for %#v: %v", testTrackedFile, err)
 	}
 
-	_, err = InitFile(testHome, testDir, fullPath, testAlias)
-	if err != nil {
-		t.Fatalf("initializing test file: %s", err)
-	}
-
 	s := &Storage{
-		Home: testHome,
-		dir:  testDir,
+		Home:     testHome,
+		dir:      testDir,
+		User:     new(UserConfig),
+		Alias:    testAlias,
+		jsonPath: filepath.Join(testDir, testAlias+".json"),
+		FileData: &file.TrackingData{
+			Path:    fullPath,
+			Commits: []file.Commit{},
+		},
 	}
 
-	if err = s.LoadFile(testAlias); err != nil {
-		t.Fatalf("loading test file: %s", err)
+	if err := file.Init(s, fullPath, testAlias); err != nil {
+		t.Fatalf("initializing test file: %v", err)
+	}
+
+	// Read the newly initialized test file.
+	if err := s.SetTrackingData(testAlias); err != nil {
+		t.Fatalf("reading test file tracking data: %v", err)
+	}
+
+	if !s.HasFile {
+		t.Fatal("expected storage to have file")
 	}
 
 	return s
