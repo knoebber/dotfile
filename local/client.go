@@ -2,7 +2,6 @@ package local
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -62,68 +61,49 @@ func getRemoteData(s *Storage) (*http.Client, *file.TrackingData, string, error)
 	return client, remoteData, fileURL, nil
 }
 
+func getRemoteRevision(client *http.Client, url string) ([]byte, error) {
+	resp, err := client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("GET", url)
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("fetching file content: %s", resp.Status)
+	}
+
+	return ioutil.ReadAll(resp.Body)
+}
+
 // Fetches revisions at hash from remote server concurrently.
 // Returns an error if any fetches fail or are non 200.
 // fileURL is the files api end point, E.G https://dotfilehub.com/api/knoebber/bashrc
-//
-// The errgroup code is based on the following example:
-// https://pkg.go.dev/golang.org/x/sync/errgroup?tab=doc#example-Group-Pipeline
 func getRemoteRevisions(client *http.Client, fileURL string, hashes []string) ([]*remoteRevision, error) {
-	g, ctx := errgroup.WithContext(context.Background())
-	resultChan := make(chan *remoteRevision)
+	g := new(errgroup.Group)
+	results := make([]*remoteRevision, len(hashes))
 
-	for _, hash := range hashes {
-		hash := hash // Otherwise closure will always use the first hash.
-		url := fileURL + "/" + hash
+	for i, hash := range hashes {
+		i, hash := i, hash // https://golang.org/doc/faq#closures_and_goroutines
 		g.Go(func() error {
-			resp, err := client.Get(url)
+			revision, err := getRemoteRevision(client, fileURL+"/"+hash)
 			if err != nil {
 				return err
 			}
-			defer resp.Body.Close()
 
-			fmt.Println("GET", url)
-			if resp.StatusCode != http.StatusOK {
-				return fmt.Errorf("fetching file content: %s", resp.Status)
-			}
-
-			revision, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				return err
-			}
-			rr := &remoteRevision{
+			results[i] = &remoteRevision{
 				hash:     hash,
 				revision: revision,
 			}
-
-			select {
-			case resultChan <- rr:
-			case <-ctx.Done():
-				return ctx.Err()
-			}
 			return nil
 		})
-	}
-
-	// Start waiting for the results and close them after it finishes.
-	go func() {
-		g.Wait()
-		close(resultChan)
-	}()
-
-	// Process the results.
-	result := make([]*remoteRevision, len(hashes))
-	index := 0
-	for r := range resultChan {
-		result[index] = r
-		index++
 	}
 
 	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	return results, nil
 }
 
 // Push new local revisions to remote using a multipart POST request.
