@@ -21,8 +21,12 @@ func GetDefaultStorageDir(home string) (storageDir string, err error) {
 		storageDir = filepath.Join(home, ".dotfile/")
 	}
 
-	if !exists(storageDir) {
-		err = os.Mkdir(storageDir, 0755)
+	if exists(storageDir) {
+		return
+	}
+
+	if err = os.Mkdir(storageDir, 0755); err != nil {
+		err = errors.Wrap(err, "creating storage dir")
 	}
 
 	return
@@ -33,6 +37,12 @@ func GetDefaultStorageDir(home string) (storageDir string, err error) {
 func NewStorage(home, dir string) (*Storage, error) {
 	s := new(Storage)
 
+	user, err := GetUserConfig(home)
+	if err != nil {
+		return nil, err
+	}
+	s.User = user
+
 	if home == "" {
 		return nil, errors.New("home cannot be empty")
 	}
@@ -40,6 +50,7 @@ func NewStorage(home, dir string) (*Storage, error) {
 		return nil, errors.New("dir cannot be empty")
 	}
 
+	s.User = user
 	s.Home = home
 	s.dir = dir
 
@@ -48,6 +59,7 @@ func NewStorage(home, dir string) (*Storage, error) {
 
 // InitFile sets up a new file to be tracked.
 // It will setup the storage directory if its the first file.
+// Closes storage.
 func InitFile(home, dir, path, alias string) (string, error) {
 	convertedPath, err := convertPath(path, home)
 	if err != nil {
@@ -55,10 +67,13 @@ func InitFile(home, dir, path, alias string) (string, error) {
 	}
 
 	alias, err = file.GetAlias(alias, convertedPath)
+	if err != nil {
+		return "", err
+	}
 
 	s, err := NewStorage(home, dir)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	if err := s.LoadFile(alias); err != nil {

@@ -12,7 +12,6 @@ import (
 type cliConfig struct {
 	storageDir string
 	home       string
-	user       *local.UserConfig
 }
 
 var config cliConfig
@@ -25,7 +24,7 @@ func getHome() (string, error) {
 	return home, nil
 }
 
-func loadFile(alias string) (*local.Storage, error) {
+func loadFileStorage(alias string) (*local.Storage, error) {
 	storage, err := local.NewStorage(config.home, config.storageDir)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting storage")
@@ -33,6 +32,14 @@ func loadFile(alias string) (*local.Storage, error) {
 
 	if err := storage.LoadFile(alias); err != nil {
 		return nil, errors.Wrapf(err, "loading %#v", alias)
+	}
+	return storage, nil
+}
+
+func loadFile(alias string) (*local.Storage, error) {
+	storage, err := loadFileStorage(alias)
+	if err != nil {
+		return nil, err
 	}
 
 	if !storage.HasFile {
@@ -50,11 +57,6 @@ func setConfig(app *kingpin.Application) error {
 	config.home = home
 
 	defaultStorageDir, err := local.GetDefaultStorageDir(config.home)
-	if err != nil {
-		return err
-	}
-
-	config.user, err = local.GetUserConfig(config.home)
 	if err != nil {
 		return err
 	}

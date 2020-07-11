@@ -24,11 +24,13 @@ package local
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
 
 	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/usererr"
 	"github.com/pkg/errors"
 )
 
@@ -39,6 +41,7 @@ type Storage struct {
 	Alias    string             // A friendly name for the file that is being tracked.
 	FileData *file.TrackingData // The current file that storage is tracking.
 	HasFile  bool               // Whether the storage has a TrackedFile loaded.
+	User     *UserConfig
 
 	dir      string // The path to the folder where data will be stored.
 	jsonPath string
@@ -55,7 +58,7 @@ func (s *Storage) GetJSON() ([]byte, error) {
 }
 
 // LoadFile sets storage to track alias.
-// Loads the tracking data when it exists, otherwise sets an empty TrackedFile.
+// Loads the tracking data when it exists otherwise sets an empty TrackedFile.
 func (s *Storage) LoadFile(alias string) error {
 	if alias == "" {
 		return errors.New("alias cannot be empty")
@@ -110,7 +113,6 @@ func (s *Storage) HasCommit(hash string) (exists bool, err error) {
 }
 
 // GetRevision returns the files state at hash.
-// The bytes are zlib compressed - see file/commit.go.
 func (s *Storage) GetRevision(hash string) ([]byte, error) {
 	revisionPath := filepath.Join(s.dir, s.Alias, hash)
 
@@ -149,7 +151,7 @@ func (s *Storage) SaveCommit(buff *bytes.Buffer, c *file.Commit) error {
 func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
 	err := ioutil.WriteFile(s.GetPath(), buff.Bytes(), 0644)
 	if err != nil {
-		return errors.Wrap(err, "reverting file")
+		return errors.Wrapf(err, "reverting file %q", s.GetPath())
 	}
 
 	s.FileData.Revision = hash
@@ -168,4 +170,66 @@ func (s *Storage) GetPath() string {
 	}
 
 	return strings.Replace(s.FileData.Path, "~", s.Home, 1)
+}
+
+// Push pushes a file's commits to a remote dotfile server.
+// Updates the remote file with the new content from local.
+func (s *Storage) Push() error {
+	var newHashes []string
+
+	client, remoteData, fileURL, err := getRemoteData(s)
+	if err != nil {
+		return err
+	}
+
+	s.FileData, newHashes, err = file.MergeTrackingData(remoteData, s.FileData)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("pushing", s.FileData.Path)
+	if err := postData(s, client, newHashes, fileURL); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Pull retrieves a file's commits from a dotfile server.
+// Updates the local file with the new content from remote.
+// Closes storage.
+func (s *Storage) Pull() error {
+	var newHashes []string
+
+	client, remoteData, fileURL, err := getRemoteData(s)
+	if err != nil {
+		return err
+	}
+
+	s.FileData, newHashes, err = file.MergeTrackingData(s.FileData, remoteData)
+	if err != nil {
+		return err
+	}
+
+	// If the pulled file is new and a file with the remotes path already exists.
+	if !s.HasFile && exists(s.GetPath()) {
+		return usererr.Invalid(remoteData.Path +
+			" already exists and is not tracked by dotfile. Remove the file or initialize it before pulling")
+	}
+
+	fmt.Printf("pulling %d new revisions for %s\n", len(newHashes), s.FileData.Path)
+
+	remoteRevisions, err := getRemoteRevisions(client, fileURL, newHashes)
+	if err != nil {
+		return err
+	}
+
+	for _, rr := range remoteRevisions {
+		if err = writeCommit(rr.revision, s.dir, s.Alias, rr.hash); err != nil {
+			return err
+		}
+	}
+
+	// This closes storage.
+	return file.Checkout(s, s.FileData.Revision)
 }

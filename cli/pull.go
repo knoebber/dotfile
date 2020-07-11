@@ -15,41 +15,33 @@ type pullCommand struct {
 }
 
 func (pc *pullCommand) run(ctx *kingpin.ParseContext) error {
-	storage, err := local.NewStorage(config.home, config.storageDir)
-	if err != nil {
-		return errors.Wrap(err, "getting storage")
-	}
+	var err error
 
-	// Create a new config so that the username can be overridden when flag is provided.
-	// Dereference the pointer to avoid mutating the global config variable.
-	cfg := *config.user
+	s, err := loadFileStorage(pc.fileName)
+	if err = local.AssertClean(s); err != nil {
+		return err
+	}
 
 	if pc.username != "" {
-		cfg.Username = pc.username
+		s.User.Username = pc.username
 	}
 
-	if cfg.Username == "" {
+	if s.User.Username == "" {
 		return errors.New("must set config username or use --username flag")
 	}
 
 	if pc.pullAll {
 		return pullAll()
 	} else if pc.fileName != "" {
-		return pullFile(storage, &cfg, pc.fileName)
+		return s.Pull()
 	} else {
 		return errors.New("neither filename nor --all provided to pull")
 	}
-
-	return nil
 }
 
 func pullAll() error {
 	fmt.Println("TODO pull all")
 	return nil
-}
-
-func pullFile(s *local.Storage, cfg *local.UserConfig, alias string) error {
-	return local.Pull(s, cfg, alias)
 }
 
 func addPullSubCommandToApplication(app *kingpin.Application) {

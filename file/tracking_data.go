@@ -20,7 +20,7 @@ type Commit struct {
 }
 
 // MergeTrackingData merges the new data into old.
-// Returns the merged data and a slice of hashes that the original data doesn't have.
+// Returns the merged data and a slice of the hashes that are new.
 func MergeTrackingData(old, new *TrackingData) (merged *TrackingData, newHashes []string, err error) {
 	if old.Path != new.Path && old.Path != "" {
 		err = fmt.Errorf("merging tracking data: old path %#v does not match new %#v", old.Path, new.Path)
@@ -54,6 +54,5 @@ func MergeTrackingData(old, new *TrackingData) (merged *TrackingData, newHashes 
 	sort.Slice(merged.Commits, func(i, j int) bool {
 		return merged.Commits[i].Timestamp < merged.Commits[j].Timestamp
 	})
-
 	return
 }

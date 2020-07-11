@@ -1,28 +1,23 @@
 package cli
 
-import (
-	"github.com/knoebber/dotfile/local"
-	"github.com/pkg/errors"
-	"gopkg.in/alecthomas/kingpin.v2"
-)
+import "gopkg.in/alecthomas/kingpin.v2"
 
 type pushCommand struct {
 	fileName string
 }
 
 func (pc *pushCommand) run(ctx *kingpin.ParseContext) error {
-	storage, err := local.NewStorage(config.home, config.storageDir)
+	s, err := loadFile(pc.fileName)
 	if err != nil {
-		return errors.Wrap(err, "getting storage")
+		return err
 	}
 
-	local.Push(storage, config.user, pc.fileName)
-	return nil
+	return s.Push()
 }
 
 func addPushSubCommandToApplication(app *kingpin.Application) {
 	pc := new(pushCommand)
 
-	p := app.Command("push", "push committed changes to central service").Action(pc.run)
+	p := app.Command("push", "push committed changes to a dotfile server").Action(pc.run)
 	p.Arg("file-name", "the file to push").Required().StringVar(&pc.fileName)
 }

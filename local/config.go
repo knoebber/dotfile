@@ -28,6 +28,8 @@ func (uc *UserConfig) String() string {
 	)
 }
 
+// TODO this could be a conflict with the storage dir if .config and .local do not exist.
+// Should probably use a .toml file or something.
 func getConfigPath(home string) (string, error) {
 	var configDir string
 

@@ -13,12 +13,16 @@ type configCommand struct {
 }
 
 func (cc *configCommand) run(ctx *kingpin.ParseContext) error {
-	if cc.key == "" {
-		fmt.Println(config.user)
-		return nil
+	if cc.key != "" {
+		return local.SetUserConfig(config.home, cc.key, cc.value)
+	}
+	user, err := local.GetUserConfig(config.home)
+	if err != nil {
+		return err
 	}
 
-	return local.SetUserConfig(config.home, cc.key, cc.value)
+	fmt.Println(user)
+	return nil
 }
 
 func addConfigSubCommandToApplication(app *kingpin.Application) {
