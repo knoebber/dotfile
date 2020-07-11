@@ -14,8 +14,12 @@ import (
 )
 
 var (
+	// Captures the last part of the path without its file ending.
 	pathToAliasRegex = regexp.MustCompile(`(\w+)(\.\w+)?$`)
-	validAliasRegex  = regexp.MustCompile(`^\w+$`)
+
+	// Alias must only be words.
+	validAliasRegex = regexp.MustCompile(`^\w+$`)
+
 	// Must start in ~/ or /, cannot end in /
 	validPathRegex = regexp.MustCompile(`^~?/.+[^/]$`)
 
