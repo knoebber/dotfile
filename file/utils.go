@@ -64,16 +64,26 @@ func CheckPath(path string) error {
 
 func hashAndCompress(contents []byte) (*bytes.Buffer, string, error) {
 	hash := fmt.Sprintf("%x", sha1.Sum(contents))
+	compressed, err := Compress(contents)
 
+	if err != nil {
+		return nil, "", err
+	}
+
+	return compressed, hash, nil
+}
+
+// Compress compresses bytes with zlib.
+func Compress(uncompressed []byte) (*bytes.Buffer, error) {
 	compressed := new(bytes.Buffer)
 	w := zlib.NewWriter(compressed)
 	defer w.Close()
 
-	if _, err := w.Write(contents); err != nil {
-		return nil, "", errors.Wrap(err, "compressing file for commit")
+	if _, err := w.Write(uncompressed); err != nil {
+		return nil, errors.Wrap(err, "compressing content")
 	}
 
-	return compressed, hash, nil
+	return compressed, nil
 }
 
 // Uncompress uncompresses bytes.
