@@ -1,24 +1,3 @@
-// Package local tracks files by writing to JSON files in the dotfile directory.
-//
-// For every new file that is tracked a new .json file is created.
-// For each commit on a tracked file, a new file is created with the same name as the hash.
-//
-// Example: ~/.emacs.d/init.el is added with alias "emacs".
-// Supposing Storage.dir is ~/.config/dotfile, then the following files are created:
-//
-// ~/.config/dotfile/emacs.json
-// ~/.config/dotfile/emacs/8f94c7720a648af9cf9dab33e7f297d28b8bf7cd
-//
-// The emacs.json file would look something like this:
-// {
-//   "path": "~/.emacs.d/init.el",
-//   "revision": "8f94c7720a648af9cf9dab33e7f297d28b8bf7cd"
-//   "commits": [{
-//     "hash": "8f94c7720a648af9cf9dab33e7f297d28b8bf7cd",
-//     "timestamp": 1558896290,
-//     "message": "Initial commit"
-//   }]
-// }
 package local
 
 import (
@@ -34,8 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Storage implements the file.Storer interface.
-// It provides methods for manipulating tracked files on the file system.
+// Storage provides methods for manipulating tracked files on the file system.
 type Storage struct {
 	Home     string             // The path to the users home directory.
 	Alias    string             // A friendly name for the file that is being tracked.

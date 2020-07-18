@@ -1,3 +1,4 @@
+// Package server serves a web interface for interacting with dotfiles stored in a database.
 package server
 
 import (

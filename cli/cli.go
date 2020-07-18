@@ -1,3 +1,4 @@
+// Package cli creates a command line interface for interacting with local dotfiles.
 package cli
 
 import (

@@ -1,6 +1,6 @@
+// Package db stores and manipulates dotfiles via a sqlite3 database.
 package db
 
-// TODO combine with initialize.go - create db.go
 import (
 	"crypto/rand"
 	"database/sql"
@@ -10,7 +10,10 @@ import (
 	"time"
 
 	"github.com/knoebber/dotfile/usererr"
+	// Driver for sql
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 const (
@@ -20,21 +23,13 @@ const (
 	maxBlobSizeBytes       = 15000
 )
 
-func checkSize(content []byte, name string) error {
-	if len(content) == 0 {
-		return usererr.Invalid(fmt.Sprintf("%s is empty", name))
-	}
+var (
+	connection *sql.DB
+	validate   *validator.Validate
+)
 
-	if len(content) > maxBlobSizeBytes {
-		return usererr.Invalid(fmt.Sprintf("%s is too large (max=%dKB)", name, maxBlobSizeBytes/1000))
-	}
-	return nil
-
-}
-
-// NotFound returns whether err is wrapping a no rows error.
-func NotFound(err error) bool {
-	return errors.Is(err, sql.ErrNoRows)
+type tableCreator interface {
+	createStmt() string
 }
 
 type executor interface {
@@ -47,6 +42,25 @@ type inserter interface {
 
 type checker interface {
 	check() error
+}
+
+// Creates the required tables if they doesn't exist
+func createTables() error {
+	for _, model := range []tableCreator{
+		new(User),
+		new(ReservedUsername),
+		new(Session),
+		new(SessionLocation),
+		new(File),
+		new(TempFile),
+		new(Commit),
+	} {
+		_, err := connection.Exec(model.createStmt())
+		if err != nil {
+			return errors.Wrap(err, "creating tables")
+		}
+	}
+	return nil
 }
 
 func insert(i inserter, tx *sql.Tx) (id int64, err error) {
@@ -113,4 +127,41 @@ func randomBytes(n int) ([]byte, error) {
 func formatTime(t time.Time) string {
 	// TODO save user timezone preference.
 	return t.Format(timestampDisplayFormat)
+}
+
+func checkSize(content []byte, name string) error {
+	if len(content) == 0 {
+		return usererr.Invalid(fmt.Sprintf("%s is empty", name))
+	}
+
+	if len(content) > maxBlobSizeBytes {
+		return usererr.Invalid(fmt.Sprintf("%s is too large (max=%dKB)", name, maxBlobSizeBytes/1000))
+	}
+	return nil
+
+}
+
+// NotFound returns whether err is wrapping a no rows error.
+func NotFound(err error) bool {
+	return errors.Is(err, sql.ErrNoRows)
+}
+
+// Start opens a connection a sqlite3 database.
+// Creates a new sqlite database with all required tables when not found.
+func Start(dbPath string) (err error) {
+	dsn := "?_foreign_keys=true"
+	connection, err = sql.Open("sqlite3", dbPath+dsn)
+	if err != nil {
+		return err
+	}
+
+	validate = validator.New()
+	return createTables()
+}
+
+// Close closes the connection.
+func Close() {
+	if err := connection.Close(); err != nil {
+		log.Printf("failed to close database: %v", err)
+	}
 }
