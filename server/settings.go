@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/knoebber/dotfile/db"
-	"github.com/knoebber/dotfile/usererr"
+	"github.com/knoebber/dotfile/usererror"
 )
 
 func handleEmail(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
@@ -25,11 +25,11 @@ func handlePassword(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 	confirm := r.Form.Get("confirm")
 
 	if len(newPass) < minPassLength {
-		return p.setError(w, usererr.Invalid(fmt.Sprintf("Password must be %d or more characters.", minPassLength)))
+		return p.setError(w, usererror.Invalid(fmt.Sprintf("Password must be %d or more characters.", minPassLength)))
 	}
 
 	if newPass != confirm {
-		return p.setError(w, usererr.Invalid("Confirm does not match."))
+		return p.setError(w, usererror.Invalid("Confirm does not match."))
 	}
 
 	if err := db.UpdatePassword(p.Session.Username, currentPass, newPass); err != nil {

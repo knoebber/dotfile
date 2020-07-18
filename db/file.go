@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/knoebber/dotfile/file"
-	"github.com/knoebber/dotfile/usererr"
+	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -66,7 +66,7 @@ func (f *File) check() error {
 		return err
 	}
 	if exists {
-		return usererr.Duplicate("File alias", f.Alias)
+		return usererror.Duplicate("File alias", f.Alias)
 	}
 
 	if err := connection.QueryRow("SELECT COUNT(*) FROM files WHERE user_id = ?", f.UserID).
@@ -75,7 +75,7 @@ func (f *File) check() error {
 	}
 
 	if count > maxFilesPerUser {
-		return usererr.Invalid("User has maximum amount of files")
+		return usererror.Invalid("User has maximum amount of files")
 	}
 
 	return nil

@@ -6,7 +6,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/knoebber/dotfile/usererr"
+	"github.com/knoebber/dotfile/usererror"
 )
 
 // TODO change init to take an initial commit message.
@@ -54,7 +54,7 @@ func NewCommit(c Commiter, message string) error {
 		return err
 	}
 	if exists {
-		return usererr.Invalid(fmt.Sprintf("Commit %#v already exists", hash))
+		return usererror.Invalid(fmt.Sprintf("Commit %#v already exists", hash))
 	}
 
 	newCommit := &Commit{

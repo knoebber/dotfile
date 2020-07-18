@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"database/sql"
-	"github.com/knoebber/dotfile/usererr"
+	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 	"strings"
 )
@@ -40,7 +40,7 @@ func checkUsernameAllowed(username string) error {
 	}
 
 	if count > 0 {
-		return usererr.Invalid(fmt.Sprintf("Username %#v is reserved.", username))
+		return usererror.Invalid(fmt.Sprintf("Username %#v is reserved.", username))
 	}
 
 	return nil

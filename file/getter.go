@@ -31,7 +31,7 @@ func UncompressRevision(g Getter, hash string) (*bytes.Buffer, error) {
 
 // Diff runs a diff on the revision at hash1 against the revision at hash2.
 // If hash2 is empty, compares the current contents of the file.
-// Returns an usererr when there is no difference.
+// Returns an usererror when there is no difference.
 func Diff(g Getter, hash1, hash2 string) ([]diffmatchpatch.Diff, error) {
 	var text1, text2 string
 

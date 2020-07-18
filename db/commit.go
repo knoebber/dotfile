@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/knoebber/dotfile/file"
-	"github.com/knoebber/dotfile/usererr"
+	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -62,7 +62,7 @@ func (c *Commit) check() error {
 		return err
 	}
 	if exists {
-		return usererr.Duplicate("File hash", c.Hash)
+		return usererror.Duplicate("File hash", c.Hash)
 	}
 
 	if err := checkSize(c.Revision, "Commit "+c.Hash); err != nil {
@@ -76,7 +76,7 @@ func (c *Commit) check() error {
 	}
 
 	if count > maxCommitsPerFile {
-		return usererr.Invalid("File has maximum amount of commits")
+		return usererror.Invalid("File has maximum amount of commits")
 	}
 	return nil
 }

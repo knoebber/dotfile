@@ -9,7 +9,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/knoebber/dotfile/usererr"
+	"github.com/knoebber/dotfile/usererror"
 	// Driver for sql
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
@@ -75,7 +75,7 @@ func insert(i inserter, tx *sql.Tx) (id int64, err error) {
 
 	if err = validate.Struct(i); err != nil {
 		log.Print(err)
-		invalidError := usererr.Invalid("Values are missing or improperly formatted.")
+		invalidError := usererror.Invalid("Values are missing or improperly formatted.")
 		return 0, handleErr(invalidError)
 	}
 
@@ -131,11 +131,11 @@ func formatTime(t time.Time) string {
 
 func checkSize(content []byte, name string) error {
 	if len(content) == 0 {
-		return usererr.Invalid(fmt.Sprintf("%s is empty", name))
+		return usererror.Invalid(fmt.Sprintf("%s is empty", name))
 	}
 
 	if len(content) > maxBlobSizeBytes {
-		return usererr.Invalid(fmt.Sprintf("%s is too large (max=%dKB)", name, maxBlobSizeBytes/1000))
+		return usererror.Invalid(fmt.Sprintf("%s is too large (max=%dKB)", name, maxBlobSizeBytes/1000))
 	}
 	return nil
 

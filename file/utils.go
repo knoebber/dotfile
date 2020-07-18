@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/knoebber/dotfile/usererr"
+	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -24,7 +24,7 @@ var (
 	validPathRegex = regexp.MustCompile(`^~?/.+[^/]$`)
 
 	// ErrNoChanges is returned when a diff operation finds no changes.
-	ErrNoChanges = usererr.Invalid("No changes")
+	ErrNoChanges = usererror.Invalid("No changes")
 )
 
 // GetAlias creates an alias when the passed in alias is empty.
@@ -47,7 +47,7 @@ func GetAlias(alias, path string) (string, error) {
 // CheckAlias checks whether the alias format is allowed.
 func CheckAlias(alias string) error {
 	if !validAliasRegex.Match([]byte(alias)) {
-		return usererr.Invalid(fmt.Sprintf("%#v has non word characters", alias))
+		return usererror.Invalid(fmt.Sprintf("%#v has non word characters", alias))
 	}
 
 	return nil
@@ -56,7 +56,7 @@ func CheckAlias(alias string) error {
 // CheckPath checks whether the alias format is allowed.
 func CheckPath(path string) error {
 	if !validPathRegex.Match([]byte(path)) {
-		return usererr.Invalid(fmt.Sprintf("%#v is not a valid file path", path))
+		return usererror.Invalid(fmt.Sprintf("%#v is not a valid file path", path))
 	}
 
 	return nil

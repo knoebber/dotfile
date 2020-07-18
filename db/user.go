@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"database/sql"
-	"github.com/knoebber/dotfile/usererr"
+	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -77,7 +77,7 @@ func (u *User) check() error {
 	}
 
 	if count > 0 {
-		return usererr.Duplicate("Username", u.Username)
+		return usererror.Duplicate("Username", u.Username)
 	}
 
 	if u.Email == nil {
@@ -98,7 +98,7 @@ func checkUniqueEmail(email string) error {
 	}
 
 	if count > 0 {
-		return usererr.Duplicate("Email", email)
+		return usererror.Duplicate("Email", email)
 	}
 
 	return nil
@@ -201,7 +201,7 @@ func UpdateEmail(userID int64, email string) error {
 func UpdatePassword(username string, currentPass, newPass string) error {
 	err := compareUserPassword(username, currentPass)
 	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-		return usererr.Invalid("Current password does not match.")
+		return usererror.Invalid("Current password does not match.")
 	} else if err != nil {
 		return err
 	}

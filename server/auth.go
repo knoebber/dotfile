@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/knoebber/dotfile/db"
-	"github.com/knoebber/dotfile/usererr"
+	"github.com/knoebber/dotfile/usererror"
 )
 
 const minPassLength = 8
@@ -31,7 +31,7 @@ func login(w http.ResponseWriter, r *http.Request, p *Page, secure bool) (done b
 	if err != nil {
 		// Print the real error and show the user a generic catch all.
 		log.Print(err)
-		return p.setError(w, usererr.Invalid("Username or password is incorrect."))
+		return p.setError(w, usererror.Invalid("Username or password is incorrect."))
 	}
 
 	http.SetCookie(w, &http.Cookie{
@@ -53,11 +53,11 @@ func createHandleSignup(secure bool) pageBuilder {
 
 		if len(password) < minPassLength {
 			msg := fmt.Sprintf("Password must be at least %d characters.", minPassLength)
-			return p.setError(w, usererr.Invalid(msg))
+			return p.setError(w, usererror.Invalid(msg))
 		}
 
 		if password != confirm {
-			p.setError(w, usererr.Invalid("Passwords do not match."))
+			p.setError(w, usererror.Invalid("Passwords do not match."))
 			return false
 		}
 

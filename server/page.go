@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/knoebber/dotfile/db"
 	"github.com/knoebber/dotfile/file"
-	"github.com/knoebber/dotfile/usererr"
+	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -74,7 +74,7 @@ func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
 		return true
 	}
 
-	var uerr *usererr.Error
+	var uerr *usererror.Error
 	if errors.As(err, &uerr) {
 		log.Printf("flashing %s error: %s", uerr.Reason, err)
 		p.ErrorMessage = uerr.Message

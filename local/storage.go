@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/knoebber/dotfile/file"
-	"github.com/knoebber/dotfile/usererr"
+	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -211,7 +211,7 @@ func (s *Storage) Pull() error {
 
 	// If the pulled file is new and a file with the remotes path already exists.
 	if !s.HasFile && exists(s.GetPath()) {
-		return usererr.Invalid(remoteData.Path +
+		return usererror.Invalid(remoteData.Path +
 			" already exists and is not tracked by dotfile. Remove the file or initialize it before pulling")
 	}
 

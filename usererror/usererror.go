@@ -1,4 +1,5 @@
-package usererr
+// Package usererror creates errors that are expected from a user making a mistake.
+package usererror
 
 import "fmt"
 

@@ -29,7 +29,7 @@ import (
 	"strings"
 
 	"github.com/knoebber/dotfile/file"
-	"github.com/knoebber/dotfile/usererr"
+	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -162,5 +162,5 @@ func AssertClean(s *Storage) error {
 		return err
 	}
 
-	return usererr.Invalid("File has uncommited changes")
+	return usererror.Invalid("File has uncommited changes")
 }

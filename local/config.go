@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/knoebber/dotfile/usererr"
+	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -112,7 +112,7 @@ func SetUserConfig(home string, key string, value string) error {
 	}
 
 	if _, ok := cfg[key]; !ok {
-		return usererr.Invalid(fmt.Sprintf("%#v is not a valid config key", key))
+		return usererror.Invalid(fmt.Sprintf("%#v is not a valid config key", key))
 	}
 
 	cfg[key] = &value
