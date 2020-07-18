@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/knoebber/dotfile/db"
-	"github.com/knoebber/dotfile/file"
 )
 
 func loadCommits(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
@@ -53,28 +52,24 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 // This route isn't protected because any user can view any commit.
 // Adds permission checks so only an owner can restore their file.
 func restoreFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+	username := p.Vars["username"]
+	alias := p.Vars["alias"]
+	hash := p.Vars["hash"]
+
 	if p.Session == nil {
-		permissionDenied(w, "", p.Vars["username"])
+		permissionDenied(w, "", username)
 		return true
 	}
 	if !p.Owned() {
-		permissionDenied(w, p.Session.Username, p.Vars["username"])
+		permissionDenied(w, p.Session.Username, username)
 		return true
 	}
 
-	alias := p.Vars["alias"]
-	hash := p.Vars["hash"]
-	storage, err := db.NewStorage(p.Session.UserID, alias)
-	if err != nil {
-		return p.setError(w, err)
-	}
-
-	if err := file.Checkout(storage, hash); err != nil {
+	if err := db.SetFileToHash(username, alias, hash); err != nil {
 		return p.setError(w, err)
 	}
 
 	return
-
 }
 
 func commitsHandler() http.HandlerFunc {

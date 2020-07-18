@@ -38,7 +38,7 @@ func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 func editFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	content := r.Form.Get("contents")
 
-	existingFile, err := db.GetFileByUsername(p.Session.Username, p.Vars["alias"])
+	existingFile, err := db.GetFile(p.Session.Username, p.Vars["alias"])
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -68,15 +68,15 @@ func confirmTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool
 	var err error
 
 	alias := p.Vars["alias"]
-	storage, err := db.NewStorage(p.Session.UserID, alias)
+	tx, err := db.StageFile(p.Session.Username, alias)
 	if err != nil {
 		return p.setError(w, err)
 	}
 
-	if storage.Staged.New {
-		err = file.Init(storage, storage.Staged.Path, alias)
+	if !tx.FileExists {
+		err = file.Init(tx, tx.Staged.Path, alias)
 	} else {
-		err = file.NewCommit(storage, r.Form.Get("message"))
+		err = file.NewCommit(tx, r.Form.Get("message"))
 	}
 	if err != nil {
 		return p.setError(w, err)
@@ -130,14 +130,14 @@ func loadFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	username := p.Vars["username"]
 	alias := p.Vars["alias"]
 
-	file, err := db.GetFileByUsername(username, alias)
+	file, err := db.GetFile(username, alias)
 	if err != nil {
 		return p.setError(w, err)
 	}
 
 	p.Data["path"] = file.Path
 	p.Data["content"] = string(file.Content)
-	p.Data["hash"] = file.CurrentRevision
+	p.Data["hash"] = file.Hash
 
 	p.Title = file.Alias
 
@@ -168,7 +168,7 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 		return
 	}
 	if editing {
-		tempFile, err := db.GetTempFile(p.Session.UserID, pageAlias)
+		tempFile, err := db.GetTempFile(p.Session.Username, pageAlias)
 		if err != nil && !db.NotFound(err) {
 			return p.setError(w, err)
 		}
@@ -184,7 +184,7 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 
 	if at == "" {
 		// Load the current content.
-		file, err := db.GetFileByUsername(p.Vars["username"], pageAlias)
+		file, err := db.GetFile(p.Vars["username"], pageAlias)
 		if err != nil {
 			return p.setError(w, err)
 		}
@@ -207,27 +207,30 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 // Loads the contents of a users temp file for the confirm edit page.
 func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	alias := p.Vars["alias"]
-	storage, err := db.NewStorage(p.Session.UserID, alias)
+
+	f, err := db.GetFile(p.Session.Username, alias)
 	if err != nil {
 		return p.setError(w, err)
 	}
 
-	diffs, err := file.Diff(storage, storage.Staged.CurrentRevision, "")
+	content := &db.FileContent{Username: p.Session.Username, Alias: alias}
+
+	diffs, err := file.Diff(content, f.Hash, "")
 	if err != nil {
 		return p.setError(w, err)
 	}
 
 	p.Data["diffs"] = diffs
-	p.Data["alias"] = storage.Staged.Alias
-	p.Data["path"] = storage.Staged.Path
+	p.Data["alias"] = f.Alias
+	p.Data["path"] = f.Path
 	p.Data["editAction"] = fmt.Sprintf("/%s/%s/edit", p.Session.Username, alias)
-	p.Title = storage.Staged.Alias + " - edit"
+	p.Title = f.Alias + " - edit"
 	return
 }
 
 // Loads the contents of a users temp file for the new file page.
 func loadNewFileConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	tempFile, err := db.GetTempFile(p.Session.UserID, p.Vars["alias"])
+	tempFile, err := db.GetTempFile(p.Session.Username, p.Vars["alias"])
 	if err != nil {
 		return p.setError(w, err)
 	}

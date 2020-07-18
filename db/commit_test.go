@@ -9,8 +9,8 @@ import (
 
 func TestCommitsTable(t *testing.T) {
 	createTestDB(t)
+
 	c := &Commit{
-		FileID:    testFileID,
 		Hash:      testHash,
 		Message:   testMessage,
 		Revision:  []byte(testContent),
@@ -19,26 +19,30 @@ func TestCommitsTable(t *testing.T) {
 
 	t.Run("has foreign key constraints", func(t *testing.T) {
 		// Fails because file doesn't exist.
-		_, err := insert(c, nil)
-		assert.Error(t, err)
+		t.Run("fails when file doesnt exist", func(t *testing.T) {
+			_, err := insert(c, nil)
+			assert.Error(t, err)
+		})
 
-		createTestFile(t)
+		t.Run("ok when file exists", func(t *testing.T) {
+			fv := initTestFile(t)
+			c.FileID = fv.ID
+			_, err := insert(c, nil)
+			assert.NoError(t, err)
+		})
 
-		// File exists - ok.
-		_, err = insert(c, nil)
-		assert.NoError(t, err)
-
-		// FK should restrict delete not cascade.
-		_, err = connection.Exec("DELETE FROM files WHERE id = ?", testFileID)
-		assert.Error(t, err)
+		t.Run("fk restricts delete", func(t *testing.T) {
+			_, err := connection.Exec("DELETE FROM files")
+			assert.Error(t, err)
+		})
 	})
 
-	// Reset DB.
-	createTestDB(t)
-
 	t.Run("forked from commit must exist", func(t *testing.T) {
-		createTestFile(t)
+		createTestDB(t)
+
+		fv := initTestFile(t)
 		nonExistentcommitID := int64(69)
+		c.FileID = fv.ID
 		c.ForkedFrom = &nonExistentcommitID
 
 		_, err := insert(c, nil)

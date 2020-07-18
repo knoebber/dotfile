@@ -11,7 +11,7 @@ import (
 func handleRawFile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	file, err := db.GetFileByUsername(vars["username"], vars["alias"])
+	file, err := db.GetFile(vars["username"], vars["alias"])
 	if err != nil {
 		rawContentError(w, err)
 		return

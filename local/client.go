@@ -138,12 +138,20 @@ func postData(s *Storage, client *http.Client, newHashes []string, url string) e
 		revisionPart.Write(revision)
 	}
 
-	contentType := fmt.Sprintf("multipart/mixed; boundary=%s", w.Boundary())
-	resp, err := client.Post(url, contentType, body)
+	req, err := http.NewRequest("POST", url, body)
+	if err != nil {
+		return err
+
+	}
+
+	req.Header.Set("Content-Type", fmt.Sprintf("multipart/mixed; boundary=%s", w.Boundary()))
+	req.SetBasicAuth(s.User.Username, s.User.Token)
+
+	resp, err := client.Do(req)
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("pushing file content: %s", resp.Status)
 	}
 
-	return nil
+	return resp.Body.Close()
 
 }

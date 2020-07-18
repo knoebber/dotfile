@@ -31,16 +31,14 @@ func loadDiff(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return
 	}
 
-	storage, err := db.NewReadOnlyStorage(username, alias)
+	content := &db.FileContent{Username: username, Alias: alias}
+
+	diffs, err := file.Diff(content, on, against)
 	if err != nil {
 		return p.setError(w, err)
 	}
 
-	diffs, err := file.Diff(storage, on, against)
-	if err != nil {
-		return p.setError(w, err)
-	}
-	p.Data["path"] = storage.Staged.Path
+	// p.Data["path"] = storage.Staged.Path
 	p.Data["diffs"] = diffs
 
 	return

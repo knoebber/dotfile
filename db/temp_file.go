@@ -8,10 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO prevent user from creating temp file with alias that already exists.
-
-const tempFileCountQuery = "SELECT COUNT(*) FROM temp_files WHERE user_id = ?"
-
 // TempFile models the temp_files table.
 // It represents a changed/new file that has not yet been commited.
 // Similar to an untracked or dirty file on the filesystem.
@@ -31,8 +27,8 @@ func (*TempFile) createStmt() string {
 CREATE TABLE IF NOT EXISTS temp_files(
 id         INTEGER PRIMARY KEY,
 user_id    INTEGER NOT NULL REFERENCES users,
-alias      TEXT NOT NULL,
-path       TEXT NOT NULL,
+alias      TEXT NOT NULL COLLATE NOCASE,
+path       TEXT NOT NULL COLLATE NOCASE,
 content    BLOB NOT NULL,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -51,11 +47,10 @@ func (f *TempFile) check() error {
 		return err
 	}
 
-	if err := checkSize(f.Content, "File "+f.Alias); err != nil {
-		return err
-	}
-
-	if err := connection.QueryRow(tempFileCountQuery, f.UserID).Scan(&count); err != nil {
+	// TODO prevent users from creating a temp file with an alias that already exists.
+	if err := connection.
+		QueryRow("SELECT COUNT(*) FROM temp_files WHERE user_id = ?", f.UserID).
+		Scan(&count); err != nil {
 		return errors.Wrapf(err, "counting user %d's temp files", f.UserID)
 	}
 
@@ -65,21 +60,30 @@ func (f *TempFile) check() error {
 // Inserts or updates a user's previous temp file.
 // Uses an UPSERT statement: https://sqlite.org/lang_UPSERT.html
 func (f *TempFile) insertStmt(e executor) (sql.Result, error) {
+	compressed, err := file.Compress(f.Content)
+	if err != nil {
+		return nil, err
+	}
+	content := compressed.Bytes()
+
+	if err := checkSize(content, "File "+f.Alias); err != nil {
+		return nil, err
+	}
+
 	return e.Exec(`
 INSERT INTO temp_files
 (user_id, alias, path, content) 
 VALUES
 (?, ?, ?, ?)
 ON CONFLICT(user_id) DO UPDATE
-SET alias = ?, path = ?, content = ?, created_at = ?`,
+SET alias = ?, path = ?, content = ?`,
 		f.UserID,
 		f.Alias,
 		f.Path,
-		f.Content,
+		content,
 		f.Alias,
 		f.Path,
-		f.Content,
-		time.Now(),
+		content,
 	)
 }
 
@@ -94,38 +98,38 @@ func (f *TempFile) Create() error {
 	return nil
 }
 
-func (f *TempFile) save(tx *sql.Tx) (*File, error) {
-	var err error
-
-	file := &File{
-		UserID:  f.UserID,
-		Alias:   f.Alias,
-		Path:    f.Path,
-		Content: f.Content,
+func (f *TempFile) save(tx *sql.Tx) (newFileID int64, err error) {
+	newFile := &File{
+		UserID: f.UserID,
+		Alias:  f.Alias,
+		Path:   f.Path,
 	}
 
-	file.ID, err = insert(file, tx)
+	newFileID, err = insert(newFile, tx)
 	if err != nil {
-		return nil, errors.Wrapf(err, "creating file %#v for user %d", f.Alias, f.UserID)
+		return 0, err
 	}
 
 	_, err = tx.Exec("DELETE FROM temp_files WHERE user_id = ?", f.UserID)
 	if err != nil {
-		return nil, rollback(tx, errors.Wrapf(err, "deleting temp file %#v for user %d", f.Alias, f.UserID))
+		return 0, rollback(tx, errors.Wrapf(err, "deleting temp file %#v for user %d", f.Alias, f.UserID))
 	}
 
-	return file, nil
-
+	return
 }
 
 // GetTempFile finds a user's temp file.
-// Users can only have one temp file at a time, so alias can be empty.
+// Users can only have one temp file at a time so alias can be empty.
 // When alias is present, ensures that temp file exists with alias.
-func GetTempFile(userID int64, alias string) (*TempFile, error) {
+func GetTempFile(username string, alias string) (*TempFile, error) {
 	res := new(TempFile)
 
 	if err := connection.
-		QueryRow("SELECT * FROM temp_files WHERE user_id = ? AND (? = '' OR alias = ?)", userID, alias, alias).
+		QueryRow(`
+SELECT temp_files.* 
+FROM temp_files 
+JOIN users ON user_id = users.id
+WHERE username = ? AND (? = '' OR alias = ?)`, username, alias, alias).
 		Scan(
 			&res.ID,
 			&res.UserID,
@@ -134,8 +138,15 @@ func GetTempFile(userID int64, alias string) (*TempFile, error) {
 			&res.Content,
 			&res.CreatedAt,
 		); err != nil {
-		return nil, errors.Wrapf(err, "querying for user %d's temp file %#v", userID, alias)
+		return nil, errors.Wrapf(err, "querying for user %q temp file %q", username, alias)
 	}
+
+	buff, err := file.Uncompress(res.Content)
+	if err != nil {
+		return nil, err
+	}
+
+	res.Content = buff.Bytes()
 
 	return res, nil
 }

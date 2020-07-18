@@ -41,7 +41,8 @@ func assetRoutes(r *mux.Router) {
 }
 
 func apiRoutes(r *mux.Router) {
-	r.HandleFunc("/api/{username}/{alias}", handleFileJSON)
+	r.HandleFunc("/api/{username}/{alias}", handleFileJSON).Methods("GET")
+	r.HandleFunc("/api/{username}/{alias}", handlePush).Methods("POST")
 	r.HandleFunc("/api/{username}/{alias}/{hash}", handleRawCompressedCommit)
 }
 

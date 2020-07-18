@@ -9,16 +9,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	commitCountQuery    = "SELECT COUNT(*) FROM commits WHERE file_id = ?"
-	commitValidateQuery = "SELECT COUNT(*) FROM commits WHERE file_id = ? AND hash = ?"
-	commitRevisionQuery = `
-SELECT revision
-FROM commits
-JOIN files ON files.id = file_id
-WHERE file_id = ? AND hash = ?`
-)
-
 // Commit models the commits table.
 type Commit struct {
 	ID         int64
@@ -54,7 +44,7 @@ CREATE TABLE IF NOT EXISTS commits(
 id          INTEGER PRIMARY KEY,
 forked_from INTEGER REFERENCES commits,
 file_id     INTEGER NOT NULL REFERENCES files,
-hash        TEXT NOT NULL,
+hash        TEXT NOT NULL COLLATE NOCASE,
 message     TEXT NOT NULL,
 revision    BLOB NOT NULL,
 timestamp   INTEGER NOT NULL
@@ -79,7 +69,9 @@ func (c *Commit) check() error {
 		return err
 	}
 
-	if err := connection.QueryRow(commitCountQuery, c.FileID).Scan(&count); err != nil {
+	if err := connection.
+		QueryRow("SELECT COUNT(*) FROM commits WHERE file_id = ?", c.FileID).
+		Scan(&count); err != nil {
 		return errors.Wrapf(err, "counting file %d's commits", c.FileID)
 	}
 
@@ -112,7 +104,12 @@ func (c *Commit) create(tx *sql.Tx) error {
 }
 
 func getRevision(fileID int64, hash string) (revision []byte, err error) {
-	err = connection.QueryRow(commitRevisionQuery, fileID, hash).Scan(&revision)
+	err = connection.QueryRow(`
+SELECT revision
+FROM commits
+JOIN files ON files.id = file_id
+WHERE file_id = ? AND hash = ?
+`, fileID, hash).Scan(&revision)
 	if err != nil {
 		err = errors.Wrapf(err, "querying for file %d at %#v", fileID, hash)
 	}
@@ -122,7 +119,9 @@ func getRevision(fileID int64, hash string) (revision []byte, err error) {
 func hasCommit(fileID int64, hash string) (bool, error) {
 	var count int
 
-	err := connection.QueryRow(commitValidateQuery, fileID, hash).Scan(&count)
+	err := connection.
+		QueryRow("SELECT COUNT(*) FROM commits WHERE file_id = ? AND hash = ?", fileID, hash).
+		Scan(&count)
 	if err != nil {
 		return false, errors.Wrapf(err, "checking if commit exists for file %d at %#v", fileID, hash)
 	}
@@ -137,7 +136,7 @@ func GetCommitList(username, alias string) ([]CommitSummary, error) {
 SELECT hash,
        forked_from,
        message, 
-       hash = current_revision AS current,
+       current_commit_id = commits.id AS current,
        timestamp
 FROM commits
 JOIN files ON commits.file_id = files.id
@@ -209,7 +208,7 @@ SELECT hash,
        forked_from,
        message,
        path,
-       hash = current_revision AS current,
+       current_commit_id = commits.id AS current,
        revision,
        timestamp
 FROM commits

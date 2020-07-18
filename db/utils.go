@@ -1,5 +1,6 @@
 package db
 
+// TODO combine with initialize.go - create db.go
 import (
 	"crypto/rand"
 	"database/sql"
@@ -49,16 +50,24 @@ type checker interface {
 }
 
 func insert(i inserter, tx *sql.Tx) (id int64, err error) {
+	handleErr := func(err error) error {
+		if tx != nil {
+			return rollback(tx, err)
+		}
+		return err
+	}
+
 	var res sql.Result
 
 	if err = validate.Struct(i); err != nil {
 		log.Print(err)
-		return 0, usererr.Invalid("Values are missing or improperly formatted.")
+		invalidError := usererr.Invalid("Values are missing or improperly formatted.")
+		return 0, handleErr(invalidError)
 	}
 
 	if c, ok := i.(checker); ok {
 		if err := c.check(); err != nil {
-			return 0, err
+			return 0, handleErr(err)
 		}
 	}
 
@@ -67,17 +76,14 @@ func insert(i inserter, tx *sql.Tx) (id int64, err error) {
 	} else {
 		res, err = i.insertStmt(connection)
 	}
-
-	if err != nil && tx != nil {
-		return 0, rollback(tx, err)
-	} else if err != nil {
-		return 0, err
+	if err != nil {
+		return 0, handleErr(err)
 	}
 
 	id, err = res.LastInsertId()
 
 	if err != nil {
-		return 0, err
+		return 0, handleErr(err)
 	}
 
 	return id, nil

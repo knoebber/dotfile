@@ -16,7 +16,6 @@ const (
 	testDir            = "testdata/"
 	testAlias          = "testalias"
 	testPath           = "~/dotfile/test-file.txt"
-	testFileID         = 1
 	testUserID         = 1
 	testContent        = "Testing content. Stored as a blob."
 	testUpdatedContent = testContent + "\n New content!\n"
@@ -70,35 +69,6 @@ VALUES(?, ?, ?, ?, ?)`,
 	}
 }
 
-func createTestFile(t *testing.T) {
-	createTestUser(t, testUserID, testUsername, testEmail)
-	var count int
-
-	err := connection.
-		QueryRow("SELECT COUNT(*) FROM files WHERE id = ?", testFileID).
-		Scan(&count)
-	if err != nil {
-		t.Fatalf("counting test files: %s", err)
-	}
-	if count > 0 {
-		return
-	}
-
-	_, err = connection.Exec(`
-INSERT INTO files(id, user_id, alias, path, current_revision, content)
-VALUES(?, ?, ?, ?, ?, ?)`,
-		testFileID,
-		testUserID,
-		testAlias,
-		testPath,
-		testHash,
-		[]byte(testContent),
-	)
-	if err != nil {
-		t.Fatalf("creating test file: %s", err)
-	}
-}
-
 func createTestTempFile(t *testing.T, content string) *TempFile {
 	createTestUser(t, testUserID, testUsername, testEmail)
 
@@ -114,23 +84,6 @@ func createTestTempFile(t *testing.T, content string) *TempFile {
 	}
 	testTempFile.ID = id
 	return testTempFile
-}
-
-func createTestCommit(t *testing.T) {
-	createTestFile(t)
-
-	testCommit := &Commit{
-		FileID:    testFileID,
-		Hash:      testHash,
-		Message:   testMessage,
-		Revision:  []byte(testRevision),
-		Timestamp: time.Now().Unix(),
-	}
-
-	_, err := insert(testCommit, nil)
-	if err != nil {
-		t.Fatalf("creating test commit: %s", err)
-	}
 }
 
 func failIf(t *testing.T, err error, context ...string) {
@@ -153,11 +106,10 @@ func assertErrNoRows(t *testing.T, err error) {
 	}
 }
 
-func getTestStorage(t *testing.T) *Storage {
-	createTestFile(t)
-	s, err := NewStorage(testUserID, testAlias)
+func getTestFileTransaction(t *testing.T) *FileTransaction {
+	ft, err := NewFileTransaction(testUsername, testAlias)
 	failIf(t, err, "getting test storage")
-	return s
+	return ft
 }
 
 func getTestTransaction(t *testing.T) *sql.Tx {
@@ -166,14 +118,15 @@ func getTestTransaction(t *testing.T) *sql.Tx {
 	return tx
 }
 
-func initTestFile(t *testing.T) *File {
+func initTestFile(t *testing.T) *FileView {
+	createTestUser(t, testUserID, testUsername, testEmail)
 	createTestTempFile(t, testContent)
 
-	s, err := NewStorage(testUserID, testAlias)
+	ft, err := StageFile(testUsername, testAlias)
 	failIf(t, err, "new storage in init test file")
-	failIf(t, file.Init(s, testPath, testAlias), "initialing test file")
+	failIf(t, file.Init(ft, testPath, testAlias), "initialing test file")
 
-	f, err := GetFileByUsername(testUsername, testAlias)
+	f, err := GetFile(testUsername, testAlias)
 	failIf(t, err, "getting file by username in init test file")
 	return f
 }
@@ -185,13 +138,13 @@ func initTestFileAndCommit(t *testing.T) (initialCommit CommitSummary, currentCo
 	// Latest commit will have this content.
 	createTestTempFile(t, testUpdatedContent)
 
-	s, err := NewStorage(testUserID, testAlias)
-	failIf(t, err, "initializing test file")
+	ft, err := StageFile(testUsername, testAlias)
+	failIf(t, err, "staging test file")
 
 	// Ensure that the new commit has a different timestamp - unix time is by the second.
 	time.Sleep(time.Second)
 
-	failIf(t, file.NewCommit(s, "Commiting test updated content"))
+	failIf(t, file.NewCommit(ft, "Commiting test updated content"))
 
 	lst, err := GetCommitList(testUsername, testAlias)
 	failIf(t, err, "getting test commit")
@@ -200,12 +153,21 @@ func initTestFileAndCommit(t *testing.T) (initialCommit CommitSummary, currentCo
 		t.Fatalf("expected commit list to be length 2, got %d", len(lst))
 	}
 
-	f, err := GetFileByUsername(testUsername, testAlias)
+	f, err := GetFile(testUsername, testAlias)
 	failIf(t, err, "initTestFileAndCommit: GetFileByUsername")
 
 	currentCommit = lst[0]
 	initialCommit = lst[1]
 
-	assert.Equal(t, currentCommit.Hash, f.CurrentRevision)
+	assert.Equal(t, currentCommit.Hash, f.Hash)
 	return
+}
+
+// Should run after any tests that use a transaction.
+func assertDBNotLocked(t *testing.T) {
+	_, err := connection.Exec("DELETE FROM sessions")
+	if err != nil {
+		t.Fatalf("asserting db is still open: %s", err)
+	}
+
 }

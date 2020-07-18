@@ -10,11 +10,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	fileCountQuery    = "SELECT COUNT(*) FROM files WHERE user_id = ?"
-	fileValidateQuery = "SELECT COUNT(*) FROM files WHERE user_id = ? AND alias = ?"
-)
-
 // File models the files table.
 // It stores the contents of a file at the current revision hash.
 //
@@ -24,10 +19,16 @@ type File struct {
 	UserID          int64  `validate:"required"`
 	Alias           string `validate:"required"` // Friendly name for a file: bashrc
 	Path            string `validate:"required"` // Where the file lives: ~/.bashrc
-	CurrentRevision string // The current hash that the file is at.
-	Content         []byte `validate:"required"`
+	CurrentCommitID *int64 // The commit that the file is at.
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+}
+
+// FileView contains a file record and its commits uncompressed contents.
+type FileView struct {
+	File
+	Content []byte
+	Hash    string
 }
 
 // FileSummary summarizes a file.
@@ -46,22 +47,18 @@ id                 INTEGER PRIMARY KEY,
 user_id            INTEGER NOT NULL REFERENCES users,
 alias              TEXT NOT NULL COLLATE NOCASE,
 path               TEXT NOT NULL COLLATE NOCASE,
-current_revision   TEXT NOT NULL,
-content            BLOB NOT NULL,
+current_commit_id  INTEGER REFERENCES commits,
 created_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 updated_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS files_user_index ON files(user_id);
+CREATE INDEX IF NOT EXISTS files_commit_index ON files(current_commit_id);
 CREATE UNIQUE INDEX IF NOT EXISTS files_user_alias_index ON files(user_id, alias);
 CREATE UNIQUE INDEX IF NOT EXISTS files_user_path_index ON files(user_id, path);
 `
 }
 
 func (f *File) check() error {
-	// TODO path should either start with '/' or '~'.
-	// Path should be allowed to be empty.
-	// When path is empty the templates should display it as 'web-only', and
-	// be disallowed from being pulled.
 	var count int
 
 	exists, err := fileExists(f.UserID, f.Alias)
@@ -72,11 +69,8 @@ func (f *File) check() error {
 		return usererr.Duplicate("File alias", f.Alias)
 	}
 
-	if err := checkSize(f.Content, "File "+f.Alias); err != nil {
-		return err
-	}
-
-	if err := connection.QueryRow(fileCountQuery, f.UserID).Scan(&count); err != nil {
+	if err := connection.QueryRow("SELECT COUNT(*) FROM files WHERE user_id = ?", f.UserID).
+		Scan(&count); err != nil {
 		return errors.Wrapf(err, "counting user %d file", f.UserID)
 	}
 
@@ -89,26 +83,35 @@ func (f *File) check() error {
 
 func (f *File) insertStmt(e executor) (sql.Result, error) {
 	return e.Exec(`
-INSERT INTO files(user_id, alias, path, current_revision, content) VALUES(?, ?, ?, ?, ?)`,
+INSERT INTO files(user_id, alias, path, current_commit_id) VALUES(?, ?, ?, ?)`,
 		f.UserID,
 		f.Alias,
 		f.Path,
-		f.CurrentRevision,
-		f.Content,
+		f.CurrentCommitID,
 	)
 }
 
-func (f *File) scan(row *sql.Row) error {
-	return row.Scan(
+func (f *FileView) scan(row *sql.Row) error {
+	if err := row.Scan(
 		&f.ID,
 		&f.UserID,
 		&f.Alias,
 		&f.Path,
-		&f.CurrentRevision,
-		&f.Content,
+		&f.CurrentCommitID,
 		&f.CreatedAt,
 		&f.UpdatedAt,
-	)
+		&f.Content,
+		&f.Hash,
+	); err != nil {
+		return err
+	}
+	buff, err := file.Uncompress(f.Content)
+	if err != nil {
+		return err
+	}
+
+	f.Content = buff.Bytes()
+	return nil
 }
 
 // Update updates the alias or path if they are different.
@@ -123,9 +126,9 @@ func (f *File) Update(newAlias, newPath string) error {
 	}
 	_, err := connection.Exec(`
 UPDATE files
-SET alias = ?, path = ?, updated_at = ?
+SET alias = ?, path = ?, updated_at = CURRENT_TIMESTAMP
 WHERE file_id = ?
-`, newAlias, newPath, time.Now(), f.ID)
+`, newAlias, newPath, f.ID)
 	if err != nil {
 		return errors.Wrapf(err, "updating file %d to %#v %#v", f.ID, newAlias, newPath)
 	}
@@ -133,36 +136,22 @@ WHERE file_id = ?
 	return nil
 }
 
-func updateContent(tx *sql.Tx, fileID int64, content []byte, hash string) error {
-	if err := checkSize(content, "File revision "+hash); err != nil {
-		return err
-	}
-
-	if _, err := tx.Exec(`
-UPDATE files
-SET content = ?, current_revision = ?, updated_at = ?
-WHERE id = ?
-`, content, hash, time.Now(), fileID); err != nil {
-		return rollback(tx, errors.Wrapf(err, "updating content in file %d", fileID))
-	}
-	return nil
-}
-
-// GetFileByUsername retrieves a user's file by their username.
-func GetFileByUsername(username string, alias string) (*File, error) {
-	file := new(File)
+// GetFile retrieves a user's file by their username.
+func GetFile(username string, alias string) (*FileView, error) {
+	fv := new(FileView)
 
 	row := connection.QueryRow(`
-SELECT files.* FROM files
+SELECT files.*, commits.revision, commits.hash FROM files
 JOIN users ON user_id = users.id
+JOIN commits ON current_commit_id = commits.id
 WHERE username = ? AND alias = ?
 `, username, alias)
 
-	if err := file.scan(row); err != nil {
+	if err := fv.scan(row); err != nil {
 		return nil, errors.Wrapf(err, "querying for user %#v file %#v", username, alias)
 	}
 
-	return file, nil
+	return fv, nil
 }
 
 // GetFilesByUsername gets a summary of all a users files.
@@ -224,27 +213,15 @@ func ForkFile(username, alias, hash string, newUserID int64) error {
 		return errors.Wrap(err, "starting fork file transaction")
 	}
 
-	fileForkee, err := GetFileByUsername(username, alias)
+	fileForkee, err := GetFile(username, alias)
 	if err != nil {
-		return err
-	}
-
-	commitForkee, err := GetCommit(username, alias, hash)
-	if err != nil {
-		return err
-	}
-
-	forkedContent, err := file.Uncompress(commitForkee.Revision)
-	if err != nil {
-		return errors.Wrap(err, "uncompressing for fork")
+		return rollback(tx, err)
 	}
 
 	newFile := &File{
-		UserID:          newUserID,
-		Alias:           alias,
-		Path:            fileForkee.Path,
-		CurrentRevision: hash,
-		Content:         forkedContent.Bytes(),
+		UserID: newUserID,
+		Alias:  alias,
+		Path:   fileForkee.Path,
 	}
 
 	newFileID, err := insert(newFile, tx)
@@ -252,14 +229,22 @@ func ForkFile(username, alias, hash string, newUserID int64) error {
 		return err
 	}
 
-	newCommit := commitForkee
+	commitForkee, err := GetCommit(username, alias, hash)
+	if err != nil {
+		return rollback(tx, err)
+	}
 
+	newCommit := commitForkee
 	newCommit.FileID = newFileID
 	newCommit.ForkedFrom = &commitForkee.ID
 	newCommit.Message = fmt.Sprintf("/%s/%s/%s", username, alias, hash)
 
-	_, err = insert(newCommit, tx)
+	newCommitID, err := insert(newCommit, tx)
 	if err != nil {
+		return err
+	}
+
+	if err := setFileToCommitID(tx, newFileID, newCommitID); err != nil {
 		return err
 	}
 
@@ -270,23 +255,57 @@ func ForkFile(username, alias, hash string, newUserID int64) error {
 	return nil
 }
 
-func getFileByUserID(userID int64, alias string) (*File, error) {
-	file := new(File)
+func setFileToCommitID(tx *sql.Tx, fileID int64, commitID int64) error {
+	_, err := tx.Exec(`
+UPDATE files
+SET current_commit_id = ?, updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+`, commitID, fileID)
 
-	row := connection.
-		QueryRow("SELECT * FROM files WHERE user_id = ? AND alias = ?", userID, alias)
-
-	if err := file.scan(row); err != nil {
-		return nil, errors.Wrapf(err, "querying for user %d file %#v", userID, alias)
+	if err != nil {
+		return rollback(tx, errors.Wrapf(err, "updating content in file %d", fileID))
 	}
 
-	return file, nil
+	return nil
+}
+
+// SetFileToHash sets file to the commit at hash.
+func SetFileToHash(username, alias, hash string) error {
+	result, err := connection.Exec(`
+WITH new_commit(id, file_id) AS (
+SELECT commits.id,
+       file_id
+FROM commits
+JOIN files ON files.id = commits.file_id
+JOIN users ON files.user_id = users.id
+WHERE username = ? AND alias = ? AND hash = ?
+)
+UPDATE files
+SET current_commit_id = (SELECT new_commit.id FROM new_commit), updated_at = CURRENT_TIMESTAMP
+WHERE id = (SELECT file_id FROM new_commit)
+`, username, alias, hash)
+	if err != nil {
+		return errors.Wrapf(err, "setting %q %q to hash %q", username, alias, hash)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err, "getting rows affected in set file to hash")
+	}
+	if affected == 0 {
+		return fmt.Errorf("commit %q %q %q not found", username, alias, hash)
+	}
+
+	return nil
+
 }
 
 func fileExists(userID int64, alias string) (bool, error) {
 	var count int
 
-	err := connection.QueryRow(fileValidateQuery, userID, alias).Scan(&count)
+	err := connection.
+		QueryRow("SELECT COUNT(*) FROM files WHERE user_id = ? AND alias = ?", userID, alias).
+		Scan(&count)
 	if err != nil {
 		return false, errors.Wrapf(err, "checking if file %#v exists for user %d", alias, userID)
 	}
