@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"mime"
@@ -16,7 +17,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Gathers a file/commits and marshals it into the format that package local uses.
+// Gathers a file/commits and marshals it into file tracking data.
 func handleFileJSON(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
@@ -104,44 +105,50 @@ func getMultipartReader(w http.ResponseWriter, r *http.Request) *multipart.Reade
 	return multipart.NewReader(r.Body, params["boundary"])
 }
 
-func readPushedFileData(p *multipart.Part, w http.ResponseWriter) *file.TrackingData {
+func readPushedFileData(p *multipart.Part) (*file.TrackingData, error) {
+	if p.Header.Get("Content-Type") != "application/json" {
+		return nil, errors.New("expected json part to be content type application/json")
+	}
+
 	result := new(file.TrackingData)
 	if err := json.NewDecoder(p).Decode(result); err != nil {
-		apiError(w, errors.Wrap(err, "decoding pushed tracked file"))
-		return nil
+		return nil, errors.Wrap(err, "decoding pushed tracked file")
 	}
 
-	return result
+	if err := p.Close(); err != nil {
+		return nil, errors.Wrap(err, "closing json part")
+	}
+
+	return result, nil
 }
 
-func savePushedRevision(w http.ResponseWriter, tx *db.FileTransaction, mr *multipart.Reader) (hasMore bool) {
-
-	p, err := mr.NextPart()
-	if err == io.EOF {
-		return
-	}
-
-	if err != nil {
-		apiError(w, errors.Wrap(err, "reading revision parts"))
-		return
-	}
-
+func savePushedRevision(ft *db.FileTransaction, p *multipart.Part, commitMap map[string]*file.Commit) error {
 	hash := p.FileName()
 	buff := new(bytes.Buffer)
 
-	_, err = buff.ReadFrom(p)
+	n, err := buff.ReadFrom(p)
 	if err != nil {
-		apiError(w, errors.Wrap(err, "reading revision from push"))
-		return
+		err = errors.Wrapf(err, "reading revision %q from push (%d bytes)", hash, n)
+		return ft.Rollback(err)
 	}
 
-	tx.SaveCommit(buff, &file.Commit{
-		// TODO - other fields.
-		Hash: hash,
-	})
+	if err = p.Close(); err != nil {
+		err = errors.Wrap(err, "closing revision part")
+		return ft.Rollback(err)
+	}
 
-	hasMore = true
-	return
+	c, ok := commitMap[hash]
+	if !ok {
+		err = fmt.Errorf("pushed revision %q doesn't exist in file data json", hash)
+		return ft.Rollback(err)
+	}
+
+	if err := ft.SaveCommit(buff, c); err != nil {
+		return err
+	}
+
+	log.Printf("saved %s (%d bytes)", hash, n)
+	return nil
 }
 
 // Response body is expected to be multipart.
@@ -149,10 +156,7 @@ func savePushedRevision(w http.ResponseWriter, tx *db.FileTransaction, mr *multi
 // Subsequent parts are the new revisions that the server should save.
 // Each revision part should have be named as its hash.
 func handlePush(w http.ResponseWriter, r *http.Request) {
-	var (
-		fileData *file.TrackingData
-		mr       *multipart.Reader
-	)
+	var mr *multipart.Reader
 
 	vars := mux.Vars(r)
 	username := vars["username"]
@@ -167,25 +171,49 @@ func handlePush(w http.ResponseWriter, r *http.Request) {
 
 	jsonPart, err := mr.NextPart()
 	if err != nil {
-		apiError(w, errors.Wrap(err, "reading JSON part"))
-		return
-	}
-	if jsonPart.Header.Get("Content-Type") != "application/json" {
-		apiError(w, errors.New("expected first part to be application/json"))
+		apiError(w, errors.Wrap(err, "reading json part"))
 		return
 	}
 
-	if fileData = readPushedFileData(jsonPart, w); fileData == nil {
-		return
-	}
-
-	tx, err := db.NewFileTransaction(username, alias)
+	fileData, err := readPushedFileData(jsonPart)
 	if err != nil {
 		apiError(w, err)
 		return
 	}
 
-	for savePushedRevision(w, tx, mr) {
+	ft, err := db.NewFileTransaction(username, alias)
+	if err != nil {
+		apiError(w, err)
+		return
+	}
+	commitMap := fileData.MapCommits()
+
+	for {
+		revisionPart, err := mr.NextPart()
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			err = ft.Rollback(errors.Wrap(err, "reading revision part"))
+			apiError(w, err)
+			return
+		}
+
+		if err = savePushedRevision(ft, revisionPart, commitMap); err != nil {
+			apiError(w, err)
+			return
+		}
+	}
+
+	if err = ft.SetRevision(fileData.Revision); err != nil {
+		apiError(w, err)
+		return
+	}
+
+	if err = ft.Close(); err != nil {
+		apiError(w, err)
+		return
 	}
 }
 

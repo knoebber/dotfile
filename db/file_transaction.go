@@ -32,7 +32,7 @@ func NewFileTransaction(username, alias string) (ft *FileTransaction, err error)
 		return nil, errors.Wrap(err, "starting storage transaction")
 	}
 
-	row := connection.
+	row := ft.tx.
 		QueryRow(`
 SELECT files.id, current_commit_id, hash
 FROM files 
@@ -138,7 +138,7 @@ func (ft *FileTransaction) GetRevision(hash string) ([]byte, error) {
 
 // SetRevision sets the file to the commit at hash.
 func (ft *FileTransaction) SetRevision(hash string) error {
-	row := connection.QueryRow("SELECT id FROM commits WHERE file_id = ? AND hash = ?", ft.FileID, hash)
+	row := ft.tx.QueryRow("SELECT id FROM commits WHERE file_id = ? AND hash = ?", ft.FileID, hash)
 
 	if err := row.Scan(&ft.newCommitID); err != nil {
 		err = errors.Wrapf(err, "setting file %d to revision %q", ft.FileID, hash)

@@ -48,17 +48,15 @@ func getRemoteTrackingData(client *http.Client, fileURL string) (*file.TrackingD
 	return result, nil
 }
 
-func getRemoteData(s *Storage) (*http.Client, *file.TrackingData, string, error) {
-	client := getClient()
-
+func getRemoteData(s *Storage, client *http.Client) (*file.TrackingData, string, error) {
 	fileURL := s.User.Remote + path.Join("/api", s.User.Username, s.Alias)
 
 	remoteData, err := getRemoteTrackingData(client, fileURL)
 	if err != nil {
-		return nil, nil, fileURL, err
+		return nil, fileURL, err
 	}
 
-	return client, remoteData, fileURL, nil
+	return remoteData, fileURL, nil
 }
 
 func getRemoteRevision(client *http.Client, url string) ([]byte, error) {
@@ -109,47 +107,61 @@ func getRemoteRevisions(client *http.Client, fileURL string, hashes []string) ([
 // Push new local revisions to remote using a multipart POST request.
 // The first part is fileData JSON the rest are form files with compressed revisions.
 func postData(s *Storage, client *http.Client, newHashes []string, url string) error {
-	body := new(bytes.Buffer)
+	var body bytes.Buffer
 
-	w := multipart.NewWriter(body)
-	defer w.Close()
+	writer := multipart.NewWriter(&body)
 
-	jsonPart, err := w.CreatePart(textproto.MIMEHeader{"Content-Type": {"application/json"}})
+	jsonPart, err := writer.CreatePart(textproto.MIMEHeader{
+		"Content-Type": {"application/json"},
+	})
+
 	if err != nil {
 		return errors.Wrap(err, "creating JSON part")
 	}
 
-	if err := json.NewEncoder(jsonPart).Encode(s.FileData); err != nil {
+	if err = json.NewEncoder(jsonPart).Encode(s.FileData); err != nil {
 		return errors.Wrap(err, "encoding json part: %v")
 	}
 
 	for _, hash := range newHashes {
-		fmt.Println("adding", hash)
-		revisionPart, err := w.CreateFormFile("revision", hash)
-		if err != nil {
-			return errors.Wrap(err, "creating revision part")
-		}
-
 		revision, err := s.GetRevision(hash)
 		if err != nil {
 			return err
 		}
 
-		revisionPart.Write(revision)
+		revisionPart, err := writer.CreateFormFile("revision", hash)
+		if err != nil {
+			return errors.Wrap(err, "creating revision part")
+		}
+
+		n, err := revisionPart.Write(revision)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("pushing %s (%d bytes)\n", hash, n)
 	}
 
-	req, err := http.NewRequest("POST", url, body)
+	contentType := fmt.Sprintf("multipart/mixed; boundary=%s", writer.Boundary())
+	if err = writer.Close(); err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("POST", url, &body)
 	if err != nil {
 		return err
-
 	}
 
-	req.Header.Set("Content-Type", fmt.Sprintf("multipart/mixed; boundary=%s", w.Boundary()))
+	req.Header.Set("Content-Type", contentType)
 	req.SetBasicAuth(s.User.Username, s.User.Token)
 
 	resp, err := client.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "creating upload request for push")
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("pushing file content: %s", resp.Status)
+		return fmt.Errorf("uploading file revisions: %s", resp.Status)
 	}
 
 	return resp.Body.Close()

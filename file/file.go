@@ -43,6 +43,21 @@ type Commit struct {
 	Timestamp int64  `json:"timestamp"` // Unix timestamp.
 }
 
+// MapCommits maps hashes to commits.
+func (td *TrackingData) MapCommits() map[string]*Commit {
+	result := make(map[string]*Commit)
+	for _, commit := range td.Commits {
+		c := commit // commit always has the same address.
+		if _, ok := result[c.Hash]; ok {
+			continue
+		}
+
+		result[c.Hash] = &c
+	}
+
+	return result
+}
+
 // MergeTrackingData merges the new data into old.
 // Returns the merged data and a slice of the hashes that are new.
 func MergeTrackingData(old, new *TrackingData) (merged *TrackingData, newHashes []string, err error) {

@@ -175,7 +175,9 @@ func (s *Storage) GetPath() string {
 func (s *Storage) Push() error {
 	var newHashes []string
 
-	client, remoteData, fileURL, err := getRemoteData(s)
+	client := getClient()
+
+	remoteData, fileURL, err := getRemoteData(s, client)
 	if err != nil {
 		return err
 	}
@@ -199,7 +201,9 @@ func (s *Storage) Push() error {
 func (s *Storage) Pull() error {
 	var newHashes []string
 
-	client, remoteData, fileURL, err := getRemoteData(s)
+	client := getClient()
+
+	remoteData, fileURL, err := getRemoteData(s, client)
 	if err != nil {
 		return err
 	}
