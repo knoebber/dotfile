@@ -83,7 +83,7 @@ func AddCommandsToApplication(app *kingpin.Application) error {
 	}
 
 	addInitSubCommandToApplication(app)
-	addPrintSubCommandToApplication(app)
+	addShowSubCommandToApplication(app)
 	addEditSubCommandToApplication(app)
 	addDiffSubCommandToApplication(app)
 	addLogSubCommandToApplication(app)

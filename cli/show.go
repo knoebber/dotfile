@@ -6,12 +6,12 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-type printCommand struct {
+type showCommand struct {
 	json     bool
 	fileName string
 }
 
-func (pc *printCommand) run(ctx *kingpin.ParseContext) error {
+func (pc *showCommand) run(ctx *kingpin.ParseContext) error {
 	var (
 		content []byte
 		err     error
@@ -36,9 +36,9 @@ func (pc *printCommand) run(ctx *kingpin.ParseContext) error {
 	return nil
 }
 
-func addPrintSubCommandToApplication(app *kingpin.Application) {
-	pc := new(printCommand)
-	c := app.Command("print", "print the file").Action(pc.run)
-	c.Arg("file-name", "the file to print").Required().StringVar(&pc.fileName)
-	c.Flag("json", "print the file json schema").BoolVar(&pc.json)
+func addShowSubCommandToApplication(app *kingpin.Application) {
+	pc := new(showCommand)
+	c := app.Command("show", "show the file").Action(pc.run)
+	c.Arg("file-name", "the file to show").Required().StringVar(&pc.fileName)
+	c.Flag("json", "show the file json schema").BoolVar(&pc.json)
 }
