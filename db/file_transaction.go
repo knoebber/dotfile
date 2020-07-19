@@ -51,7 +51,7 @@ WHERE username = ? AND alias = ?`, username, alias)
 	}
 
 	if err != nil {
-		return nil, rollback(ft.tx, errors.Wrapf(err, "querying for user %q file %q", username, alias))
+		return nil, ft.Rollback(errors.Wrapf(err, "querying for user %q file %q", username, alias))
 	}
 
 	ft.FileExists = true
@@ -69,7 +69,7 @@ func StageFile(username string, alias string) (ft *FileTransaction, err error) {
 
 	ft.Staged, err = GetTempFile(username, alias)
 	if err != nil {
-		return nil, rollback(ft.tx, err)
+		return nil, ft.Rollback(err)
 	}
 
 	if ft.FileExists {
@@ -90,7 +90,7 @@ func StageFile(username string, alias string) (ft *FileTransaction, err error) {
 func (ft *FileTransaction) HasCommit(hash string) (exists bool, err error) {
 	exists, err = hasCommit(ft.FileID, hash)
 	if err != nil {
-		return false, rollback(ft.tx, err)
+		return false, ft.Rollback(err)
 	}
 
 	return
@@ -100,7 +100,7 @@ func (ft *FileTransaction) HasCommit(hash string) (exists bool, err error) {
 // Returns an error if the temp file is not set.
 func (ft *FileTransaction) GetContents() ([]byte, error) {
 	if ft.Staged == nil || len(ft.Staged.Content) == 0 {
-		return nil, rollback(ft.tx, errors.New("temp file has no content"))
+		return nil, ft.Rollback(errors.New("temp file has no content"))
 	}
 
 	return ft.Staged.Content, nil
@@ -110,7 +110,7 @@ func (ft *FileTransaction) GetContents() ([]byte, error) {
 // The files current revision will be set to the new commit.
 func (ft *FileTransaction) SaveCommit(buff *bytes.Buffer, c *file.Commit) error {
 	commit := &Commit{
-		FileID:    ft.Staged.ID,
+		FileID:    ft.FileID,
 		Revision:  buff.Bytes(),
 		Hash:      c.Hash,
 		Message:   c.Message,
@@ -130,7 +130,7 @@ func (ft *FileTransaction) SaveCommit(buff *bytes.Buffer, c *file.Commit) error 
 func (ft *FileTransaction) GetRevision(hash string) ([]byte, error) {
 	revision, err := getRevision(ft.FileID, hash)
 	if err != nil {
-		return nil, rollback(ft.tx, err)
+		return nil, ft.Rollback(err)
 	}
 
 	return revision, nil
@@ -138,12 +138,11 @@ func (ft *FileTransaction) GetRevision(hash string) ([]byte, error) {
 
 // SetRevision sets the file to the commit at hash.
 func (ft *FileTransaction) SetRevision(hash string) error {
-	row := connection.
-		QueryRow("SELECT id FROM commits WHERE file_id = ? AND hash = ?", ft.FileID, hash)
+	row := connection.QueryRow("SELECT id FROM commits WHERE file_id = ? AND hash = ?", ft.FileID, hash)
 
 	if err := row.Scan(&ft.newCommitID); err != nil {
 		err = errors.Wrapf(err, "setting file %d to revision %q", ft.FileID, hash)
-		return rollback(ft.tx, err)
+		return ft.Rollback(err)
 	}
 
 	return nil
@@ -152,7 +151,7 @@ func (ft *FileTransaction) SetRevision(hash string) error {
 // Close updates a files current commit and closes the transaction.
 func (ft *FileTransaction) Close() error {
 	if ft.newCommitID > 0 && ft.newCommitID != ft.CurrentCommitID {
-		err := setFileToCommitID(ft.tx, ft.Staged.ID, ft.newCommitID)
+		err := setFileToCommitID(ft.tx, ft.FileID, ft.newCommitID)
 		if err != nil {
 			return err
 		}
@@ -162,4 +161,9 @@ func (ft *FileTransaction) Close() error {
 		return errors.Wrapf(err, "closing transaction for file %d", ft.Staged.ID)
 	}
 	return nil
+}
+
+// Rollback rollsback the file transaction to its initial state.
+func (ft *FileTransaction) Rollback(err error) error {
+	return rollback(ft.tx, err)
 }
