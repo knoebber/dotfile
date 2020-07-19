@@ -1,3 +1,4 @@
+// Package file provides functions and intefaces for dotfile operations.
 package file
 
 import (
@@ -7,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/knoebber/dotfile/usererror"
@@ -26,6 +28,58 @@ var (
 	// ErrNoChanges is returned when a diff operation finds no changes.
 	ErrNoChanges = usererror.Invalid("No changes")
 )
+
+// TrackingData is the data that dotfile uses to track files.
+type TrackingData struct {
+	Path     string   `json:"path"`
+	Revision string   `json:"revision"`
+	Commits  []Commit `json:"commits"`
+}
+
+// Commit represents a file revision.
+type Commit struct {
+	Hash      string `json:"hash"`
+	Message   string `json:"message"`
+	Timestamp int64  `json:"timestamp"` // Unix timestamp.
+}
+
+// MergeTrackingData merges the new data into old.
+// Returns the merged data and a slice of the hashes that are new.
+func MergeTrackingData(old, new *TrackingData) (merged *TrackingData, newHashes []string, err error) {
+	if old.Path != new.Path && old.Path != "" {
+		err = fmt.Errorf("merging tracking data: old path %#v does not match new %#v", old.Path, new.Path)
+		return
+	}
+
+	merged = &TrackingData{
+		Path:     new.Path,
+		Revision: new.Revision,
+		Commits:  old.Commits,
+	}
+
+	newHashes = []string{}
+
+	oldMap := make(map[string]bool)
+	for _, c := range old.Commits {
+		oldMap[c.Hash] = true
+	}
+
+	for _, r := range new.Commits {
+		if _, ok := oldMap[r.Hash]; ok {
+			// Old already has the new hash.
+			continue
+		}
+
+		// Add the new hash.
+		newHashes = append(newHashes, r.Hash)
+		merged.Commits = append(merged.Commits, r)
+	}
+
+	sort.Slice(merged.Commits, func(i, j int) bool {
+		return merged.Commits[i].Timestamp < merged.Commits[j].Timestamp
+	})
+	return
+}
 
 // GetAlias creates an alias when the passed in alias is empty.
 // It works by removing leading dots and file extensions from the path.
