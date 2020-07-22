@@ -1,15 +1,15 @@
 <main>
-  <h1>{{ .Title }}</h1>
+  {{ template "settings_header" . }}
   <p>Joined: <strong>{{ .Data.joined }}</strong></p>
   {{ if .Data.email }}
   <p>Email: <strong>{{ .Data.email }}</strong></p>
   <p><a href="/settings/cli">Setup CLI</a></p>
-  <p><a href="/settings/email">Update email</a></p>
+  <p><a href="/settings/email">Set email</a></p>
   {{ else }}
   <p><a href="/settings/email">Enable account recovery</a></p>
   {{ end }}
-  <p><a href="/settings/password">Update password</a></p>
-  <p><a href="/settings/theme">Change theme</a></p>
+  <p><a href="/settings/password">Set password</a></p>
+  <p><a href="/settings/theme">Set theme</a></p>
   <form action="/logout" method="post" class="empty">
     <button class="danger">Logout</button>
   </form>

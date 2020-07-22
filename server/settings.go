@@ -158,7 +158,7 @@ func emailHandler() http.HandlerFunc {
 func passwordHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "password.tmpl",
-		title:        "Update Password",
+		title:        "Set Password",
 		handleForm:   handlePassword,
 		protected:    true,
 	})

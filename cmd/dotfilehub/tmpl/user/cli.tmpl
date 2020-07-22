@@ -1,5 +1,5 @@
 <main>
-  <h1>{{ .Title }}</h1>
+  {{ template "settings_header" . }}
   {{ if not .Data.authenticated }}
   <form method="post">
     <label for="password">Password</label>
