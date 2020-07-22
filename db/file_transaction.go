@@ -19,11 +19,12 @@ type FileTransaction struct {
 	FileID          int64
 	CurrentCommitID int64
 	Hash            string
+	Path            string
 	Staged          *TempFile
 }
 
 // NewFileTransaction loads file information into a file transaction.
-// FileID, CurrentCommitID, and Hash will be zero valued when the file doesn't exist.
+// Exported fields will be zero valued when the file doesn't exist.
 func NewFileTransaction(username, alias string) (ft *FileTransaction, err error) {
 	ft = new(FileTransaction)
 
@@ -34,7 +35,7 @@ func NewFileTransaction(username, alias string) (ft *FileTransaction, err error)
 
 	row := ft.tx.
 		QueryRow(`
-SELECT files.id, current_commit_id, hash
+SELECT files.id, current_commit_id, hash, path
 FROM files 
 JOIN users ON users.id = user_id
 JOIN commits ON current_commit_id = commits.id
@@ -44,6 +45,7 @@ WHERE username = ? AND alias = ?`, username, alias)
 		&ft.FileID,
 		&ft.CurrentCommitID,
 		&ft.Hash,
+		&ft.Path,
 	)
 
 	if NotFound(err) {
@@ -84,6 +86,25 @@ func StageFile(username string, alias string) (ft *FileTransaction, err error) {
 	// File still does not exist after this - there is no commit association thus no content.
 	// CurrentCommitID and hash are zero valued.
 	return
+}
+
+// SaveFile saves a new file that does yet have any commits.
+// Callers should call SaveCommit in the same transaction.
+func (ft *FileTransaction) SaveFile(userID int64, alias, path string) error {
+	f := &File{
+		UserID: userID,
+		Alias:  alias,
+		Path:   path,
+	}
+
+	fileID, err := insert(f, ft.tx)
+	if err != nil {
+		return err
+	}
+
+	ft.FileID = fileID
+	ft.FileExists = true
+	return nil
 }
 
 // HasCommit returns whether the file has a commit with hash.
@@ -150,6 +171,11 @@ func (ft *FileTransaction) SetRevision(hash string) error {
 
 // Close updates a files current commit and closes the transaction.
 func (ft *FileTransaction) Close() error {
+	if ft.CurrentCommitID == 0 && ft.newCommitID == 0 {
+		err := errors.New("attempted to write file with no commit association")
+		return ft.Rollback(err)
+	}
+
 	if ft.newCommitID > 0 && ft.newCommitID != ft.CurrentCommitID {
 		err := setFileToCommitID(ft.tx, ft.FileID, ft.newCommitID)
 		if err != nil {

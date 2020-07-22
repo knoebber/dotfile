@@ -61,6 +61,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS files_user_path_index ON files(user_id, path);
 func (f *File) check() error {
 	var count int
 
+	if err := checkFile(f.Alias, f.Path); err != nil {
+		return err
+	}
+
 	exists, err := fileExists(f.UserID, f.Alias)
 	if err != nil {
 		return err

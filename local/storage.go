@@ -182,9 +182,16 @@ func (s *Storage) Push() error {
 		return err
 	}
 
-	s.FileData, newHashes, err = file.MergeTrackingData(remoteData, s.FileData)
-	if err != nil {
-		return err
+	if remoteData == nil {
+		// File isn't yet tracked on remote, push all local revisions.
+		for _, c := range s.FileData.Commits {
+			newHashes = append(newHashes, c.Hash)
+		}
+	} else {
+		s.FileData, newHashes, err = file.MergeTrackingData(remoteData, s.FileData)
+		if err != nil {
+			return err
+		}
 	}
 
 	fmt.Println("pushing", s.FileData.Path)
@@ -206,6 +213,9 @@ func (s *Storage) Pull() error {
 	remoteData, fileURL, err := getRemoteData(s, client)
 	if err != nil {
 		return err
+	}
+	if remoteData == nil {
+		return fmt.Errorf("%q not found on remote %q", s.Alias, s.User.Remote)
 	}
 
 	s.FileData, newHashes, err = file.MergeTrackingData(s.FileData, remoteData)

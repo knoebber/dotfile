@@ -74,11 +74,7 @@ func MergeTrackingData(old, new *TrackingData) (merged *TrackingData, newHashes 
 
 	newHashes = []string{}
 
-	oldMap := make(map[string]bool)
-	for _, c := range old.Commits {
-		oldMap[c.Hash] = true
-	}
-
+	oldMap := old.MapCommits()
 	for _, r := range new.Commits {
 		if _, ok := oldMap[r.Hash]; ok {
 			// Old already has the new hash.

@@ -39,11 +39,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS temp_files_user_index ON temp_files(user_id);
 func (f *TempFile) check() error {
 	var count int
 
-	if err := file.CheckPath(f.Path); err != nil {
-		return err
-	}
-
-	if err := file.CheckAlias(f.Alias); err != nil {
+	if err := checkFile(f.Alias, f.Path); err != nil {
 		return err
 	}
 

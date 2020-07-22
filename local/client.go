@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
@@ -36,6 +37,9 @@ func getRemoteTrackingData(client *http.Client, fileURL string) (*file.TrackingD
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("fetching remote tracked file: %s", resp.Status)
 	}
@@ -160,6 +164,9 @@ func postData(s *Storage, client *http.Client, newHashes []string, url string) e
 		return errors.Wrap(err, "creating upload request for push")
 	}
 
+	if resp.StatusCode == http.StatusBadRequest {
+		return usererror.Invalid(resp.Status)
+	}
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("uploading file revisions: %s", resp.Status)
 	}

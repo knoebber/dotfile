@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/knoebber/dotfile/db"
 	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -69,25 +70,25 @@ func handleRawCompressedCommit(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func validateAPIUser(w http.ResponseWriter, r *http.Request) (ok bool) {
+func validateAPIUser(w http.ResponseWriter, r *http.Request) *db.User {
 	username, password, ok := r.BasicAuth()
 	if !ok {
 		authError(w, errors.New("basic auth not provided"))
-		return
+		return nil
 	}
 
 	user, err := db.GetUser(username)
 	if err != nil {
 		authError(w, err)
-		return
+		return nil
 	}
 
 	if user.CLIToken != password {
 		authError(w, errors.New("user CLI token does not match password"))
-		return
+		return nil
 	}
 
-	return true
+	return user
 }
 
 func getMultipartReader(w http.ResponseWriter, r *http.Request) *multipart.Reader {
@@ -162,9 +163,11 @@ func handlePush(w http.ResponseWriter, r *http.Request) {
 	username := vars["username"]
 	alias := vars["alias"]
 
-	if ok := validateAPIUser(w, r); !ok {
+	user := validateAPIUser(w, r)
+	if user == nil {
 		return
 	}
+
 	if mr = getMultipartReader(w, r); mr == nil {
 		return
 	}
@@ -186,6 +189,21 @@ func handlePush(w http.ResponseWriter, r *http.Request) {
 		apiError(w, err)
 		return
 	}
+
+	if !ft.FileExists {
+		if err := ft.SaveFile(user.ID, alias, fileData.Path); err != nil {
+			apiError(w, err)
+			return
+		}
+	} else {
+		if ft.Path != fileData.Path {
+			msg := fmt.Sprintf("local path %q does not match remote path %q", ft.Path, fileData.Path)
+			apiError(w, usererror.Invalid(msg))
+			return
+
+		}
+	}
+
 	commitMap := fileData.MapCommits()
 
 	for {
@@ -231,10 +249,18 @@ func authError(w http.ResponseWriter, err error) {
 }
 
 func apiError(w http.ResponseWriter, err error) {
+	var usererr *usererror.Error
+
 	log.Print(err)
 	if db.NotFound(err) {
 		w.WriteHeader(http.StatusNotFound)
-	} else {
-		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+
+	if errors.As(err, &usererr) {
+		http.Error(w, usererr.Message, http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusInternalServerError)
 }

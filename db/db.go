@@ -9,6 +9,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/knoebber/dotfile/file"
 	"github.com/knoebber/dotfile/usererror"
 	// Driver for sql
 	_ "github.com/mattn/go-sqlite3"
@@ -139,6 +140,17 @@ func checkSize(content []byte, name string) error {
 	}
 	return nil
 
+}
+
+func checkFile(alias, path string) error {
+	if err := file.CheckAlias(alias); err != nil {
+		return err
+	}
+
+	if err := file.CheckPath(path); err != nil {
+		return err
+	}
+	return nil
 }
 
 // NotFound returns whether err is wrapping a no rows error.
