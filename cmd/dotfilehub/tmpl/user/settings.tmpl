@@ -3,6 +3,7 @@
   <p>Joined: <strong>{{ .Data.joined }}</strong></p>
   {{ if .Data.email }}
   <p>Email: <strong>{{ .Data.email }}</strong></p>
+  <p><a href="/settings/cli">Setup CLI</a></p>
   <p><a href="/settings/email">Update email</a></p>
   {{ else }}
   <p><a href="/settings/email">Enable account recovery</a></p>

@@ -32,6 +32,7 @@ func staticRoutes(r *mux.Router, secure bool) {
 	r.HandleFunc("/settings/email", emailHandler())
 	r.HandleFunc("/settings/password", passwordHandler())
 	r.HandleFunc("/settings/theme", themeHandler())
+	r.HandleFunc("/settings/cli", cliHandler(secure))
 }
 
 func assetRoutes(r *mux.Router) {

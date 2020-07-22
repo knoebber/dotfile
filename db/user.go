@@ -183,7 +183,7 @@ func CreateUser(username, password string, email *string) (*User, error) {
 	return u, nil
 }
 
-// UpdateEmail updates a users email and sets confirmed to false.
+// UpdateEmail updates a users email and sets email_confirmed to false.
 func UpdateEmail(userID int64, email string) error {
 	if err := validate.Var(email, "email"); err != nil {
 		return err
@@ -196,13 +196,50 @@ func UpdateEmail(userID int64, email string) error {
 	return err
 }
 
+// RotateToken creates a new token for the user.
+func RotateToken(userID int64, currentToken string) error {
+	newToken, err := cliToken()
+	if err != nil {
+		return err
+	}
+
+	res, err := connection.Exec(`
+UPDATE users
+SET cli_token = ?
+WHERE id = ? AND cli_token = ?`, newToken, userID, currentToken)
+	if err != nil {
+		return errors.Wrap(err, "rotating cli token")
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if affected == 0 {
+		return usererror.Invalid("User token mismatch")
+	}
+
+	return err
+}
+
+// CheckPassword checks username and password combination.
+// Tells the user when the password does not match.
+func CheckPassword(username, password string) error {
+	err := compareUserPassword(username, password)
+	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+		return usererror.Invalid("Password does not match.")
+	} else if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // UpdatePassword updates a users password.
 // currentPass must match the current hash.
 func UpdatePassword(username string, currentPass, newPass string) error {
-	err := compareUserPassword(username, currentPass)
-	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-		return usererror.Invalid("Current password does not match.")
-	} else if err != nil {
+	if err := CheckPassword(username, currentPass); err != nil {
 		return err
 	}
 

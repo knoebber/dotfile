@@ -18,6 +18,25 @@ func handleEmail(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	return
 }
 
+func handleTokenForm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+	if token := r.Form.Get("token"); token != "" {
+		if err := db.RotateToken(p.Session.UserID, token); err != nil {
+			return p.setError(w, err)
+		}
+
+		p.flashSuccess("Generated new token")
+		return
+	}
+
+	password := r.Form.Get("password")
+	if err := db.CheckPassword(p.Session.Username, password); err != nil {
+		return p.setError(w, err)
+	}
+
+	p.Data["authenticated"] = true
+	return
+}
+
 func handlePassword(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	currentPass := r.Form.Get("current")
 
@@ -49,6 +68,24 @@ func handleTheme(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	p.Session.Theme = newTheme
 
 	return
+}
+
+func createLoadUserCLI(secure bool) pageBuilder {
+	return func(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+		user, err := db.GetUser(p.Session.Username)
+		if err != nil {
+			return p.setError(w, err)
+		}
+
+		p.Data["token"] = user.CLIToken
+		if secure {
+			p.Data["remote"] = "https://" + r.Host
+		} else {
+			p.Data["remote"] = "http://" + r.Host
+		}
+
+		return
+	}
 }
 
 func loadUserSettings(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
@@ -84,6 +121,16 @@ func settingsHandler() http.HandlerFunc {
 		title:        settingsTitle,
 		loadData:     loadUserSettings,
 		handleForm:   handleEmail,
+		protected:    true,
+	})
+}
+
+func cliHandler(secure bool) http.HandlerFunc {
+	return createHandler(&pageDescription{
+		templateName: "cli.tmpl",
+		title:        "CLI Setup",
+		loadData:     createLoadUserCLI(secure),
+		handleForm:   handleTokenForm,
 		protected:    true,
 	})
 }

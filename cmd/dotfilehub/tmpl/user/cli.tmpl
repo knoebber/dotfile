@@ -1,0 +1,20 @@
+<main>
+  <h1>{{ .Title }}</h1>
+  {{ if not .Data.authenticated }}
+  <form method="post">
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" required>
+    <button>Submit</button>
+  </form>
+  {{ else }}
+  <p>
+    <pre><code>$ dot config username {{ .Session.Username }}</code></pre>
+    <pre><code>$ dot config token {{ .Data.token }}</code></pre>
+    <pre><code>$ dot config remote {{ .Data.remote }}</code></pre>
+  </p>
+  <form method="post" class="empty">
+    <input type="hidden" name="token" value="{{ .Data.token }}">
+    <button class="success">Rotate Token</button>
+  </form>
+  {{ end }}
+</main>
