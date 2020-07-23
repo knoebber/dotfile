@@ -13,7 +13,7 @@ func setupRoutes(r *mux.Router, secure bool) {
 	staticRoutes(r, secure)
 	assetRoutes(r)
 	apiRoutes(r)
-	// Important to register these last so non dymaic routes take precedence.
+	// Important to register these last so non dynamic routes take precedence.
 	dynamicRoutes(r)
 
 	createReservedUsernames(r)
