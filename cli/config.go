@@ -16,7 +16,13 @@ func (cc *configCommand) run(ctx *kingpin.ParseContext) error {
 	if cc.key != "" {
 		return local.SetUserConfig(config.home, cc.key, cc.value)
 	}
-	user, err := local.GetUserConfig(config.home)
+
+	configPath, err := local.GetConfigPath(config.home)
+	if err != nil {
+		return err
+	}
+
+	user, err := local.GetUserConfig(configPath)
 	if err != nil {
 		return err
 	}
