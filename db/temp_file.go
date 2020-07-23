@@ -37,17 +37,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS temp_files_user_index ON temp_files(user_id);
 }
 
 func (f *TempFile) check() error {
-	var count int
-
 	if err := checkFile(f.Alias, f.Path); err != nil {
 		return err
-	}
-
-	// TODO prevent users from creating a temp file with an alias that already exists.
-	if err := connection.
-		QueryRow("SELECT COUNT(*) FROM temp_files WHERE user_id = ?", f.UserID).
-		Scan(&count); err != nil {
-		return errors.Wrapf(err, "counting user %d's temp files", f.UserID)
 	}
 
 	return nil

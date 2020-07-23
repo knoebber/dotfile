@@ -7,6 +7,7 @@ import (
 
 	"github.com/knoebber/dotfile/db"
 	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/usererror"
 )
 
 // Handles submitting the new file form.
@@ -16,6 +17,15 @@ func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 
 	alias, err := file.GetAlias(r.Form.Get("name"), path)
 	if err != nil {
+		return p.setError(w, err)
+	}
+
+	// Expect not found error.
+	_, err = db.GetFile(p.Session.Username, alias)
+	if err == nil {
+		return p.setError(w, usererror.Duplicate("File", alias))
+	}
+	if !db.NotFound(err) {
 		return p.setError(w, err)
 	}
 

@@ -65,12 +65,12 @@ func (f *File) check() error {
 		return err
 	}
 
-	exists, err := fileExists(f.UserID, f.Alias)
+	exists, err := fileExists(f.UserID, f.Alias, f.Path)
 	if err != nil {
 		return err
 	}
 	if exists {
-		return usererror.Duplicate("File alias", f.Alias)
+		return usererror.Duplicate("File", f.Alias)
 	}
 
 	if err := connection.QueryRow("SELECT COUNT(*) FROM files WHERE user_id = ?", f.UserID).
@@ -79,7 +79,7 @@ func (f *File) check() error {
 	}
 
 	if count > maxFilesPerUser {
-		return usererror.Invalid("User has maximum amount of files")
+		return usererror.Invalid("Maximum amount of files reached")
 	}
 
 	return nil
@@ -304,12 +304,16 @@ WHERE id = (SELECT file_id FROM new_commit)
 
 }
 
-func fileExists(userID int64, alias string) (bool, error) {
+func fileExists(userID int64, alias, path string) (bool, error) {
 	var count int
 
 	err := connection.
-		QueryRow("SELECT COUNT(*) FROM files WHERE user_id = ? AND alias = ?", userID, alias).
+		QueryRow(`
+SELECT COUNT(*) FROM files
+WHERE user_id = ?
+AND (alias = ? OR path = ?)`, userID, alias, path).
 		Scan(&count)
+
 	if err != nil {
 		return false, errors.Wrapf(err, "checking if file %#v exists for user %d", alias, userID)
 	}
