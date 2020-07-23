@@ -9,6 +9,7 @@ import (
 
 // Loads a diff: ?on VS ?against.
 func loadDiff(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+	// TODO add line numbers to diff template
 	alias := p.Vars["alias"]
 	username := p.Vars["username"]
 
