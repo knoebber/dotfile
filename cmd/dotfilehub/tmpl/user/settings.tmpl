@@ -1,15 +1,23 @@
 <main>
   {{ template "settings_header" . }}
-  <p>Joined: <strong>{{ .Data.joined }}</strong></p>
-  {{ if .Data.email }}
-  <p>Email: <strong>{{ .Data.email }}</strong></p>
-  <p><a href="/settings/cli">Setup CLI</a></p>
-  <p><a href="/settings/email">Set email</a></p>
-  {{ else }}
-  <p><a href="/settings/email">Enable account recovery</a></p>
-  {{ end }}
-  <p><a href="/settings/password">Set password</a></p>
-  <p><a href="/settings/theme">Set theme</a></p>
+  <section>
+    <h2>User Data</h2>
+    <p>Joined: <strong>{{ .Data.joined }}</strong></p>
+    {{ if .Data.email }}
+    <p>Email: <strong>{{ .Data.email }}</strong></p>
+    {{ end }}
+  </section>
+  <section>
+    <h2>Options</h2>
+    <p><a href="/settings/cli">Setup CLI</a></p>
+    {{ if .Data.email }}
+    <p><a href="/settings/email">Set email</a></p>
+    {{ else }}
+    <p><a href="/settings/email">Enable account recovery</a></p>
+    {{ end }}
+    <p><a href="/settings/password">Set password</a></p>
+    <p><a href="/settings/theme">Set theme</a></p>
+  </section>
   <form action="/logout" method="post" class="empty">
     <button class="danger">Logout</button>
   </form>
