@@ -47,6 +47,7 @@ email           TEXT UNIQUE,
 email_confirmed INTEGER NOT NULL DEFAULT 0,
 password_hash   BLOB NOT NULL,
 cli_token       TEXT NOT NULL,
+timezone        TEXT,
 theme           TEXT NOT NULL DEFAULT "Light",
 created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
