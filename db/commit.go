@@ -131,12 +131,15 @@ func hasCommit(fileID int64, hash string) (bool, error) {
 
 // GetCommitList gets a summary of all commits for a file.
 func GetCommitList(username, alias string) ([]CommitSummary, error) {
+	var timezone *string
+
 	result := []CommitSummary{}
 	rows, err := connection.Query(`
 SELECT hash,
        forked_from,
        message, 
        current_commit_id = commits.id AS current,
+       timezone,
        timestamp
 FROM commits
 JOIN files ON commits.file_id = files.id
@@ -157,11 +160,12 @@ ORDER BY timestamp DESC
 			&c.ForkedFrom,
 			&c.Message,
 			&c.Current,
+			&timezone,
 			&c.Timestamp,
 		); err != nil {
 			return nil, errors.Wrapf(err, "scanning commits for user %#v file %#v", username, alias)
 		}
-		c.DateString = formatTime(time.Unix(c.Timestamp, 0))
+		c.DateString = formatTime(time.Unix(c.Timestamp, 0), timezone)
 		result = append(result, c)
 	}
 
@@ -200,6 +204,8 @@ WHERE username = ? AND alias = ? AND hash = ?`, username, alias, hash).
 
 // GetUncompressedCommit gets a commit and uncompresses its contents.
 func GetUncompressedCommit(username, alias, hash string) (*CommitView, error) {
+	var timezone *string
+
 	result := new(CommitView)
 	revision := []byte{}
 
@@ -210,6 +216,7 @@ SELECT hash,
        path,
        current_commit_id = commits.id AS current,
        revision,
+       timezone,
        timestamp
 FROM commits
 JOIN files ON commits.file_id = files.id
@@ -223,13 +230,14 @@ WHERE username = ? AND alias = ? AND hash = ?
 			&result.Path,
 			&result.Current,
 			&revision,
+			&timezone,
 			&result.Timestamp,
 		)
 	if err != nil {
 		return nil, errors.Wrapf(err, "querying for %#v %#v %#v", username, alias, hash)
 	}
 
-	result.DateString = formatTime(time.Unix(result.Timestamp, 0))
+	result.DateString = formatTime(time.Unix(result.Timestamp, 0), timezone)
 
 	uncompressed, err := file.Uncompress(revision)
 	if err != nil {

@@ -14,9 +14,13 @@ type SearchResult struct {
 
 // Search looks for files by their alias or path.
 func Search(q string) ([]SearchResult, error) {
+	var (
+		timezone  *string
+		updatedAt time.Time
+	)
+
 	q = "%" + q + "%"
 	current := SearchResult{}
-	updatedAt := time.Time{}
 	result := []SearchResult{}
 	rows, err := connection.Query(`
 SELECT 
@@ -24,6 +28,7 @@ SELECT
        alias,
        path,
        COUNT(commits.id) AS num_commits,
+       timezone,
        updated_at
 FROM users
 JOIN files ON user_id = users.id
@@ -42,12 +47,13 @@ ORDER BY username, alias`, q, q)
 			&current.Alias,
 			&current.Path,
 			&current.NumCommits,
+			&timezone,
 			&updatedAt,
 		); err != nil {
 			return nil, errors.Wrap(err, "scanning files for file search")
 		}
 
-		current.UpdatedAt = formatTime(updatedAt)
+		current.UpdatedAt = formatTime(updatedAt, timezone)
 
 		result = append(result, current)
 	}

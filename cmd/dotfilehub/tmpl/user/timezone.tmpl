@@ -1,0 +1,8 @@
+<main>
+  {{ template "settings_header" . }}
+  <form method="post">
+    <label for="timezone">Timezone:</label>
+    <input value="{{ .Data.user.Timezone }}" id="timezone" name="timezone" required>
+    <button>Submit</button>
+  </form>
+</main>

@@ -20,8 +20,6 @@ type File struct {
 	Alias           string `validate:"required"` // Friendly name for a file: bashrc
 	Path            string `validate:"required"` // Where the file lives: ~/.bashrc
 	CurrentCommitID *int64 // The commit that the file is at.
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
 }
 
 // FileView contains a file record and its commits uncompressed contents.
@@ -102,8 +100,6 @@ func (f *FileView) scan(row *sql.Row) error {
 		&f.Alias,
 		&f.Path,
 		&f.CurrentCommitID,
-		&f.CreatedAt,
-		&f.UpdatedAt,
 		&f.Content,
 		&f.Hash,
 	); err != nil {
@@ -145,7 +141,14 @@ func GetFile(username string, alias string) (*FileView, error) {
 	fv := new(FileView)
 
 	row := connection.QueryRow(`
-SELECT files.*, commits.revision, commits.hash FROM files
+SELECT files.id,
+       files.user_id,
+       files.alias,
+       files.path,
+       files.current_commit_id,
+       commits.revision,
+       commits.hash
+FROM files
 JOIN users ON user_id = users.id
 JOIN commits ON current_commit_id = commits.id
 WHERE username = ? AND alias = ?
@@ -160,9 +163,12 @@ WHERE username = ? AND alias = ?
 
 // GetFilesByUsername gets a summary of all a users files.
 func GetFilesByUsername(username string) ([]FileSummary, error) {
-	var alias, path *string
+	var (
+		alias, path, timezone *string
+		updatedAt             time.Time
+	)
+
 	f := FileSummary{}
-	updatedAt := new(time.Time)
 
 	result := []FileSummary{}
 	rows, err := connection.Query(`
@@ -170,6 +176,7 @@ SELECT
        alias,
        path,
        COUNT(commits.id) AS num_commits,
+       timezone,
        updated_at
 FROM users
 LEFT JOIN files ON user_id = users.id
@@ -186,17 +193,18 @@ GROUP BY files.id`, username)
 			&alias,
 			&path,
 			&f.NumCommits,
+			&timezone,
 			&updatedAt,
 		); err != nil {
 			return nil, errors.Wrapf(err, "scanning files for user %#v", username)
 		}
 
-		// These are nil when no files are found but user exists.
-		if alias == nil || path == nil || updatedAt == nil {
+		// Alias is nil when no files are found but user exists.
+		if alias == nil {
 			return result, nil
 		}
 
-		f.UpdatedAt = formatTime(*updatedAt)
+		f.UpdatedAt = formatTime(updatedAt, timezone)
 		f.Alias = *alias
 		f.Path = *path
 

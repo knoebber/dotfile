@@ -70,6 +70,15 @@ func handleTheme(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	return
 }
 
+func handleTimezone(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+	if err := db.UpdateTimezone(p.Session.UserID, r.Form.Get("timezone")); err != nil {
+		return p.setError(w, err)
+	}
+
+	p.flashSuccess("Updated timezone")
+	return
+}
+
 func createLoadUserCLI(secure bool) pageBuilder {
 	return func(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		user, err := db.GetUser(p.Session.Username)
@@ -89,7 +98,6 @@ func createLoadUserCLI(secure bool) pageBuilder {
 }
 
 func loadUserSettings(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	var email string
 	username := p.Session.Username
 
 	user, err := db.GetUser(username)
@@ -98,12 +106,7 @@ func loadUserSettings(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 		return p.setError(w, err)
 	}
 
-	if user.Email != nil {
-		email = *user.Email
-	}
-
-	p.Data["email"] = email
-	p.Data["joined"] = user.JoinDate()
+	p.Data["user"] = user
 	return
 }
 
@@ -151,6 +154,16 @@ func emailHandler() http.HandlerFunc {
 		title:        "Set Email",
 		loadData:     loadUserSettings,
 		handleForm:   handleEmail,
+		protected:    true,
+	})
+}
+
+func timezoneHandler() http.HandlerFunc {
+	return createHandler(&pageDescription{
+		templateName: "timezone.tmpl",
+		title:        "Set Timezone",
+		loadData:     loadUserSettings,
+		handleForm:   handleTimezone,
 		protected:    true,
 	})
 }

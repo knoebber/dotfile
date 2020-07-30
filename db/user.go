@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"database/sql"
@@ -24,18 +25,14 @@ const cliTokenLength = 24
 // User is the model for a dotfilehub user.
 type User struct {
 	ID             int64
-	Username       string  `validate:"alphanum"`        // TODO make regex, usernames should be allowed to have underscores etc.
-	Email          *string `validate:"omitempty,email"` // Not required; users may opt in to enable account recovery.
+	Username       string `validate:"alphanum"`        // TODO make regex, usernames should be allowed to have underscores etc.
+	Email          string `validate:"omitempty,email"` // Not required; users may opt in to enable account recovery.
 	EmailConfirmed bool
 	PasswordHash   []byte
 	CLIToken       string `validate:"required"` // Allows CLI to write to server.
 	Theme          string
-	CreatedAt      time.Time
-}
-
-// JoinDate returns a formatted date of a users join date.
-func (u *User) JoinDate() string {
-	return formatTime(u.CreatedAt)
+	Timezone       string
+	CreatedAt      string
 }
 
 func (*User) createStmt() string {
@@ -81,11 +78,11 @@ func (u *User) check() error {
 		return usererror.Duplicate("Username", u.Username)
 	}
 
-	if u.Email == nil {
-		return nil
+	if u.Email != "" {
+		return checkUniqueEmail(u.Email)
 	}
 
-	return checkUniqueEmail(*u.Email)
+	return nil
 }
 
 func checkUniqueEmail(email string) error {
@@ -128,6 +125,11 @@ func compareUserPassword(username string, password string) error {
 // Only one argument is required - userID will be used if both are present.
 // This does not scan password_hash.
 func GetUser(username string) (*User, error) {
+	var (
+		email, timezone *string
+		createdAt       time.Time
+	)
+
 	user := new(User)
 
 	err := connection.QueryRow(`
@@ -136,27 +138,37 @@ SELECT id,
        email,
        email_confirmed,
        cli_token,
+       theme,
+       timezone,
        created_at
 FROM users
 WHERE username = ?
 `, username).Scan(
 		&user.ID,
 		&user.Username,
-		&user.Email,
+		&email,
 		&user.EmailConfirmed,
 		&user.CLIToken,
-		&user.CreatedAt,
+		&user.Theme,
+		&timezone,
+		&createdAt,
 	)
 	if err != nil {
 		return nil, errors.Wrapf(err, "querying for user %#v", username)
 	}
+	if email != nil {
+		user.Email = *email
+	}
+	if timezone != nil {
+		user.Timezone = *timezone
+	}
+	user.CreatedAt = formatTime(createdAt, timezone)
 
 	return user, nil
 }
 
 // CreateUser inserts a new user into the users table.
-// Email is optional.
-func CreateUser(username, password string, email *string) (*User, error) {
+func CreateUser(username, password string) (*User, error) {
 	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 	if err != nil {
 		return nil, err
@@ -169,7 +181,6 @@ func CreateUser(username, password string, email *string) (*User, error) {
 
 	u := &User{
 		Username:     username,
-		Email:        email,
 		PasswordHash: hashed,
 		CLIToken:     cliToken,
 	}
@@ -194,6 +205,17 @@ func UpdateEmail(userID int64, email string) error {
 	}
 
 	_, err := connection.Exec("UPDATE users SET email = ?, email_confirmed = 0 WHERE id = ?", email, userID)
+	return err
+}
+
+// UpdateTimezone checks if the timezone is able to be loaded and updates the user record.
+func UpdateTimezone(userID int64, timezone string) error {
+	if _, err := time.LoadLocation(timezone); err != nil {
+		log.Printf("error updating timezone: %v", err)
+		return usererror.Invalid(fmt.Sprintf("Timezone %q not found", timezone))
+	}
+
+	_, err := connection.Exec("UPDATE users SET timezone = ? WHERE id = ?", timezone, userID)
 	return err
 }
 

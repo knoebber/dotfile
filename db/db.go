@@ -125,8 +125,17 @@ func randomBytes(n int) ([]byte, error) {
 	return buff, nil
 }
 
-func formatTime(t time.Time) string {
-	// TODO save user timezone preference.
+func formatTime(t time.Time, timezone *string) string {
+	if timezone != nil {
+		loc, err := time.LoadLocation(*timezone)
+		if err != nil {
+			log.Print(err)
+			return "Unknown timezone"
+		}
+
+		t = t.In(loc)
+	}
+
 	return t.Format(timestampDisplayFormat)
 }
 

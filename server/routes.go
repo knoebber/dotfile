@@ -30,6 +30,7 @@ func staticRoutes(r *mux.Router, secure bool) {
 	r.HandleFunc("/new_file", newFileHandler())
 	r.HandleFunc("/settings", settingsHandler())
 	r.HandleFunc("/settings/email", emailHandler())
+	r.HandleFunc("/settings/timezone", timezoneHandler())
 	r.HandleFunc("/settings/password", passwordHandler())
 	r.HandleFunc("/settings/theme", themeHandler())
 	r.HandleFunc("/settings/cli", cliHandler(secure))

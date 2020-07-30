@@ -61,7 +61,7 @@ func createHandleSignup(secure bool) pageBuilder {
 			return false
 		}
 
-		_, err := db.CreateUser(username, password, nil)
+		_, err := db.CreateUser(username, password)
 		if err != nil {
 			return p.setError(w, err)
 		}
