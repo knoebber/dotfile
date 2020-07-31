@@ -79,19 +79,28 @@ func handleTimezone(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 	return
 }
 
-func createLoadUserCLI(secure bool) pageBuilder {
+func createLoadUserCLI(config Config) pageBuilder {
 	return func(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+		var remote string
+
 		user, err := db.GetUser(p.Session.Username)
 		if err != nil {
 			return p.setError(w, err)
 		}
 
 		p.Data["token"] = user.CLIToken
-		if secure {
-			p.Data["remote"] = "https://" + r.Host
+		if config.Secure {
+			remote = "https://"
 		} else {
-			p.Data["remote"] = "http://" + r.Host
+			remote = "http://"
 		}
+		if config.Host != "" {
+			remote += config.Host
+		} else {
+			remote += r.Host
+		}
+
+		p.Data["remote"] = remote
 
 		return
 	}
@@ -128,11 +137,11 @@ func settingsHandler() http.HandlerFunc {
 	})
 }
 
-func cliHandler(secure bool) http.HandlerFunc {
+func cliHandler(config Config) http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "cli.tmpl",
 		title:        "CLI Setup",
-		loadData:     createLoadUserCLI(secure),
+		loadData:     createLoadUserCLI(config),
 		handleForm:   handleTokenForm,
 		protected:    true,
 	})

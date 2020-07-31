@@ -18,6 +18,7 @@ type Config struct {
 	DBPath       string // The path to store the sqlite database file.
 	Secure       bool   // Sets session cookie to HTTPS only.
 	ProxyHeaders bool   // Sets request IP from reverse proxy headers.
+	Host         string // Overrides http.Request.Host when not empty.
 }
 
 const timeout = 10 * time.Second
@@ -32,7 +33,7 @@ func Start(cfg Config) {
 
 	r := mux.NewRouter()
 
-	setupRoutes(r, cfg.Secure)
+	setupRoutes(r, cfg)
 
 	s := &http.Server{
 		Addr:         cfg.Addr,
@@ -52,6 +53,5 @@ func Start(cfg Config) {
 
 	log.Printf("using sqlite3 database %s", cfg.DBPath)
 	log.Println("serving dotfiles at", cfg.Addr)
-
 	log.Panicf("starting dotfile server: %v", s.ListenAndServe())
 }

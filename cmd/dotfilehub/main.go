@@ -22,6 +22,7 @@ func getConfig() server.Config {
 
 	addr := flag.String("addr", defaultAddress, "HTTP address to listen on")
 	dbPath := flag.String("db", defaultDBName, "Name of sqlite database file")
+	host := flag.String("host", "", "Override the host header for remote name display")
 	secure := flag.Bool("secure", false, "Set session cookie to HTTPS only")
 	proxyHeaders := flag.Bool("proxyheaders", false, "Set request IP by inspecting reverse proxy headers")
 	flag.Parse()
@@ -31,6 +32,7 @@ func getConfig() server.Config {
 		DBPath:       *dbPath,
 		Secure:       *secure,
 		ProxyHeaders: *proxyHeaders,
+		Host:         *host,
 	}
 }
 

@@ -9,8 +9,8 @@ import (
 	"github.com/knoebber/dotfile/db"
 )
 
-func setupRoutes(r *mux.Router, secure bool) {
-	staticRoutes(r, secure)
+func setupRoutes(r *mux.Router, config Config) {
+	staticRoutes(r, config)
 	assetRoutes(r)
 	apiRoutes(r)
 	// Important to register these last so non dynamic routes take precedence.
@@ -20,12 +20,12 @@ func setupRoutes(r *mux.Router, secure bool) {
 }
 
 // Pages that do not have a path variables.
-func staticRoutes(r *mux.Router, secure bool) {
+func staticRoutes(r *mux.Router, config Config) {
 	r.HandleFunc("/", indexHandler())
 	r.HandleFunc("/about", aboutHandler())
 	r.HandleFunc("/acknowledgments", acknowledgmentsHander())
-	r.HandleFunc("/signup", signupHandler(secure))
-	r.HandleFunc("/login", loginHandler(secure))
+	r.HandleFunc("/signup", signupHandler(config.Secure))
+	r.HandleFunc("/login", loginHandler(config.Secure))
 	r.HandleFunc("/logout", logoutHandler())
 	r.HandleFunc("/new_file", newFileHandler())
 	r.HandleFunc("/settings", settingsHandler())
@@ -33,7 +33,7 @@ func staticRoutes(r *mux.Router, secure bool) {
 	r.HandleFunc("/settings/timezone", timezoneHandler())
 	r.HandleFunc("/settings/password", passwordHandler())
 	r.HandleFunc("/settings/theme", themeHandler())
-	r.HandleFunc("/settings/cli", cliHandler(secure))
+	r.HandleFunc("/settings/cli", cliHandler(config))
 }
 
 func assetRoutes(r *mux.Router) {
