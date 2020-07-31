@@ -179,8 +179,8 @@ SELECT
        timezone,
        updated_at
 FROM users
-LEFT JOIN files ON user_id = users.id
-LEFT JOIN commits ON file_id = files.id
+JOIN files ON user_id = users.id
+JOIN commits ON file_id = files.id
 WHERE username = ?
 GROUP BY files.id`, username)
 	if err != nil {
@@ -197,11 +197,6 @@ GROUP BY files.id`, username)
 			&updatedAt,
 		); err != nil {
 			return nil, errors.Wrapf(err, "scanning files for user %#v", username)
-		}
-
-		// Alias is nil when no files are found but user exists.
-		if alias == nil {
-			return result, nil
 		}
 
 		f.UpdatedAt = formatTime(updatedAt, timezone)

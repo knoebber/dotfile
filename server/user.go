@@ -8,13 +8,16 @@ import (
 
 func loadUserFiles(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	username := p.Vars["username"]
+	p.Title = username
+
 	files, err := db.GetFilesByUsername(username)
-	if err != nil {
+	if db.NotFound(err) {
+		return
+	} else if err != nil {
 		return p.setError(w, err)
 	}
 
 	p.Data["files"] = files
-	p.Title = username
 	return
 }
 
