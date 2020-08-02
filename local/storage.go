@@ -189,9 +189,9 @@ func (s *Storage) GetPath() string {
 func (s *Storage) Push() error {
 	var newHashes []string
 
-	client := getClient()
+	client := newDotfilehubClient(s.User)
 
-	remoteData, fileURL, err := getRemoteData(s, client)
+	remoteData, err := client.getRemoteTrackingData(s.Alias)
 	if err != nil {
 		return err
 	}
@@ -209,7 +209,7 @@ func (s *Storage) Push() error {
 	}
 
 	fmt.Println("pushing", s.FileData.Path)
-	if err := postData(s, client, newHashes, fileURL); err != nil {
+	if err := client.postRevisions(s, newHashes); err != nil {
 		return err
 	}
 
@@ -222,7 +222,7 @@ func (s *Storage) Push() error {
 func (s *Storage) Pull() error {
 	var newHashes []string
 
-	client := getClient()
+	client := newDotfilehubClient(s.User)
 
 	fileExists := exists(s.GetPath())
 	if fileExists {
@@ -235,7 +235,7 @@ func (s *Storage) Pull() error {
 		}
 	}
 
-	remoteData, fileURL, err := getRemoteData(s, client)
+	remoteData, err := client.getRemoteTrackingData(s.Alias)
 	if err != nil {
 		return err
 	}
@@ -256,7 +256,7 @@ func (s *Storage) Pull() error {
 
 	fmt.Printf("pulling %d new revisions for %s\n", len(newHashes), s.FileData.Path)
 
-	remoteRevisions, err := getRemoteRevisions(client, fileURL, newHashes)
+	remoteRevisions, err := client.getRemoteRevisions(s.Alias, newHashes)
 	if err != nil {
 		return err
 	}
@@ -318,5 +318,5 @@ func (s *Storage) GetLocalFileList() ([]string, error) {
 
 // GetRemoteFileList gets a list of files that the remote user has saved.
 func (s *Storage) GetRemoteFileList() ([]string, error) {
-	return getRemoteFileList(getClient(), s.User)
+	return newDotfilehubClient(s.User).getRemoteFileList()
 }

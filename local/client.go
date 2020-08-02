@@ -30,10 +30,32 @@ func getClient() *http.Client {
 	}
 }
 
-func getRemoteFileList(client *http.Client, user *UserConfig) ([]string, error) {
+type dotfilehubClient struct {
+	client   *http.Client
+	remote   string
+	username string
+	token    string
+}
+
+func newDotfilehubClient(u *UserConfig) *dotfilehubClient {
+	return &dotfilehubClient{
+		username: u.Username,
+		remote:   u.Remote,
+		token:    u.Token,
+		client: &http.Client{
+			Timeout: time.Second * timeoutSeconds,
+		},
+	}
+}
+
+func (dc *dotfilehubClient) fileURL(alias string) string {
+	return dc.remote + path.Join("/api", dc.username, alias)
+}
+
+func (dc *dotfilehubClient) getRemoteFileList() ([]string, error) {
 	var result []string
 
-	resp, err := client.Get(user.Remote + "/api/" + user.Username)
+	resp, err := dc.client.Get(dc.remote + "/api/" + dc.username)
 	if err != nil {
 		return nil, errors.Wrap(err, "sending request for file list")
 	}
@@ -49,8 +71,8 @@ func getRemoteFileList(client *http.Client, user *UserConfig) ([]string, error) 
 	return result, nil
 }
 
-func getRemoteTrackingData(client *http.Client, fileURL string) (*file.TrackingData, error) {
-	resp, err := client.Get(fileURL)
+func (dc *dotfilehubClient) getRemoteTrackingData(alias string) (*file.TrackingData, error) {
+	resp, err := dc.client.Get(dc.fileURL(alias))
 	if err != nil {
 		return nil, errors.Wrap(err, "sending request for remote tracked file")
 	}
@@ -60,7 +82,7 @@ func getRemoteTrackingData(client *http.Client, fileURL string) (*file.TrackingD
 		return nil, nil
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("fetching remote tracked file: %s", resp.Status)
+		return nil, fmt.Errorf("fetching remote tracked file %q: %s", alias, resp.Status)
 	}
 
 	result := new(file.TrackingData)
@@ -71,23 +93,13 @@ func getRemoteTrackingData(client *http.Client, fileURL string) (*file.TrackingD
 	return result, nil
 }
 
-func getRemoteData(s *Storage, client *http.Client) (*file.TrackingData, string, error) {
-	fileURL := s.User.Remote + path.Join("/api", s.User.Username, s.Alias)
-
-	remoteData, err := getRemoteTrackingData(client, fileURL)
-	if err != nil {
-		return nil, fileURL, err
-	}
-
-	return remoteData, fileURL, nil
-}
-
-func getRemoteRevision(client *http.Client, url string) ([]byte, error) {
-	resp, err := client.Get(url)
+func (dc *dotfilehubClient) getRemoteRevision(revisionURL string) ([]byte, error) {
+	resp, err := dc.client.Get(revisionURL)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("GET", url)
+
+	fmt.Println("GET", revisionURL)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -100,14 +112,15 @@ func getRemoteRevision(client *http.Client, url string) ([]byte, error) {
 // Fetches revisions at hash from remote server concurrently.
 // Returns an error if any fetches fail or are non 200.
 // fileURL is the files api end point, E.G https://dotfilehub.com/api/knoebber/bashrc
-func getRemoteRevisions(client *http.Client, fileURL string, hashes []string) ([]*remoteRevision, error) {
+func (dc *dotfilehubClient) getRemoteRevisions(alias string, hashes []string) ([]*remoteRevision, error) {
+	fileURL := dc.fileURL(alias)
 	g := new(errgroup.Group)
 	results := make([]*remoteRevision, len(hashes))
 
 	for i, hash := range hashes {
 		i, hash := i, hash // https://golang.org/doc/faq#closures_and_goroutines
 		g.Go(func() error {
-			revision, err := getRemoteRevision(client, fileURL+"/"+hash)
+			revision, err := dc.getRemoteRevision(fileURL + "/" + hash)
 			if err != nil {
 				return err
 			}
@@ -127,10 +140,11 @@ func getRemoteRevisions(client *http.Client, fileURL string, hashes []string) ([
 	return results, nil
 }
 
-// Push new local revisions to remote using a multipart POST request.
+// Pushes new local revisions to remote using a multipart POST request.
 // The first part is fileData JSON the rest are form files with compressed revisions.
-func postData(s *Storage, client *http.Client, newHashes []string, url string) error {
+func (dc *dotfilehubClient) postRevisions(s *Storage, newHashes []string) error {
 	var body bytes.Buffer
+	url := dc.fileURL(s.Alias)
 
 	writer := multipart.NewWriter(&body)
 
@@ -178,7 +192,7 @@ func postData(s *Storage, client *http.Client, newHashes []string, url string) e
 	req.Header.Set("Content-Type", contentType)
 	req.SetBasicAuth(s.User.Username, s.User.Token)
 
-	resp, err := client.Do(req)
+	resp, err := dc.client.Do(req)
 	if err != nil {
 		return errors.Wrap(err, "creating upload request for push")
 	}
