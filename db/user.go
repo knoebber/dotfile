@@ -110,7 +110,7 @@ func compareUserPassword(username string, password string) error {
 		QueryRow("SELECT password_hash FROM users WHERE username = ?", username).
 		Scan(&hash)
 	if err != nil {
-		return fmt.Errorf("querying for user %#v password hash", username)
+		return errors.Wrapf(err, "querying for user %q password hash", username)
 	}
 
 	if err = bcrypt.CompareHashAndPassword(hash, []byte(password)); err != nil {
