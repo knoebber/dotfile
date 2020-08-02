@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 
-	"github.com/knoebber/dotfile/local"
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -18,7 +17,7 @@ func (pc *pullCommand) run(ctx *kingpin.ParseContext) error {
 	var err error
 
 	s, err := loadFileStorage(pc.fileName)
-	if err = local.AssertClean(s); err != nil {
+	if err != nil {
 		return err
 	}
 

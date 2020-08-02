@@ -35,6 +35,25 @@ func (s *Storage) GetJSON() ([]byte, error) {
 	return jsonContent, nil
 }
 
+// GetRemoteJSON returns the remote tracked files json.
+func (s *Storage) GetRemoteJSON() ([]byte, error) {
+	return []byte("TODO"), nil
+}
+
+func (s *Storage) setTrackingData() error {
+	jsonContent, err := s.GetJSON()
+	if err != nil {
+		return err
+	}
+
+	if err = json.Unmarshal(jsonContent, s.FileData); err != nil {
+		return errors.Wrapf(err, "unmarshaling tracking data")
+	}
+
+	s.HasFile = true
+	return nil
+}
+
 // Close updates the files JSON with s.FileData.
 func (s *Storage) Close() error {
 	bytes, err := json.MarshalIndent(s.FileData, "", jsonIndent)
@@ -67,17 +86,7 @@ func (s *Storage) SetTrackingData(alias string) error {
 		return nil
 	}
 
-	jsonContent, err := s.GetJSON()
-	if err != nil {
-		return err
-	}
-
-	if err = json.Unmarshal(jsonContent, &s.FileData); err != nil {
-		return errors.Wrapf(err, "unmarshaling tracking data")
-	}
-
-	s.HasFile = true
-	return nil
+	return s.setTrackingData()
 }
 
 // InitFile sets up a new file to be tracked.
@@ -130,6 +139,11 @@ func (s *Storage) GetContents() ([]byte, error) {
 	}
 
 	return contents, nil
+}
+
+// GetRemoteContents reads the contents of the file from remote.
+func (s *Storage) GetRemoteContents() ([]byte, error) {
+	return []byte("TODO"), nil
 }
 
 // SaveCommit saves a commit to the file system.
@@ -210,6 +224,17 @@ func (s *Storage) Pull() error {
 
 	client := getClient()
 
+	fileExists := exists(s.GetPath())
+	if fileExists {
+		clean, err := file.IsClean(s, s.FileData.Revision)
+		if err != nil {
+			return err
+		}
+		if !clean {
+			return usererror.Invalid("File has uncommited changes")
+		}
+	}
+
 	remoteData, fileURL, err := getRemoteData(s, client)
 	if err != nil {
 		return err
@@ -224,7 +249,7 @@ func (s *Storage) Pull() error {
 	}
 
 	// If the pulled file is new and a file with the remotes path already exists.
-	if !s.HasFile && exists(s.GetPath()) {
+	if !s.HasFile && fileExists {
 		return usererror.Invalid(remoteData.Path +
 			" already exists and is not tracked by dotfile. Remove the file or initialize it before pulling")
 	}
@@ -244,4 +269,54 @@ func (s *Storage) Pull() error {
 
 	// This closes storage.
 	return file.Checkout(s, s.FileData.Revision)
+}
+
+// GetLocalFileList returns a list of all locally tracked files.
+// When the file has uncommited changes an asterisks is added to the end.
+func (s *Storage) GetLocalFileList() ([]string, error) {
+	var alias string
+
+	files, err := filepath.Glob(filepath.Join(s.dir, "*.json"))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]string, len(files))
+
+	s.FileData = new(file.TrackingData)
+	for i, filename := range files {
+		parts := strings.Split(filename, "/")
+		if len(parts) != 0 {
+			alias = parts[len(parts)-1]
+		}
+
+		alias = strings.TrimSuffix(alias, ".json")
+		s.Alias = alias
+		s.jsonPath = filepath.Join(filename)
+
+		if err := s.setTrackingData(); err != nil {
+			return nil, err
+		}
+
+		if !exists(s.GetPath()) {
+			alias += " - removed"
+		} else {
+			clean, err := file.IsClean(s, s.FileData.Revision)
+			if err != nil {
+				return nil, err
+			}
+
+			if !clean {
+				alias += "*"
+			}
+		}
+
+		result[i] = alias
+	}
+
+	return result, nil
+}
+
+// GetRemoteFileList gets a list of files that the remote user has saved.
+func (s *Storage) GetRemoteFileList() ([]string, error) {
+	return getRemoteFileList(getClient(), s.User)
 }

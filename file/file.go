@@ -58,6 +58,10 @@ func (td *TrackingData) MapCommits() map[string]*Commit {
 	return result
 }
 
+func hashContent(contents []byte) string {
+	return fmt.Sprintf("%x", sha1.Sum(contents))
+}
+
 // MergeTrackingData merges the new data into old.
 // Returns the merged data and a slice of the hashes that are new.
 func MergeTrackingData(old, new *TrackingData) (merged *TrackingData, newHashes []string, err error) {
@@ -128,14 +132,13 @@ func CheckPath(path string) error {
 }
 
 func hashAndCompress(contents []byte) (*bytes.Buffer, string, error) {
-	hash := fmt.Sprintf("%x", sha1.Sum(contents))
 	compressed, err := Compress(contents)
 
 	if err != nil {
 		return nil, "", err
 	}
 
-	return compressed, hash, nil
+	return compressed, hashContent(contents), nil
 }
 
 // Compress compresses bytes with zlib.

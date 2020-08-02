@@ -28,8 +28,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/knoebber/dotfile/file"
-	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -147,20 +145,4 @@ func NewStorage(home, storageDir, configDir string) (*Storage, error) {
 	}
 
 	return s, nil
-}
-
-// AssertClean returns an error when the tracked file has uncommitted changes.
-func AssertClean(s *Storage) error {
-	if !s.HasFile {
-		return nil
-	}
-
-	_, err := file.Diff(s, s.FileData.Revision, "")
-	if errors.Is(err, file.ErrNoChanges) {
-		return nil
-	} else if err != nil {
-		return err
-	}
-
-	return usererror.Invalid("File has uncommited changes")
 }

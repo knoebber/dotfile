@@ -29,6 +29,16 @@ func UncompressRevision(g Getter, hash string) (*bytes.Buffer, error) {
 	return uncompressed, nil
 }
 
+// IsClean returns whether the contents of g matches hash.
+func IsClean(g Getter, hash string) (bool, error) {
+	contents, err := g.GetContents()
+	if err != nil {
+		return false, err
+	}
+
+	return hash == hashContent(contents), nil
+}
+
 // Diff runs a diff on the revision at hash1 against the revision at hash2.
 // If hash2 is empty, compares the current contents of the file.
 // Returns an usererror when there is no difference.

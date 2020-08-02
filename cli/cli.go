@@ -25,7 +25,7 @@ func getHome() (string, error) {
 	return home, nil
 }
 
-func loadFileStorage(alias string) (*local.Storage, error) {
+func loadStorage() (*local.Storage, error) {
 	configPath, err := local.GetConfigPath(config.home)
 	if err != nil {
 		return nil, err
@@ -34,6 +34,15 @@ func loadFileStorage(alias string) (*local.Storage, error) {
 	storage, err := local.NewStorage(config.home, config.storageDir, configPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating local storage")
+	}
+
+	return storage, nil
+}
+
+func loadFileStorage(alias string) (*local.Storage, error) {
+	storage, err := loadStorage()
+	if err != nil {
+		return nil, err
 	}
 
 	if err := storage.SetTrackingData(alias); err != nil {
@@ -84,6 +93,7 @@ func AddCommandsToApplication(app *kingpin.Application) error {
 
 	addInitSubCommandToApplication(app)
 	addShowSubCommandToApplication(app)
+	addListSubCommandToApplication(app)
 	addEditSubCommandToApplication(app)
 	addDiffSubCommandToApplication(app)
 	addLogSubCommandToApplication(app)

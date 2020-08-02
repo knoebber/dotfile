@@ -30,6 +30,25 @@ func getClient() *http.Client {
 	}
 }
 
+func getRemoteFileList(client *http.Client, user *UserConfig) ([]string, error) {
+	var result []string
+
+	resp, err := client.Get(user.Remote + "/api/" + user.Username)
+	if err != nil {
+		return nil, errors.Wrap(err, "sending request for file list")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("getting remote file list: %v", resp.Status)
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, errors.Wrap(err, "decoding  file list")
+	}
+
+	return result, nil
+}
+
 func getRemoteTrackingData(client *http.Client, fileURL string) (*file.TrackingData, error) {
 	resp, err := client.Get(fileURL)
 	if err != nil {

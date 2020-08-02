@@ -8,6 +8,13 @@ import (
 
 func loadUserFiles(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	username := p.Vars["username"]
+	// Not doing anything with the user yet
+	// Error is used to throw 404 when the user doesn't exist.
+	_, err := db.GetUser(username)
+	if err != nil {
+		return p.setError(w, err)
+	}
+
 	p.Title = username
 
 	files, err := db.GetFilesByUsername(username)
