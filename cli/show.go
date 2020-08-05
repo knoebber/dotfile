@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 
+	"github.com/knoebber/dotfile/dotfileclient"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -24,22 +25,25 @@ func (sc *showCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
+	client := dotfileclient.New(storage.User.Remote, storage.User.Username, storage.User.Token)
+
 	if sc.username != "" {
 		sc.remote = true
-		storage.User.Username = sc.username
+		client.Username = sc.username
 	}
 
 	if sc.data {
 		if !sc.remote {
 			content, err = storage.GetJSON()
 		} else {
-			content, err = storage.GetRemoteJSON()
+			content, err = client.GetTrackingDataBytes(sc.fileName)
+			// TODO this isn't a super helpful option - the json isn't formatted.
 		}
 	} else {
 		if !sc.remote {
 			content, err = storage.GetContents()
 		} else {
-			content, err = storage.GetRemoteContents()
+			content, err = client.GetContents(sc.fileName)
 		}
 	}
 

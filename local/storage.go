@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/knoebber/dotfile/dotfileclient"
 	"github.com/knoebber/dotfile/file"
 	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
@@ -33,11 +34,6 @@ func (s *Storage) GetJSON() ([]byte, error) {
 	}
 
 	return jsonContent, nil
-}
-
-// GetRemoteJSON returns the remote tracked files json.
-func (s *Storage) GetRemoteJSON() ([]byte, error) {
-	return []byte("TODO"), nil
 }
 
 func (s *Storage) setTrackingData() error {
@@ -141,11 +137,6 @@ func (s *Storage) GetContents() ([]byte, error) {
 	return contents, nil
 }
 
-// GetRemoteContents reads the contents of the file from remote.
-func (s *Storage) GetRemoteContents() ([]byte, error) {
-	return []byte("TODO"), nil
-}
-
 // SaveCommit saves a commit to the file system.
 // Creates a new directory when its the first commit.
 // Updates the file's revision field to point to the new hash.
@@ -189,9 +180,9 @@ func (s *Storage) GetPath() string {
 func (s *Storage) Push() error {
 	var newHashes []string
 
-	client := newDotfilehubClient(s.User)
+	client := dotfileclient.New(s.User.Remote, s.User.Username, s.User.Token)
 
-	remoteData, err := client.getRemoteTrackingData(s.Alias)
+	remoteData, err := client.GetTrackingData(s.Alias)
 	if err != nil {
 		return err
 	}
@@ -207,9 +198,21 @@ func (s *Storage) Push() error {
 			return err
 		}
 	}
+	revisions := make([]*dotfileclient.Revision, len(newHashes))
 
-	fmt.Println("pushing", s.FileData.Path)
-	if err := client.postRevisions(s, newHashes); err != nil {
+	for i, hash := range newHashes {
+		revision, err := s.GetRevision(hash)
+		if err != nil {
+			return err
+		}
+
+		revisions[i] = &dotfileclient.Revision{
+			Bytes: revision,
+			Hash:  hash,
+		}
+	}
+
+	if err := client.UploadRevisions(s.Alias, s.FileData, revisions); err != nil {
 		return err
 	}
 
@@ -222,7 +225,7 @@ func (s *Storage) Push() error {
 func (s *Storage) Pull() error {
 	var newHashes []string
 
-	client := newDotfilehubClient(s.User)
+	client := dotfileclient.New(s.User.Remote, s.User.Username, s.User.Token)
 
 	fileExists := exists(s.GetPath())
 	if fileExists {
@@ -235,7 +238,7 @@ func (s *Storage) Pull() error {
 		}
 	}
 
-	remoteData, err := client.getRemoteTrackingData(s.Alias)
+	remoteData, err := client.GetTrackingData(s.Alias)
 	if err != nil {
 		return err
 	}
@@ -256,13 +259,13 @@ func (s *Storage) Pull() error {
 
 	fmt.Printf("pulling %d new revisions for %s\n", len(newHashes), s.FileData.Path)
 
-	remoteRevisions, err := client.getRemoteRevisions(s.Alias, newHashes)
+	revisions, err := client.GetRevisions(s.Alias, newHashes)
 	if err != nil {
 		return err
 	}
 
-	for _, rr := range remoteRevisions {
-		if err = writeCommit(rr.revision, s.dir, s.Alias, rr.hash); err != nil {
+	for _, revision := range revisions {
+		if err = writeCommit(revision.Bytes, s.dir, s.Alias, revision.Hash); err != nil {
 			return err
 		}
 	}
@@ -314,9 +317,4 @@ func (s *Storage) GetLocalFileList() ([]string, error) {
 	}
 
 	return result, nil
-}
-
-// GetRemoteFileList gets a list of files that the remote user has saved.
-func (s *Storage) GetRemoteFileList() ([]string, error) {
-	return newDotfilehubClient(s.User).getRemoteFileList()
 }

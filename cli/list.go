@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 
+	"github.com/knoebber/dotfile/dotfileclient"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -19,13 +20,16 @@ func (lc *listCommand) run(ctx *kingpin.ParseContext) (err error) {
 		return err
 	}
 
+	user := storage.User
 	if lc.username != "" {
 		lc.remote = true
-		storage.User.Username = lc.username
+		user.Username = lc.username
 	}
 
 	if lc.remote {
-		result, err = storage.GetRemoteFileList()
+		result, err = dotfileclient.
+			New(user.Remote, user.Username, user.Token).
+			GetFileList()
 	} else {
 		result, err = storage.GetLocalFileList()
 	}
