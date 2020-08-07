@@ -14,33 +14,22 @@ import (
 
 func TestNewStorage(t *testing.T) {
 	t.Run("error when home is empty", func(t *testing.T) {
-		_, err := NewStorage("", "", "")
+		_, err := NewStorage("", "")
 		assert.Error(t, err)
 	})
 
 	t.Run("error when storage dir is empty", func(t *testing.T) {
-		_, err := NewStorage(testHome, "", "")
-		assert.Error(t, err)
-	})
-
-	t.Run("error when config path is empty", func(t *testing.T) {
-		_, err := NewStorage(testHome, testDir, "")
+		_, err := NewStorage(testHome, "")
 		assert.Error(t, err)
 	})
 
 	t.Run("error when storage dir does not exist", func(t *testing.T) {
-		_, err := NewStorage(testHome, "/does/not/exist", testDir)
-		assert.Error(t, err)
-	})
-
-	t.Run("error when config path does not exist", func(t *testing.T) {
-		_, err := NewStorage(testHome, testDir, "/does/not/exist")
+		_, err := NewStorage(testHome, "/does/not/exist")
 		assert.Error(t, err)
 	})
 
 	t.Run("ok", func(t *testing.T) {
-		configPath := filepath.Join(testDir, "dotfile-config.json")
-		_, err := NewStorage(testHome, testDir, configPath)
+		_, err := NewStorage(testHome, testDir)
 		assert.NoError(t, err)
 	})
 }

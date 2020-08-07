@@ -20,7 +20,6 @@ type Storage struct {
 	Alias    string             // A friendly name for the file that is being tracked.
 	FileData *file.TrackingData // The current file that storage is tracking.
 	HasFile  bool               // Whether the storage has a TrackedFile loaded.
-	User     *UserConfig
 
 	dir      string // The path to the folder where data will be stored.
 	jsonPath string
@@ -177,10 +176,8 @@ func (s *Storage) GetPath() string {
 
 // Push pushes a file's commits to a remote dotfile server.
 // Updates the remote file with the new content from local.
-func (s *Storage) Push() error {
+func (s *Storage) Push(client *dotfileclient.Client) error {
 	var newHashes []string
-
-	client := dotfileclient.New(s.User.Remote, s.User.Username, s.User.Token)
 
 	remoteData, err := client.GetTrackingData(s.Alias)
 	if err != nil {
@@ -222,10 +219,8 @@ func (s *Storage) Push() error {
 // Pull retrieves a file's commits from a dotfile server.
 // Updates the local file with the new content from remote.
 // Closes storage.
-func (s *Storage) Pull() error {
+func (s *Storage) Pull(client *dotfileclient.Client) error {
 	var newHashes []string
-
-	client := dotfileclient.New(s.User.Remote, s.User.Username, s.User.Token)
 
 	fileExists := exists(s.GetPath())
 	if fileExists {
@@ -243,7 +238,7 @@ func (s *Storage) Pull() error {
 		return err
 	}
 	if remoteData == nil {
-		return fmt.Errorf("%q not found on remote %q", s.Alias, s.User.Remote)
+		return fmt.Errorf("%q not found on remote %q", s.Alias, client.Remote)
 	}
 
 	s.FileData, newHashes, err = file.MergeTrackingData(s.FileData, remoteData)

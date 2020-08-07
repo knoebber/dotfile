@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 
-	"github.com/knoebber/dotfile/dotfileclient"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -25,7 +24,10 @@ func (sc *showCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
-	client := dotfileclient.New(storage.User.Remote, storage.User.Username, storage.User.Token)
+	client, err := getClient()
+	if err != nil {
+		return err
+	}
 
 	if sc.username != "" {
 		sc.remote = true

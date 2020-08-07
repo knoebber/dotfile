@@ -12,7 +12,12 @@ func (pc *pushCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
-	return s.Push()
+	client, err := getClient()
+	if err != nil {
+		return err
+	}
+
+	return s.Push(client)
 }
 
 func addPushSubCommandToApplication(app *kingpin.Application) {

@@ -53,7 +53,6 @@ func setupTestFile(t *testing.T) *Storage {
 	s := &Storage{
 		Home:     testHome,
 		dir:      testDir,
-		User:     new(UserConfig),
 		Alias:    testAlias,
 		jsonPath: filepath.Join(testDir, testAlias+".json"),
 		FileData: &file.TrackingData{

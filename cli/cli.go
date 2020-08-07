@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/knoebber/dotfile/dotfileclient"
 	"github.com/knoebber/dotfile/local"
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -25,13 +26,17 @@ func getHome() (string, error) {
 	return home, nil
 }
 
-func loadStorage() (*local.Storage, error) {
-	configPath, err := local.GetConfigPath(config.home)
+func getClient() (*dotfileclient.Client, error) {
+	user, err := local.GetUserConfig(config.home)
 	if err != nil {
 		return nil, err
 	}
 
-	storage, err := local.NewStorage(config.home, config.storageDir, configPath)
+	return dotfileclient.New(user.Remote, user.Username, user.Token), nil
+}
+
+func loadStorage() (*local.Storage, error) {
+	storage, err := local.NewStorage(config.home, config.storageDir)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating local storage")
 	}

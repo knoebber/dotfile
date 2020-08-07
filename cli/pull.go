@@ -3,6 +3,8 @@ package cli
 import (
 	"fmt"
 
+	"github.com/knoebber/dotfile/dotfileclient"
+	"github.com/knoebber/dotfile/local"
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -16,30 +18,49 @@ type pullCommand struct {
 func (pc *pullCommand) run(ctx *kingpin.ParseContext) error {
 	var err error
 
-	s, err := loadFileStorage(pc.fileName)
+	storage, err := loadStorage()
+	if err != nil {
+		return err
+	}
+
+	client, err := getClient()
 	if err != nil {
 		return err
 	}
 
 	if pc.username != "" {
-		s.User.Username = pc.username
-	}
-
-	if s.User.Username == "" {
-		return errors.New("must set config username or use --username flag")
+		client.Username = pc.username
 	}
 
 	if pc.pullAll {
-		return pullAll()
+		return pullAll(storage, client)
 	} else if pc.fileName != "" {
-		return s.Pull()
+		if err := storage.SetTrackingData(pc.fileName); err != nil {
+			return err
+		}
+
+		return storage.Pull(client)
 	} else {
 		return errors.New("neither filename nor --all provided to pull")
 	}
 }
 
-func pullAll() error {
-	fmt.Println("TODO pull all")
+func pullAll(storage *local.Storage, client *dotfileclient.Client) error {
+	files, err := client.GetFileList()
+	if err != nil {
+		return err
+	}
+
+	for _, alias := range files {
+		fmt.Println("pulling", alias)
+		if err := storage.SetTrackingData(alias); err != nil {
+			return err
+		}
+
+		if err := storage.Pull(client); err != nil {
+			fmt.Printf("failed to pull %q: %v\n", alias, err)
+		}
+	}
 	return nil
 }
 

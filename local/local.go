@@ -118,24 +118,16 @@ func GetDefaultStorageDir(home string) (storageDir string, err error) {
 // NewStorage returns a new storage.
 // Dir is the directory for storing dotfile tracking information.
 // Creates dir if it does not exist.
-func NewStorage(home, storageDir, configDir string) (*Storage, error) {
+func NewStorage(home, storageDir string) (*Storage, error) {
 	if home == "" {
 		return nil, errors.New("home cannot be empty")
 	}
 	if storageDir == "" {
 		return nil, errors.New("dir cannot be empty")
 	}
-	if configDir == "" {
-		return nil, errors.New("config dir cannot be empty")
-	}
+
 	s := new(Storage)
 
-	user, err := GetUserConfig(configDir)
-	if err != nil {
-		return nil, err
-	}
-
-	s.User = user
 	s.Home = home
 	s.dir = storageDir
 
