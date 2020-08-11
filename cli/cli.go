@@ -27,7 +27,7 @@ func getHome() (string, error) {
 }
 
 func getClient() (*dotfileclient.Client, error) {
-	user, err := local.GetUserConfig(config.home)
+	user, err := local.GetUserConfig()
 	if err != nil {
 		return nil, err
 	}

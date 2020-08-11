@@ -17,12 +17,7 @@ func (cc *configCommand) run(ctx *kingpin.ParseContext) error {
 		return local.SetUserConfig(config.home, cc.key, cc.value)
 	}
 
-	configPath, err := local.GetConfigPath(config.home)
-	if err != nil {
-		return err
-	}
-
-	user, err := local.GetUserConfig(configPath)
+	user, err := local.GetUserConfig()
 	if err != nil {
 		return err
 	}

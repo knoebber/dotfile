@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -219,10 +220,11 @@ func (s *Storage) Push(client *dotfileclient.Client) error {
 // Pull retrieves a file's commits from a dotfile server.
 // Updates the local file with the new content from remote.
 // Closes storage.
-func (s *Storage) Pull(client *dotfileclient.Client) error {
+func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 	var newHashes []string
 
-	fileExists := exists(s.GetPath())
+	path := s.GetPath()
+	fileExists := exists(path)
 	if fileExists {
 		clean, err := file.IsClean(s, s.FileData.Revision)
 		if err != nil {
@@ -230,6 +232,10 @@ func (s *Storage) Pull(client *dotfileclient.Client) error {
 		}
 		if !clean {
 			return usererror.Invalid("File has uncommited changes")
+		}
+	} else if createDirs {
+		if err := os.MkdirAll(path, 0755); err != nil {
+			return err
 		}
 	}
 

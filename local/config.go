@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/knoebber/dotfile/usererror"
@@ -25,27 +26,6 @@ func (uc *UserConfig) String() string {
 		uc.Username,
 		uc.Token,
 	)
-}
-
-// GetConfigPath returns the path to the dotfile user configuration.
-// Priority one: ~/.config/dotfile/config.json
-// Priority two: ~/.dotfile-config.json
-func GetConfigPath(home string) (string, error) {
-	var dotfileConfigDir string
-
-	configDir := filepath.Join(home, ".config")
-
-	if !exists(configDir) {
-		return filepath.Join(home, ".dotfile-config.json"), nil
-	}
-
-	dotfileConfigDir = filepath.Join(configDir, "dotfile")
-
-	if err := createDir(dotfileConfigDir); err != nil {
-		return "", errors.Wrap(err, "creating dotfile config directory")
-	}
-
-	return filepath.Join(dotfileConfigDir, "config.json"), nil
 }
 
 func createDefaultConfig(path string) ([]byte, error) {
@@ -76,9 +56,23 @@ func getConfigBytes(path string) ([]byte, error) {
 	return bytes, nil
 }
 
+func configPath() (string, error) {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(configDir, "dotfile", "dotfile.json"), nil
+}
+
 // GetUserConfig reads the user config.
 // Creates a default file when it doesn't yet exist.
-func GetUserConfig(path string) (*UserConfig, error) {
+func GetUserConfig() (*UserConfig, error) {
+	path, err := configPath()
+	if err != nil {
+		return nil, err
+	}
+
 	cfg := new(UserConfig)
 
 	bytes, err := getConfigBytes(path)
@@ -97,7 +91,7 @@ func GetUserConfig(path string) (*UserConfig, error) {
 func SetUserConfig(home string, key string, value string) error {
 	cfg := make(map[string]*string)
 
-	path, err := GetConfigPath(home)
+	path, err := configPath()
 	if err != nil {
 		return err
 	}
