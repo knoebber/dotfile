@@ -61,8 +61,14 @@ func configPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	dotfileDir := filepath.Join(configDir, "dotfile")
+	if !exists(dotfileDir) {
+		if err := os.Mkdir(dotfileDir, 0755); err != nil {
+			return "", err
+		}
+	}
 
-	return filepath.Join(configDir, "dotfile", "dotfile.json"), nil
+	return filepath.Join(dotfileDir, "dotfile.json"), nil
 }
 
 // GetUserConfig reads the user config.
