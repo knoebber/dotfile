@@ -45,6 +45,6 @@ func (lc *listCommand) run(ctx *kingpin.ParseContext) (err error) {
 func addListSubCommandToApplication(app *kingpin.Application) {
 	lc := new(listCommand)
 	c := app.Command("ls", "list all tracked files, an asterisks signifies uncommited changes").Action(lc.run)
-	c.Flag("remote", "read file list from remote").BoolVar(&lc.remote)
-	c.Flag("username", "read files owned by username on remote").StringVar(&lc.username)
+	c.Flag("remote", "read file list from remote").Short('r').BoolVar(&lc.remote)
+	c.Flag("username", "read files owned by username on remote").Short('u').StringVar(&lc.username)
 }

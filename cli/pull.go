@@ -60,7 +60,7 @@ func addPullSubCommandToApplication(app *kingpin.Application) {
 
 	p := app.Command("pull", "pull changes from central service").Action(pc.run)
 	p.Arg("file-name", "the file to pull").StringVar(&pc.fileName)
-	p.Flag("username", "override config username").StringVar(&pc.username)
-	p.Flag("all", "pull all tracked files").BoolVar(&pc.pullAll)
-	p.Flag("create-dirs", "create directories that do not exist").BoolVar(&pc.createDirs)
+	p.Flag("username", "override config username").Short('u').StringVar(&pc.username)
+	p.Flag("all", "pull all tracked files").Short('a').BoolVar(&pc.pullAll)
+	p.Flag("create-dirs", "create directories that do not exist").Short('c').BoolVar(&pc.createDirs)
 }
