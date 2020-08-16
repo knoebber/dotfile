@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 
+	"github.com/knoebber/dotfile/local"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -19,12 +20,14 @@ func (sc *showCommand) run(ctx *kingpin.ParseContext) error {
 		err     error
 	)
 
-	storage, err := loadFile(sc.fileName)
-	if err != nil {
-		return err
+	storage := &local.Storage{Dir: flags.storageDir, Alias: sc.fileName}
+	if !sc.remote {
+		if err := storage.SetTrackingData(); err != nil {
+			return err
+		}
 	}
 
-	client, err := getClient()
+	client, err := newDotfileClient()
 	if err != nil {
 		return err
 	}

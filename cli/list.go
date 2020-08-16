@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 
+	"github.com/knoebber/dotfile/local"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -14,12 +15,8 @@ type listCommand struct {
 func (lc *listCommand) run(ctx *kingpin.ParseContext) (err error) {
 	var result []string
 
-	storage, err := loadStorage()
-	if err != nil {
-		return err
-	}
-
-	client, err := getClient()
+	storage := &local.Storage{Dir: flags.storageDir}
+	client, err := newDotfileClient()
 	if err != nil {
 		return err
 	}

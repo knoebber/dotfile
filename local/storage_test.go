@@ -12,53 +12,42 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewStorage(t *testing.T) {
-	t.Run("error when home is empty", func(t *testing.T) {
-		_, err := NewStorage("", "")
-		assert.Error(t, err)
-	})
-
+func TestStorage_SetTrackingData(t *testing.T) {
 	t.Run("error when storage dir is empty", func(t *testing.T) {
-		_, err := NewStorage(testHome, "")
-		assert.Error(t, err)
+		s := testStorage()
+		s.Dir = ""
+		assert.Error(t, s.SetTrackingData())
 	})
 
 	t.Run("error when storage dir does not exist", func(t *testing.T) {
-		_, err := NewStorage(testHome, "/does/not/exist")
-		assert.Error(t, err)
+		s := testStorage()
+		s.Dir = "/not/exist"
+		assert.Error(t, s.SetTrackingData())
 	})
 
-	t.Run("ok", func(t *testing.T) {
-		_, err := NewStorage(testHome, testDir)
-		assert.NoError(t, err)
-	})
-}
-
-func TestStorage_SetTrackingData(t *testing.T) {
 	t.Run("error when alias is empty", func(t *testing.T) {
-		s := new(Storage)
-		assert.Error(t, s.SetTrackingData(""))
+		s := testStorage()
+		s.Alias = ""
+		assert.Error(t, s.SetTrackingData())
 	})
 
-	t.Run("ok when alias is not tracked", func(t *testing.T) {
+	t.Run("error when file is not tracked", func(t *testing.T) {
 		clearTestStorage()
-		s := &Storage{dir: testDir}
-		s.SetTrackingData(testAlias)
-		assert.False(t, s.HasFile)
+		s := testStorage()
+		assert.Error(t, s.SetTrackingData())
 	})
 
 	t.Run("error on invalid json", func(t *testing.T) {
-		clearTestStorage()
+		s := testStorage()
 		_ = os.Mkdir(testDir, 0755)
-		_ = ioutil.WriteFile(filepath.Join(testDir, testAlias+".json"), []byte("invalid json"), 0644)
-		s := &Storage{dir: testDir}
-		assert.Error(t, s.SetTrackingData(testAlias))
+		_ = ioutil.WriteFile(s.jsonPath(), []byte("invalid json"), 0644)
+		assert.Error(t, s.SetTrackingData())
 	})
 }
 
 func TestStorage_Close(t *testing.T) {
-	t.Run("error when json file does not exist", func(t *testing.T) {
-		s := &Storage{jsonPath: "/not/exist"}
+	t.Run("error when directory does not exist", func(t *testing.T) {
+		s := &Storage{Dir: "/not/exist"}
 		assert.Error(t, s.Close())
 	})
 }
@@ -100,7 +89,6 @@ func TestStorage_GetRevision(t *testing.T) {
 }
 
 func TestStorage_Revert(t *testing.T) {
-
 	t.Run("error when unable to write", func(t *testing.T) {
 		s := &Storage{FileData: &file.TrackingData{Path: "/not/exists"}}
 		assert.Error(t, s.Revert(new(bytes.Buffer), testHash))
@@ -115,9 +103,15 @@ func TestStorage_Revert(t *testing.T) {
 }
 
 func TestStorage_SaveCommit(t *testing.T) {
-
-	t.Run("error when unable to create commit directory", func(t *testing.T) {
-		s := &Storage{dir: "/not/exist", FileData: new(file.TrackingData)}
+	t.Run("error when tracking data is not set", func(t *testing.T) {
+		s := testStorage()
+		err := s.SaveCommit(new(bytes.Buffer), new(file.Commit))
+		assert.Error(t, err)
+	})
+	t.Run("error when unable to write commit", func(t *testing.T) {
+		s := testStorage()
+		s.Dir = "/not/exist"
+		s.FileData = new(file.TrackingData)
 		err := s.SaveCommit(new(bytes.Buffer), new(file.Commit))
 		assert.Error(t, err)
 	})
@@ -144,5 +138,28 @@ func TestStorage_SaveCommit(t *testing.T) {
 		assert.Equal(t, testUpdatedHash, s.FileData.Revision)
 		assert.Equal(t, testMessage, s.FileData.Commits[1].Message)
 		assert.Equal(t, timestamp.Unix(), s.FileData.Commits[1].Timestamp)
+	})
+}
+
+func TestStorage_GetPath(t *testing.T) {
+	t.Run("error when filedata is nil", func(t *testing.T) {
+		s := testStorage()
+		_, err := s.GetPath()
+		assert.Error(t, err)
+	})
+	t.Run("error when path is empty", func(t *testing.T) {
+		s := testStorage()
+		s.FileData = new(file.TrackingData)
+		_, err := s.GetPath()
+		assert.Error(t, err)
+	})
+
+	t.Run("ok", func(t *testing.T) {
+		s := testStorage()
+		s.FileData = &file.TrackingData{Path: "~/relative-path"}
+
+		path, err := s.GetPath()
+		assert.NoError(t, err)
+		assert.NotEmpty(t, path)
 	})
 }

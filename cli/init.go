@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/local"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -18,16 +19,8 @@ func (ic *initCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
-	s, err := loadFileStorage(alias)
-	if err != nil {
-		return err
-	}
-
-	if s.HasFile {
-		return fmt.Errorf("%#v is already tracked", ic.alias)
-	}
-
-	if err = s.InitFile(ic.path); err != nil {
+	storage := &local.Storage{Dir: flags.storageDir, Alias: alias}
+	if err = storage.InitFile(ic.path); err != nil {
 		return err
 	}
 

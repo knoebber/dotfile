@@ -19,12 +19,9 @@ type pullCommand struct {
 func (pc *pullCommand) run(ctx *kingpin.ParseContext) error {
 	var err error
 
-	storage, err := loadStorage()
-	if err != nil {
-		return err
-	}
+	storage := &local.Storage{Dir: flags.storageDir, Alias: pc.fileName}
 
-	client, err := getClient()
+	client, err := newDotfileClient()
 	if err != nil {
 		return err
 	}
@@ -35,7 +32,7 @@ func (pc *pullCommand) run(ctx *kingpin.ParseContext) error {
 	if pc.pullAll {
 		return pullAll(storage, client, pc.createDirs)
 	} else if pc.fileName != "" {
-		return pull(storage, client, pc.fileName, pc.createDirs)
+		return storage.Pull(client, pc.createDirs)
 	} else {
 		return errors.New("neither filename nor --all provided to pull")
 	}
@@ -48,20 +45,14 @@ func pullAll(storage *local.Storage, client *dotfileclient.Client, createDirs bo
 	}
 
 	for _, alias := range files {
-		if err := pull(storage, client, alias, createDirs); err != nil {
+		storage.Alias = alias
+		if err := storage.Pull(client, createDirs); err != nil {
 			fmt.Printf("failed to pull %q: %v\n", alias, err)
+		} else {
+			fmt.Println("pulled", alias)
 		}
 	}
 	return nil
-}
-
-func pull(storage *local.Storage, client *dotfileclient.Client, alias string, createDirs bool) error {
-	if err := storage.SetTrackingData(alias); err != nil {
-		return err
-	}
-
-	return storage.Pull(client, createDirs)
-
 }
 
 func addPullSubCommandToApplication(app *kingpin.Application) {

@@ -94,7 +94,7 @@ func GetUserConfig() (*UserConfig, error) {
 }
 
 // SetUserConfig sets a value in the dotfile config json file.
-func SetUserConfig(home string, key string, value string) error {
+func SetUserConfig(key string, value string) error {
 	cfg := make(map[string]*string)
 
 	path, err := configPath()

@@ -41,6 +41,13 @@ func resetTestStorage(t *testing.T) {
 	initTestData(t)
 }
 
+func testStorage() *Storage {
+	return &Storage{
+		Dir:   testDir,
+		Alias: testAlias,
+	}
+}
+
 func setupTestFile(t *testing.T) *Storage {
 	clearTestStorage()
 	initTestData(t)
@@ -50,15 +57,10 @@ func setupTestFile(t *testing.T) *Storage {
 		t.Fatalf("getting full path for %#v: %v", testTrackedFile, err)
 	}
 
-	s := &Storage{
-		Home:     testHome,
-		dir:      testDir,
-		Alias:    testAlias,
-		jsonPath: filepath.Join(testDir, testAlias+".json"),
-		FileData: &file.TrackingData{
-			Path:    fullPath,
-			Commits: []file.Commit{},
-		},
+	s := testStorage()
+	s.FileData = &file.TrackingData{
+		Path:    fullPath,
+		Commits: []file.Commit{},
 	}
 
 	if err := file.Init(s, fullPath, testAlias); err != nil {
@@ -66,12 +68,8 @@ func setupTestFile(t *testing.T) *Storage {
 	}
 
 	// Read the newly initialized test file.
-	if err := s.SetTrackingData(testAlias); err != nil {
+	if err := s.SetTrackingData(); err != nil {
 		t.Fatalf("reading test file tracking data: %v", err)
-	}
-
-	if !s.HasFile {
-		t.Fatal("expected storage to have file")
 	}
 
 	return s

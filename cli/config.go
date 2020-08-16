@@ -14,7 +14,7 @@ type configCommand struct {
 
 func (cc *configCommand) run(ctx *kingpin.ParseContext) error {
 	if cc.key != "" {
-		return local.SetUserConfig(config.home, cc.key, cc.value)
+		return local.SetUserConfig(cc.key, cc.value)
 	}
 
 	user, err := local.GetUserConfig()

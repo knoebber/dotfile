@@ -8,14 +8,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Based on https://npf.io/2015/06/testing-exec-command/
+var sneakyTestingReference *testing.T
+
 const arbitraryEditor = "nano"
 
 func fakeEditCommand(command string, args ...string) *exec.Cmd {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic("$HOME is required for edit test")
+	}
+
 	assert.Equal(sneakyTestingReference, arbitraryEditor, command)
 	cs := []string{"-test.run=TestEditHelperProcess", "--", command}
 	cs = append(cs, args...)
 	cmd := exec.Command(os.Args[0], cs...)
-	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1", "HOME=" + config.home}
+	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1", "HOME=" + home}
 	return cmd
 }
 

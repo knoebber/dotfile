@@ -2,31 +2,20 @@
 package cli
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/knoebber/dotfile/dotfileclient"
 	"github.com/knoebber/dotfile/local"
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-type cliConfig struct {
+// Flags that multiple cli commands share.
+type globalFlags struct {
 	storageDir string
-	home       string
 }
 
-var config cliConfig
+var flags globalFlags
 
-func getHome() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", errors.Wrap(err, "getting user home directory")
-	}
-	return home, nil
-}
-
-func getClient() (*dotfileclient.Client, error) {
+func newDotfileClient() (*dotfileclient.Client, error) {
 	user, err := local.GetUserConfig()
 	if err != nil {
 		return nil, err
@@ -35,48 +24,21 @@ func getClient() (*dotfileclient.Client, error) {
 	return dotfileclient.New(user.Remote, user.Username, user.Token), nil
 }
 
-func loadStorage() (*local.Storage, error) {
-	storage, err := local.NewStorage(config.home, config.storageDir)
-	if err != nil {
-		return nil, errors.Wrap(err, "creating local storage")
-	}
-
-	return storage, nil
-}
-
-func loadFileStorage(alias string) (*local.Storage, error) {
-	storage, err := loadStorage()
-	if err != nil {
-		return nil, err
-	}
-
-	if err := storage.SetTrackingData(alias); err != nil {
-		return nil, errors.Wrapf(err, "loading %#v", alias)
-	}
-	return storage, nil
-}
-
 func loadFile(alias string) (*local.Storage, error) {
-	storage, err := loadFileStorage(alias)
-	if err != nil {
-		return nil, err
+	storage := &local.Storage{
+		Dir:   flags.storageDir,
+		Alias: alias,
 	}
 
-	if !storage.HasFile {
-		return nil, fmt.Errorf("%#v is not tracked", alias)
+	if err := storage.SetTrackingData(); err != nil {
+		return nil, errors.Wrapf(err, "loading %q", alias)
 	}
 
 	return storage, nil
 }
 
 func setConfig(app *kingpin.Application) error {
-	home, err := getHome()
-	if err != nil {
-		return err
-	}
-	config.home = home
-
-	defaultStorageDir, err := local.GetDefaultStorageDir(config.home)
+	defaultStorageDir, err := local.GetDefaultStorageDir()
 	if err != nil {
 		return err
 	}
@@ -85,7 +47,7 @@ func setConfig(app *kingpin.Application) error {
 
 	app.Flag("storage-dir", "The directory where dotfile data is stored").
 		Default(defaultStorageDir).
-		ExistingDirVar(&config.storageDir)
+		ExistingDirVar(&flags.storageDir)
 
 	return nil
 }

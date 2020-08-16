@@ -12,7 +12,7 @@ func (pc *pushCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
-	client, err := getClient()
+	client, err := newDotfileClient()
 	if err != nil {
 		return err
 	}

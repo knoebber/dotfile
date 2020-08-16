@@ -43,7 +43,7 @@ func convertPath(path, home string) (string, error) {
 	}
 
 	// Get the full path.
-	if path[0] != '/' {
+	if !filepath.IsAbs(path) {
 		path, err = filepath.Abs(path)
 		if err != nil {
 			return "", err
@@ -98,7 +98,12 @@ func writeCommit(contents []byte, storageDir string, alias, hash string) error {
 
 // GetDefaultStorageDir returns the default location for storing dotfile information.
 // Creates the location when it does not exist.
-func GetDefaultStorageDir(home string) (storageDir string, err error) {
+func GetDefaultStorageDir() (storageDir string, err error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
 	localSharePath := filepath.Join(home, ".local/share/")
 	if exists(localSharePath) {
 		// Priority one : ~/.local/share/dotfile
@@ -113,28 +118,4 @@ func GetDefaultStorageDir(home string) (storageDir string, err error) {
 	}
 
 	return
-}
-
-// NewStorage returns a new storage.
-// Dir is the directory for storing dotfile tracking information.
-// Creates dir if it does not exist.
-func NewStorage(home, storageDir string) (*Storage, error) {
-	if home == "" {
-		return nil, errors.New("home cannot be empty")
-	}
-	if storageDir == "" {
-		return nil, errors.New("dir cannot be empty")
-	}
-
-	s := new(Storage)
-
-	s.Home = home
-	s.dir = storageDir
-
-	// Example: ~/.local/share/dotfile
-	if err := createDir(storageDir); err != nil {
-		return nil, err
-	}
-
-	return s, nil
 }

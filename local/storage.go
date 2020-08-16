@@ -15,20 +15,35 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	// ErrNotTracked is returned when the current alias in storage is not tracked.
+	ErrNotTracked = errors.New("file is not tracked")
+	// ErrNoData is returned when a method expects non nil file data.
+	ErrNoData = errors.New("tracking data is not loaded")
+)
+
 // Storage provides methods for manipulating tracked files on the file system.
 type Storage struct {
-	Home     string             // The path to the users home directory.
-	Alias    string             // A friendly name for the file that is being tracked.
+	Alias    string             // The name of the file that is being tracked.
+	Dir      string             // The path to the folder where data will be stored.
 	FileData *file.TrackingData // The current file that storage is tracking.
-	HasFile  bool               // Whether the storage has a TrackedFile loaded.
+}
 
-	dir      string // The path to the folder where data will be stored.
-	jsonPath string
+func (s *Storage) jsonPath() string {
+	return filepath.Join(s.Dir, s.Alias+".json")
+}
+
+func (s *Storage) hasSavedData() bool {
+	return exists(s.jsonPath())
 }
 
 // GetJSON returns the tracked files json.
 func (s *Storage) GetJSON() ([]byte, error) {
-	jsonContent, err := ioutil.ReadFile(s.jsonPath)
+	if !s.hasSavedData() {
+		return nil, ErrNotTracked
+	}
+
+	jsonContent, err := ioutil.ReadFile(s.jsonPath())
 	if err != nil {
 		return nil, errors.Wrap(err, "reading tracking data")
 	}
@@ -36,7 +51,17 @@ func (s *Storage) GetJSON() ([]byte, error) {
 	return jsonContent, nil
 }
 
-func (s *Storage) setTrackingData() error {
+// SetTrackingData reads the tracking data from the filesytem into FileData.
+func (s *Storage) SetTrackingData() error {
+	if s.Alias == "" {
+		return errors.New("alias cannot be empty")
+	}
+	if s.Dir == "" {
+		return errors.New("dir cannot be empty")
+	}
+
+	s.FileData = new(file.TrackingData)
+
 	jsonContent, err := s.GetJSON()
 	if err != nil {
 		return err
@@ -46,7 +71,6 @@ func (s *Storage) setTrackingData() error {
 		return errors.Wrapf(err, "unmarshaling tracking data")
 	}
 
-	s.HasFile = true
 	return nil
 }
 
@@ -57,48 +81,37 @@ func (s *Storage) Close() error {
 		return errors.Wrap(err, "marshalling tracking data to json")
 	}
 
+	// Create the storage directory if it does not yet exist.
+	// Example: ~/.local/share/dotfile
+	if err := createDir(s.Dir); err != nil {
+		return err
+	}
+
 	// Example: ~/.local/share/dotfile/bash_profile.json
-	if err := ioutil.WriteFile(s.jsonPath, bytes, 0644); err != nil {
-		return errors.Wrapf(err, "saving tracking data to %q", s.jsonPath)
+	if err := ioutil.WriteFile(s.jsonPath(), bytes, 0644); err != nil {
+		return errors.Wrapf(err, "saving tracking data to %q", s.jsonPath())
 	}
 
 	return nil
 }
 
-// SetTrackingData reads and sets FileData for alias.
-// Sets empty data and HasFile to false when alias is not tracked.
-func (s *Storage) SetTrackingData(alias string) error {
-	if alias == "" {
-		return errors.New("alias cannot be empty")
-	}
-
-	s.Alias = alias
-	s.jsonPath = filepath.Join(s.dir, s.Alias+".json")
-	s.FileData = new(file.TrackingData)
-
-	if !exists(s.jsonPath) {
-		s.FileData.Commits = []file.Commit{}
-		s.HasFile = false
-		return nil
-	}
-
-	return s.setTrackingData()
-}
-
 // InitFile sets up a new file to be tracked.
 // It will setup the storage directory if its the first use.
 // Closes storage.
-func (s *Storage) InitFile(path string) error {
-	var err error
+func (s *Storage) InitFile(path string) (err error) {
+	if s.hasSavedData() {
+		return fmt.Errorf("%#v is already tracked", s.Alias)
+	}
 
-	s.FileData.Path, err = convertPath(path, s.Home)
+	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
 	}
 
-	// Example: ~/.local/share/dotfile
-	if err := createDir(s.dir); err != nil {
-		return err
+	s.FileData = new(file.TrackingData)
+	s.FileData.Path, err = convertPath(path, home)
+	if err != nil {
+		return
 	}
 
 	return file.Init(s, s.FileData.Path, s.Alias)
@@ -107,6 +120,10 @@ func (s *Storage) InitFile(path string) error {
 // HasCommit return whether the file has a commit with hash.
 // This never returns an error; it's present to satisfy a file.Storer requirement.
 func (s *Storage) HasCommit(hash string) (exists bool, err error) {
+	if s.FileData == nil {
+		return false, ErrNoData
+	}
+
 	for _, c := range s.FileData.Commits {
 		if c.Hash == hash {
 			return true, nil
@@ -117,7 +134,7 @@ func (s *Storage) HasCommit(hash string) (exists bool, err error) {
 
 // GetRevision returns the files state at hash.
 func (s *Storage) GetRevision(hash string) ([]byte, error) {
-	revisionPath := filepath.Join(s.dir, s.Alias, hash)
+	revisionPath := filepath.Join(s.Dir, s.Alias, hash)
 
 	bytes, err := ioutil.ReadFile(revisionPath)
 	if err != nil {
@@ -129,7 +146,12 @@ func (s *Storage) GetRevision(hash string) ([]byte, error) {
 
 // GetContents reads the contents of the file that is being tracked.
 func (s *Storage) GetContents() ([]byte, error) {
-	contents, err := ioutil.ReadFile(s.GetPath())
+	path, err := s.GetPath()
+	if err != nil {
+		return nil, err
+	}
+
+	contents, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, errors.Wrap(err, "reading file contents")
 	}
@@ -141,8 +163,12 @@ func (s *Storage) GetContents() ([]byte, error) {
 // Creates a new directory when its the first commit.
 // Updates the file's revision field to point to the new hash.
 func (s *Storage) SaveCommit(buff *bytes.Buffer, c *file.Commit) error {
+	if s.FileData == nil {
+		return ErrNoData
+	}
+
 	s.FileData.Commits = append(s.FileData.Commits, *c)
-	if err := writeCommit(buff.Bytes(), s.dir, s.Alias, c.Hash); err != nil {
+	if err := writeCommit(buff.Bytes(), s.Dir, s.Alias, c.Hash); err != nil {
 		return err
 	}
 
@@ -152,9 +178,14 @@ func (s *Storage) SaveCommit(buff *bytes.Buffer, c *file.Commit) error {
 
 // Revert overwrites a file at path with contents.
 func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
-	err := ioutil.WriteFile(s.GetPath(), buff.Bytes(), 0644)
+	path, err := s.GetPath()
 	if err != nil {
-		return errors.Wrapf(err, "reverting file %q", s.GetPath())
+		return err
+	}
+
+	err = ioutil.WriteFile(path, buff.Bytes(), 0644)
+	if err != nil {
+		return errors.Wrapf(err, "reverting file %q", path)
 	}
 
 	s.FileData.Revision = hash
@@ -162,23 +193,36 @@ func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
 }
 
 // GetPath gets the full path to the file.
-// Returns an empty string when path is not set.
-func (s *Storage) GetPath() string {
+// Utilizes $HOME to convert paths with ~ to absolute.
+func (s *Storage) GetPath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	if s.FileData == nil {
+		return "", ErrNoData
+	}
 	if s.FileData.Path == "" {
-		return ""
+		return "", errors.New("file data is missing path")
 	}
 
-	if s.FileData.Path[0] == '/' {
-		return s.FileData.Path
+	// If the saved path is absolute return it.
+	if filepath.IsAbs(s.FileData.Path) {
+		return s.FileData.Path, nil
 	}
 
-	return strings.Replace(s.FileData.Path, "~", s.Home, 1)
+	return strings.Replace(s.FileData.Path, "~", home, 1), nil
 }
 
 // Push pushes a file's commits to a remote dotfile server.
 // Updates the remote file with the new content from local.
 func (s *Storage) Push(client *dotfileclient.Client) error {
 	var newHashes []string
+
+	if s.FileData == nil {
+		return ErrNoData
+	}
 
 	remoteData, err := client.GetTrackingData(s.Alias)
 	if err != nil {
@@ -219,23 +263,25 @@ func (s *Storage) Push(client *dotfileclient.Client) error {
 
 // Pull retrieves a file's commits from a dotfile server.
 // Updates the local file with the new content from remote.
+// FileData does not need to be set; its possible to pull a file that does not yet exist.
 // Closes storage.
 func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 	var newHashes []string
 
-	path := s.GetPath()
-	fileExists := exists(path)
-	if fileExists {
+	hasSavedData := s.hasSavedData()
+
+	if hasSavedData {
+		if err := s.SetTrackingData(); err != nil {
+			return err
+		}
+
 		clean, err := file.IsClean(s, s.FileData.Revision)
 		if err != nil {
 			return err
 		}
+
 		if !clean {
-			return usererror.Invalid("File has uncommited changes")
-		}
-	} else if createDirs {
-		if err := os.MkdirAll(path, 0755); err != nil {
-			return err
+			return usererror.Invalid("file has uncommited changes")
 		}
 	}
 
@@ -252,10 +298,21 @@ func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 		return err
 	}
 
+	path, err := s.GetPath()
+	if err != nil {
+		return err
+	}
+
+	if createDirs {
+		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+			return errors.Wrapf(err, "creating %q", filepath.Dir(path))
+		}
+	}
+
 	// If the pulled file is new and a file with the remotes path already exists.
-	if !s.HasFile && fileExists {
+	if exists(path) && !hasSavedData {
 		return usererror.Invalid(remoteData.Path +
-			" already exists and is not tracked by dotfile. Remove the file or initialize it before pulling")
+			" already exists and is not tracked by dotfile (remove the file or initialize it before pulling)")
 	}
 
 	fmt.Printf("pulling %d new revisions for %s\n", len(newHashes), s.FileData.Path)
@@ -266,7 +323,7 @@ func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 	}
 
 	for _, revision := range revisions {
-		if err = writeCommit(revision.Bytes, s.dir, s.Alias, revision.Hash); err != nil {
+		if err = writeCommit(revision.Bytes, s.Dir, s.Alias, revision.Hash); err != nil {
 			return err
 		}
 	}
@@ -280,7 +337,7 @@ func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 func (s *Storage) GetLocalFileList() ([]string, error) {
 	var alias string
 
-	files, err := filepath.Glob(filepath.Join(s.dir, "*.json"))
+	files, err := filepath.Glob(filepath.Join(s.Dir, "*.json"))
 	if err != nil {
 		return nil, err
 	}
@@ -295,13 +352,17 @@ func (s *Storage) GetLocalFileList() ([]string, error) {
 
 		alias = strings.TrimSuffix(alias, ".json")
 		s.Alias = alias
-		s.jsonPath = filepath.Join(filename)
 
-		if err := s.setTrackingData(); err != nil {
+		if err := s.SetTrackingData(); err != nil {
 			return nil, err
 		}
 
-		if !exists(s.GetPath()) {
+		path, err := s.GetPath()
+		if err != nil {
+			return nil, err
+		}
+
+		if !exists(path) {
 			alias += " - removed"
 		} else {
 			clean, err := file.IsClean(s, s.FileData.Revision)
