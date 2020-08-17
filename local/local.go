@@ -35,8 +35,13 @@ const jsonIndent = "  "
 
 // Creates a path that is reusable between machines.
 // Returns an error when path does not exist.
-func convertPath(path, home string) (string, error) {
+func convertPath(path string) (string, error) {
 	var err error
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
 
 	if !exists(path) {
 		return "", fmt.Errorf("%#v not found", path)

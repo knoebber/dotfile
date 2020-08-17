@@ -75,6 +75,7 @@ func (s *Storage) SetTrackingData() error {
 }
 
 // Close updates the files JSON with s.FileData.
+// TODO change name to Save.
 func (s *Storage) Close() error {
 	bytes, err := json.MarshalIndent(s.FileData, "", jsonIndent)
 	if err != nil {
@@ -103,13 +104,8 @@ func (s *Storage) InitFile(path string) (err error) {
 		return fmt.Errorf("%#v is already tracked", s.Alias)
 	}
 
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-
 	s.FileData = new(file.TrackingData)
-	s.FileData.Path, err = convertPath(path, home)
+	s.FileData.Path, err = convertPath(path)
 	if err != nil {
 		return
 	}
@@ -335,6 +331,7 @@ func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 // GetLocalFileList returns a list of all locally tracked files.
 // When the file has uncommited changes an asterisks is added to the end.
 func (s *Storage) GetLocalFileList() ([]string, error) {
+	// TODO move to local.go => local.List()
 	var alias string
 
 	files, err := filepath.Glob(filepath.Join(s.Dir, "*.json"))
@@ -379,4 +376,32 @@ func (s *Storage) GetLocalFileList() ([]string, error) {
 	}
 
 	return result, nil
+}
+
+// Move moves the file currently tracked by storage.
+func (s *Storage) Move(newPath string, createDirs bool) error {
+	if s.FileData == nil {
+		return ErrNoData
+	}
+	currentPath, err := s.GetPath()
+	if err != nil {
+		return err
+	}
+
+	if createDirs {
+		if err := os.MkdirAll(filepath.Dir(newPath), 0755); err != nil {
+			return errors.Wrapf(err, "creating %q", filepath.Dir(newPath))
+		}
+	}
+
+	if err := os.Rename(currentPath, newPath); err != nil {
+		return err
+	}
+
+	s.FileData.Path, err = convertPath(newPath)
+	if err != nil {
+		return err
+	}
+
+	return s.Close()
 }
