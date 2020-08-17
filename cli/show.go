@@ -8,7 +8,7 @@ import (
 )
 
 type showCommand struct {
-	fileName string
+	alias    string
 	data     bool
 	remote   bool
 	username string
@@ -20,7 +20,7 @@ func (sc *showCommand) run(ctx *kingpin.ParseContext) error {
 		err     error
 	)
 
-	storage := &local.Storage{Dir: flags.storageDir, Alias: sc.fileName}
+	storage := &local.Storage{Dir: flags.storageDir, Alias: sc.alias}
 	if !sc.remote {
 		if err := storage.SetTrackingData(); err != nil {
 			return err
@@ -39,16 +39,16 @@ func (sc *showCommand) run(ctx *kingpin.ParseContext) error {
 
 	if sc.data {
 		if !sc.remote {
-			content, err = storage.GetJSON()
+			content, err = storage.JSON()
 		} else {
-			content, err = client.GetTrackingDataBytes(sc.fileName)
+			content, err = client.TrackingDataBytes(sc.alias)
 			// TODO this isn't a super helpful option - the json isn't formatted.
 		}
 	} else {
 		if !sc.remote {
-			content, err = storage.GetContents()
+			content, err = storage.Content()
 		} else {
-			content, err = client.GetContents(sc.fileName)
+			content, err = client.Content(sc.alias)
 		}
 	}
 
@@ -63,7 +63,7 @@ func (sc *showCommand) run(ctx *kingpin.ParseContext) error {
 func addShowSubCommandToApplication(app *kingpin.Application) {
 	sc := new(showCommand)
 	c := app.Command("show", "show the file").Action(sc.run)
-	c.Arg("file-name", "the file to show").Required().StringVar(&sc.fileName)
+	c.Arg("alias", "the file to show").Required().StringVar(&sc.alias)
 	c.Flag("data", "show the file data in json format").Short('j').BoolVar(&sc.data)
 	c.Flag("remote", "show the file on remote").Short('r').BoolVar(&sc.remote)
 	c.Flag("username", "show the file owned by username on remote").Short('u').StringVar(&sc.username)

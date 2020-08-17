@@ -117,9 +117,9 @@ func (ft *FileTransaction) HasCommit(hash string) (exists bool, err error) {
 	return
 }
 
-// GetContents returns the bytes from the users temp file.
+// Content returns the bytes from the users temp file.
 // Returns an error if the temp file is not set.
-func (ft *FileTransaction) GetContents() ([]byte, error) {
+func (ft *FileTransaction) Content() ([]byte, error) {
 	if ft.Staged == nil || len(ft.Staged.Content) == 0 {
 		return nil, ft.Rollback(errors.New("temp file has no content"))
 	}
@@ -147,8 +147,8 @@ func (ft *FileTransaction) SaveCommit(buff *bytes.Buffer, c *file.Commit) error 
 	return nil
 }
 
-// GetRevision returns the compressed content at hash.
-func (ft *FileTransaction) GetRevision(hash string) ([]byte, error) {
+// Revision returns the compressed content at hash.
+func (ft *FileTransaction) Revision(hash string) ([]byte, error) {
 	revision, err := getRevision(ft.FileID, hash)
 	if err != nil {
 		return nil, ft.Rollback(err)

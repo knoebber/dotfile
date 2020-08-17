@@ -54,8 +54,8 @@ func (c *Client) rawFileURL(alias string) string {
 	return c.Remote + path.Join("/"+c.Username, alias, "raw")
 }
 
-// GetFileList gets a list of files that the remote user has saved.
-func (c *Client) GetFileList() ([]string, error) {
+// List lists the files that the remote user has saved.
+func (c *Client) List() ([]string, error) {
 	var result []string
 
 	resp, err := c.Client.Get(c.Remote + "/api/" + c.Username)
@@ -74,8 +74,8 @@ func (c *Client) GetFileList() ([]string, error) {
 	return result, nil
 }
 
-// GetTrackingDataBytes returns the tracking data for alias in bytes.
-func (c *Client) GetTrackingDataBytes(alias string) ([]byte, error) {
+// TrackingDataBytes returns the tracking data for alias in bytes.
+func (c *Client) TrackingDataBytes(alias string) ([]byte, error) {
 	resp, err := c.Client.Get(c.fileURL(alias))
 	if err != nil {
 		return nil, errors.Wrap(err, "sending request for remote tracked file")
@@ -92,9 +92,9 @@ func (c *Client) GetTrackingDataBytes(alias string) ([]byte, error) {
 	return ioutil.ReadAll(resp.Body)
 }
 
-// GetTrackingData returns the file tracking data for alias on remote.
-func (c *Client) GetTrackingData(alias string) (*file.TrackingData, error) {
-	data, err := c.GetTrackingDataBytes(alias)
+// TrackingData returns the file tracking data for alias on remote.
+func (c *Client) TrackingData(alias string) (*file.TrackingData, error) {
+	data, err := c.TrackingDataBytes(alias)
 	if err != nil {
 		return nil, err
 	}
@@ -126,8 +126,8 @@ func (c *Client) getRevision(revisionURL string) ([]byte, error) {
 	return ioutil.ReadAll(resp.Body)
 }
 
-// GetContents fetches the current content of alias.
-func (c *Client) GetContents(alias string) ([]byte, error) {
+// Content fetches the current content of alias.
+func (c *Client) Content(alias string) ([]byte, error) {
 	resp, err := c.Client.Get(c.rawFileURL(alias))
 	if err != nil {
 		return nil, err
@@ -137,9 +137,9 @@ func (c *Client) GetContents(alias string) ([]byte, error) {
 	return ioutil.ReadAll(resp.Body)
 }
 
-// GetRevisions fetches all of the revisions for alias in the hashes argument.
+// Revisions fetches all of the revisions for alias in the hashes argument.
 // Returns an error if any fetches fail or are non 200.
-func (c *Client) GetRevisions(alias string, hashes []string) ([]*Revision, error) {
+func (c *Client) Revisions(alias string, hashes []string) ([]*Revision, error) {
 	fileURL := c.fileURL(alias)
 	g := new(errgroup.Group)
 	results := make([]*Revision, len(hashes))

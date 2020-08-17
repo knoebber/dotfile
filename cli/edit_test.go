@@ -37,7 +37,7 @@ func TestEditCommandLaunchesEditor(t *testing.T) {
 	os.Setenv("EDITOR", arbitraryEditor)
 
 	editCommand := &editCommand{
-		fileName: trackedFileAlias,
+		alias: trackedFileAlias,
 	}
 
 	clearTestStorage()
@@ -59,7 +59,7 @@ func TestErrorIfEditorNotSet(t *testing.T) {
 	os.Unsetenv("EDITOR")
 
 	command := editCommand{
-		fileName: trackedFileAlias,
+		alias: trackedFileAlias,
 	}
 	err := command.run(nil)
 	assert.Equal(t, errEditorEnvVarNotSet, err)

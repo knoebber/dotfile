@@ -8,15 +8,15 @@ import (
 
 // Getter is an interface that wraps methods for reading tracked files.
 type Getter interface {
-	GetContents() (contents []byte, err error)
-	GetRevision(hash string) (revision []byte, err error)
+	Content() (contents []byte, err error)
+	Revision(hash string) (revision []byte, err error)
 	HasCommit(hash string) (exists bool, err error)
 }
 
 // UncompressRevision reads a revision and uncompresses it.
 // Returns the uncompressed bytes of alias at hash.
 func UncompressRevision(g Getter, hash string) (*bytes.Buffer, error) {
-	contents, err := g.GetRevision(hash)
+	contents, err := g.Revision(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func UncompressRevision(g Getter, hash string) (*bytes.Buffer, error) {
 
 // IsClean returns whether the contents of g matches hash.
 func IsClean(g Getter, hash string) (bool, error) {
-	contents, err := g.GetContents()
+	contents, err := g.Content()
 	if err != nil {
 		return false, err
 	}
@@ -53,7 +53,7 @@ func Diff(g Getter, hash1, hash2 string) ([]diffmatchpatch.Diff, error) {
 	text1 = revision1.String()
 
 	if hash2 == "" {
-		contents, err := g.GetContents()
+		contents, err := g.Content()
 		if err != nil {
 			return nil, err
 		}

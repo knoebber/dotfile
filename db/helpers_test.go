@@ -125,6 +125,7 @@ func initTestFile(t *testing.T) *FileView {
 	ft, err := StageFile(testUsername, testAlias)
 	failIf(t, err, "new storage in init test file")
 	failIf(t, file.Init(ft, testPath, testAlias), "initialing test file")
+	failIf(t, ft.Close())
 
 	f, err := GetFile(testUsername, testAlias)
 	failIf(t, err, "getting file by username in init test file")
@@ -145,6 +146,7 @@ func initTestFileAndCommit(t *testing.T) (initialCommit CommitSummary, currentCo
 	time.Sleep(time.Second)
 
 	failIf(t, file.NewCommit(ft, "Commiting test updated content"))
+	failIf(t, ft.Close())
 
 	lst, err := GetCommitList(testUsername, testAlias)
 	failIf(t, err, "getting test commit")

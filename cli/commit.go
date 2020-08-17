@@ -6,12 +6,12 @@ import (
 )
 
 type commitCommand struct {
-	fileName      string
+	alias         string
 	commitMessage string
 }
 
 func (c *commitCommand) run(ctx *kingpin.ParseContext) error {
-	s, err := loadFile(c.fileName)
+	s, err := loadFile(c.alias)
 	if err != nil {
 		return err
 	}
@@ -27,7 +27,7 @@ func addCommitSubCommandToApplication(app *kingpin.Application) {
 	cc := new(commitCommand)
 
 	c := app.Command("commit", "save a revision of file").Action(cc.run)
-	c.Arg("file-name", "name of file to save new revision of").Required().StringVar(&cc.fileName)
+	c.Arg("alias", "name of file to save new revision of").Required().StringVar(&cc.alias)
 	c.Arg("commit-message",
 		"a memo to remind yourself what's in this version").
 		StringVar(&cc.commitMessage)

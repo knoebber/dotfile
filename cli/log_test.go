@@ -13,12 +13,12 @@ func TestLog(t *testing.T) {
 	logCommand := new(logCommand)
 
 	t.Run("returns error when file is not tracked", func(t *testing.T) {
-		logCommand.fileName = notTrackedFile
+		logCommand.alias = notTrackedFile
 		assert.Error(t, logCommand.run(nil))
 	})
 
 	t.Run("ok", func(t *testing.T) {
-		logCommand.fileName = trackedFileAlias
+		logCommand.alias = trackedFileAlias
 		assert.NoError(t, logCommand.run(nil))
 	})
 }

@@ -13,12 +13,12 @@ func TestDiff(t *testing.T) {
 	diffCommand := new(diffCommand)
 
 	t.Run("returns error when file is not tracked", func(t *testing.T) {
-		diffCommand.fileName = notTrackedFile
+		diffCommand.alias = notTrackedFile
 		assert.Error(t, diffCommand.run(nil))
 	})
 
 	t.Run("error when file has no differences", func(t *testing.T) {
-		diffCommand.fileName = trackedFileAlias
+		diffCommand.alias = trackedFileAlias
 		assert.Error(t, diffCommand.run(nil))
 	})
 }

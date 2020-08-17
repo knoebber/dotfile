@@ -14,11 +14,11 @@ const (
 )
 
 type logCommand struct {
-	fileName string
+	alias string
 }
 
 func (l *logCommand) run(ctx *kingpin.ParseContext) error {
-	s, err := loadFile(l.fileName)
+	s, err := loadFile(l.alias)
 	if err != nil {
 		return err
 	}
@@ -52,5 +52,5 @@ func addLogSubCommandToApplication(app *kingpin.Application) {
 	lc := new(logCommand)
 
 	c := app.Command("log", "shows revision history with commit hashes for a tracked file").Action(lc.run)
-	c.Arg("file-name", "tracked file to show history for").Required().StringVar(&lc.fileName)
+	c.Arg("alias", "tracked file to show history for").Required().StringVar(&lc.alias)
 }

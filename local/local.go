@@ -48,7 +48,7 @@ func convertPath(path string) (string, error) {
 		return "", fmt.Errorf("%#v not found", path)
 	}
 
-	// Get the full path.
+	//  the full path.
 	if !filepath.IsAbs(path) {
 		path, err = filepath.Abs(path)
 		if err != nil {
@@ -102,9 +102,9 @@ func writeCommit(contents []byte, storageDir string, alias, hash string) error {
 	return nil
 }
 
-// GetDefaultStorageDir returns the default location for storing dotfile information.
+// DefaultStorageDir returns the default location for storing dotfile information.
 // Creates the location when it does not exist.
-func GetDefaultStorageDir() (storageDir string, err error) {
+func DefaultStorageDir() (storageDir string, err error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
@@ -153,7 +153,7 @@ func List(storageDir string) ([]string, error) {
 			return nil, err
 		}
 
-		path, err := s.GetPath()
+		path, err := s.Path()
 		if err != nil {
 			return nil, err
 		}

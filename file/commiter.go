@@ -3,7 +3,6 @@ package file
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/knoebber/dotfile/usererror"
@@ -17,13 +16,11 @@ const initialCommitMessage = "Initial commit"
 
 // Commiter is the interace that wraps methods needed for saving commits.
 type Commiter interface {
-	io.Closer
 	Getter
 	SaveCommit(buff *bytes.Buffer, c *Commit) error
 }
 
 // Init creates a new commit with the initial commit message.
-// Closes c on success.
 func Init(c Commiter, path, alias string) error {
 	if err := CheckPath(path); err != nil {
 		return err
@@ -37,9 +34,8 @@ func Init(c Commiter, path, alias string) error {
 }
 
 // NewCommit saves a revision of the file at its current state.
-// Closes c on success.
 func NewCommit(c Commiter, message string) error {
-	contents, err := c.GetContents()
+	contents, err := c.Content()
 	if err != nil {
 		return err
 	}
@@ -67,5 +63,5 @@ func NewCommit(c Commiter, message string) error {
 		return err
 	}
 
-	return c.Close()
+	return nil
 }

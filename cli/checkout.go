@@ -6,12 +6,12 @@ import (
 )
 
 type checkoutCommand struct {
-	fileName   string
+	alias      string
 	commitHash string
 }
 
 func (c *checkoutCommand) run(ctx *kingpin.ParseContext) error {
-	s, err := loadFile(c.fileName)
+	s, err := loadFile(c.alias)
 	if err != nil {
 		return err
 	}
@@ -30,6 +30,6 @@ func addCheckoutSubCommandToApplication(app *kingpin.Application) {
 	cc := new(checkoutCommand)
 
 	c := app.Command("checkout", "revert a file to a previously committed state").Action(cc.run)
-	c.Arg("file-name", "name of file to revert changes in").Required().StringVar(&cc.fileName)
+	c.Arg("alias", "name of file to revert changes in").Required().StringVar(&cc.alias)
 	c.Arg("commit-hash", "the revision to revert to").StringVar(&cc.commitHash)
 }

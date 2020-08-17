@@ -26,7 +26,7 @@ func (lc *listCommand) run(ctx *kingpin.ParseContext) (err error) {
 	}
 
 	if lc.remote {
-		result, err = client.GetFileList()
+		result, err = client.List()
 	} else {
 		result, err = local.List(flags.storageDir)
 	}

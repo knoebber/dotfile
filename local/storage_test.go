@@ -45,10 +45,10 @@ func TestStorage_SetTrackingData(t *testing.T) {
 	})
 }
 
-func TestStorage_Close(t *testing.T) {
+func TestStorage_save(t *testing.T) {
 	t.Run("error when directory does not exist", func(t *testing.T) {
 		s := &Storage{Dir: "/not/exist"}
-		assert.Error(t, s.Close())
+		assert.Error(t, s.save())
 	})
 }
 
@@ -70,11 +70,11 @@ func TestStorage_HasCommit(t *testing.T) {
 	})
 }
 
-func TestStorage_GetRevision(t *testing.T) {
+func TestStorage_Revision(t *testing.T) {
 	s := setupTestFile(t)
 
 	t.Run("error when revision does not exist", func(t *testing.T) {
-		_, err := s.GetRevision("")
+		_, err := s.Revision("")
 		assert.Error(t, err)
 	})
 
@@ -82,7 +82,7 @@ func TestStorage_GetRevision(t *testing.T) {
 		s := setupTestFile(t)
 		_ = os.Mkdir(filepath.Join(testDir, testAlias), 0755)
 		_ = ioutil.WriteFile(filepath.Join(testDir, testAlias, testHash), []byte(testContent), 0644)
-		contents, err := s.GetRevision(testHash)
+		contents, err := s.Revision(testHash)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, contents)
 	})
@@ -141,16 +141,16 @@ func TestStorage_SaveCommit(t *testing.T) {
 	})
 }
 
-func TestStorage_GetPath(t *testing.T) {
+func TestStorage_Path(t *testing.T) {
 	t.Run("error when filedata is nil", func(t *testing.T) {
 		s := testStorage()
-		_, err := s.GetPath()
+		_, err := s.Path()
 		assert.Error(t, err)
 	})
 	t.Run("error when path is empty", func(t *testing.T) {
 		s := testStorage()
 		s.FileData = new(file.TrackingData)
-		_, err := s.GetPath()
+		_, err := s.Path()
 		assert.Error(t, err)
 	})
 
@@ -158,7 +158,7 @@ func TestStorage_GetPath(t *testing.T) {
 		s := testStorage()
 		s.FileData = &file.TrackingData{Path: "~/relative-path"}
 
-		path, err := s.GetPath()
+		path, err := s.Path()
 		assert.NoError(t, err)
 		assert.NotEmpty(t, path)
 	})

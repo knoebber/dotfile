@@ -44,11 +44,6 @@ func TestInit(t *testing.T) {
 		assert.Error(t, Init(s, "/valid/path", "test"))
 	})
 
-	t.Run("error on close", func(t *testing.T) {
-		s := &MockStorer{closeErr: true}
-		assert.Error(t, Init(s, "/valid/path", "test"))
-	})
-
 	t.Run("ok", func(t *testing.T) {
 		s := &MockStorer{}
 		assert.NoError(t, Init(s, "/valid/path", "test"))
@@ -104,12 +99,6 @@ func TestCheckout(t *testing.T) {
 		s := &MockStorer{hasCommit: true}
 		err := Checkout(s, testHash)
 		assert.NoError(t, err)
-	})
-
-	t.Run("error on close", func(t *testing.T) {
-		s := &MockStorer{hasCommit: true, closeErr: true}
-		err := Checkout(s, testHash)
-		assert.Error(t, err)
 	})
 }
 

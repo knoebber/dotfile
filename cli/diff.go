@@ -12,14 +12,14 @@ import (
 // TODO commitHash should match on first 7 characters as well.
 // Same for checkout
 type diffCommand struct {
-	fileName   string
+	alias      string
 	commitHash string
 }
 
 func (d *diffCommand) run(ctx *kingpin.ParseContext) error {
 	var buff bytes.Buffer
 
-	s, err := loadFile(d.fileName)
+	s, err := loadFile(d.alias)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (d *diffCommand) run(ctx *kingpin.ParseContext) error {
 func addDiffSubCommandToApplication(app *kingpin.Application) {
 	dc := new(diffCommand)
 	c := app.Command("diff", "check changes to tracked file").Action(dc.run)
-	c.Arg("file-name", "file to check changes in").Required().StringVar(&dc.fileName)
+	c.Arg("alias", "file to check changes in").Required().StringVar(&dc.alias)
 	c.Arg("commit-hash",
 		"the revision to diff against; default current").
 		StringVar(&dc.commitHash)

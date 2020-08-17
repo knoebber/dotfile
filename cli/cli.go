@@ -38,7 +38,7 @@ func loadFile(alias string) (*local.Storage, error) {
 }
 
 func setConfig(app *kingpin.Application) error {
-	defaultStorageDir, err := local.GetDefaultStorageDir()
+	defaultStorageDir, err := local.DefaultStorageDir()
 	if err != nil {
 		return err
 	}

@@ -13,12 +13,12 @@ func TestCheckout(t *testing.T) {
 	checkoutCommand := new(checkoutCommand)
 
 	t.Run("returns error when file is not tracked", func(t *testing.T) {
-		checkoutCommand.fileName = notTrackedFile
+		checkoutCommand.alias = notTrackedFile
 		assert.Error(t, checkoutCommand.run(nil))
 	})
 
 	t.Run("ok", func(t *testing.T) {
-		checkoutCommand.fileName = trackedFileAlias
+		checkoutCommand.alias = trackedFileAlias
 		assert.NoError(t, checkoutCommand.run(nil))
 	})
 }

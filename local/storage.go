@@ -37,8 +37,8 @@ func (s *Storage) hasSavedData() bool {
 	return exists(s.jsonPath())
 }
 
-// GetJSON returns the tracked files json.
-func (s *Storage) GetJSON() ([]byte, error) {
+// JSON returns the tracked files json.
+func (s *Storage) JSON() ([]byte, error) {
 	if !s.hasSavedData() {
 		return nil, ErrNotTracked
 	}
@@ -62,7 +62,7 @@ func (s *Storage) SetTrackingData() error {
 
 	s.FileData = new(file.TrackingData)
 
-	jsonContent, err := s.GetJSON()
+	jsonContent, err := s.JSON()
 	if err != nil {
 		return err
 	}
@@ -74,9 +74,7 @@ func (s *Storage) SetTrackingData() error {
 	return nil
 }
 
-// Close updates the files JSON with s.FileData.
-// TODO change name to Save.
-func (s *Storage) Close() error {
+func (s *Storage) save() error {
 	bytes, err := json.MarshalIndent(s.FileData, "", jsonIndent)
 	if err != nil {
 		return errors.Wrap(err, "marshalling tracking data to json")
@@ -98,7 +96,6 @@ func (s *Storage) Close() error {
 
 // InitFile sets up a new file to be tracked.
 // It will setup the storage directory if its the first use.
-// Closes storage.
 func (s *Storage) InitFile(path string) (err error) {
 	if s.hasSavedData() {
 		return fmt.Errorf("%#v is already tracked", s.Alias)
@@ -128,8 +125,8 @@ func (s *Storage) HasCommit(hash string) (exists bool, err error) {
 	return
 }
 
-// GetRevision returns the files state at hash.
-func (s *Storage) GetRevision(hash string) ([]byte, error) {
+// Revision returns the files state at hash.
+func (s *Storage) Revision(hash string) ([]byte, error) {
 	revisionPath := filepath.Join(s.Dir, s.Alias, hash)
 
 	bytes, err := ioutil.ReadFile(revisionPath)
@@ -140,9 +137,9 @@ func (s *Storage) GetRevision(hash string) ([]byte, error) {
 	return bytes, nil
 }
 
-// GetContents reads the contents of the file that is being tracked.
-func (s *Storage) GetContents() ([]byte, error) {
-	path, err := s.GetPath()
+// Content reads the contents of the file that is being tracked.
+func (s *Storage) Content() ([]byte, error) {
+	path, err := s.Path()
 	if err != nil {
 		return nil, err
 	}
@@ -169,12 +166,12 @@ func (s *Storage) SaveCommit(buff *bytes.Buffer, c *file.Commit) error {
 	}
 
 	s.FileData.Revision = c.Hash
-	return nil
+	return s.save()
 }
 
 // Revert overwrites a file at path with contents.
 func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
-	path, err := s.GetPath()
+	path, err := s.Path()
 	if err != nil {
 		return err
 	}
@@ -189,12 +186,12 @@ func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
 	}
 
 	s.FileData.Revision = hash
-	return nil
+	return s.save()
 }
 
-// GetPath gets the full path to the file.
+// Path gets the full path to the file.
 // Utilizes $HOME to convert paths with ~ to absolute.
-func (s *Storage) GetPath() (string, error) {
+func (s *Storage) Path() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
@@ -224,7 +221,7 @@ func (s *Storage) Push(client *dotfileclient.Client) error {
 		return ErrNoData
 	}
 
-	remoteData, err := client.GetTrackingData(s.Alias)
+	remoteData, err := client.TrackingData(s.Alias)
 	if err != nil {
 		return err
 	}
@@ -243,7 +240,7 @@ func (s *Storage) Push(client *dotfileclient.Client) error {
 	revisions := make([]*dotfileclient.Revision, len(newHashes))
 
 	for i, hash := range newHashes {
-		revision, err := s.GetRevision(hash)
+		revision, err := s.Revision(hash)
 		if err != nil {
 			return err
 		}
@@ -264,7 +261,6 @@ func (s *Storage) Push(client *dotfileclient.Client) error {
 // Pull retrieves a file's commits from a dotfile server.
 // Updates the local file with the new content from remote.
 // FileData does not need to be set; its possible to pull a file that does not yet exist.
-// Closes storage.
 func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 	var newHashes []string
 
@@ -285,7 +281,7 @@ func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 		}
 	}
 
-	remoteData, err := client.GetTrackingData(s.Alias)
+	remoteData, err := client.TrackingData(s.Alias)
 	if err != nil {
 		return err
 	}
@@ -298,7 +294,7 @@ func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 		return err
 	}
 
-	path, err := s.GetPath()
+	path, err := s.Path()
 	if err != nil {
 		return err
 	}
@@ -317,7 +313,7 @@ func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 
 	fmt.Printf("pulling %d new revisions for %s\n", len(newHashes), s.FileData.Path)
 
-	revisions, err := client.GetRevisions(s.Alias, newHashes)
+	revisions, err := client.Revisions(s.Alias, newHashes)
 	if err != nil {
 		return err
 	}
@@ -328,7 +324,6 @@ func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 		}
 	}
 
-	// This closes storage.
 	return file.Checkout(s, s.FileData.Revision)
 }
 
@@ -337,7 +332,7 @@ func (s *Storage) Move(newPath string, createDirs bool) error {
 	if s.FileData == nil {
 		return ErrNoData
 	}
-	currentPath, err := s.GetPath()
+	currentPath, err := s.Path()
 	if err != nil {
 		return err
 	}
@@ -357,5 +352,5 @@ func (s *Storage) Move(newPath string, createDirs bool) error {
 		return err
 	}
 
-	return s.Close()
+	return s.save()
 }

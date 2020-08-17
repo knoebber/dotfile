@@ -12,7 +12,7 @@ import (
 var execCommand = exec.Command
 
 type editCommand struct {
-	fileName string
+	alias string
 }
 
 var errEditorEnvVarNotSet = errors.New("EDITOR environment variable must be set")
@@ -23,12 +23,12 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 		return errEditorEnvVarNotSet
 	}
 
-	s, err := loadFile(e.fileName)
+	s, err := loadFile(e.alias)
 	if err != nil {
 		return err
 	}
 
-	path, err := s.GetPath()
+	path, err := s.Path()
 	if err != nil {
 		return err
 	}
@@ -43,5 +43,5 @@ func (e *editCommand) run(ctx *kingpin.ParseContext) error {
 func addEditSubCommandToApplication(app *kingpin.Application) {
 	ec := new(editCommand)
 	c := app.Command("edit", "open a tracked file in $EDITOR").Action(ec.run)
-	c.Arg("file-name", "the file to edit").Required().StringVar(&ec.fileName)
+	c.Arg("alias", "the file to edit").Required().StringVar(&ec.alias)
 }
