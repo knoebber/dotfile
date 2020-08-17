@@ -176,3 +176,11 @@ func List(storageDir string) ([]string, error) {
 
 	return result, nil
 }
+
+func createDirectories(path string) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return errors.Wrapf(err, "creating %q", filepath.Dir(path))
+	}
+
+	return nil
+}

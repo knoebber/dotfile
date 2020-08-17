@@ -179,6 +179,10 @@ func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
 		return err
 	}
 
+	if err := createDirectories(path); err != nil {
+		return err
+	}
+
 	err = ioutil.WriteFile(path, buff.Bytes(), 0644)
 	if err != nil {
 		return errors.Wrapf(err, "reverting file %q", path)
@@ -300,8 +304,8 @@ func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 	}
 
 	if createDirs {
-		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-			return errors.Wrapf(err, "creating %q", filepath.Dir(path))
+		if err := createDirectories(path); err != nil {
+			return err
 		}
 	}
 
@@ -339,8 +343,8 @@ func (s *Storage) Move(newPath string, createDirs bool) error {
 	}
 
 	if createDirs {
-		if err := os.MkdirAll(filepath.Dir(newPath), 0755); err != nil {
-			return errors.Wrapf(err, "creating %q", filepath.Dir(newPath))
+		if err := createDirectories(newPath); err != nil {
+			return err
 		}
 	}
 
