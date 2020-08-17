@@ -28,6 +28,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/knoebber/dotfile/file"
 	"github.com/pkg/errors"
 )
 
@@ -123,4 +124,55 @@ func GetDefaultStorageDir() (storageDir string, err error) {
 	}
 
 	return
+}
+
+// List returns a slice of aliases for all locally tracked files.
+// When the file has uncommited changes an asterisks is added to the end.
+func List(storageDir string) ([]string, error) {
+	// TODO move to local.go => local.List()
+	var alias string
+
+	files, err := filepath.Glob(filepath.Join(storageDir, "*.json"))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]string, len(files))
+
+	s := &Storage{Dir: storageDir}
+	s.FileData = new(file.TrackingData)
+	for i, filename := range files {
+		parts := strings.Split(filename, "/")
+		if len(parts) != 0 {
+			alias = parts[len(parts)-1]
+		}
+
+		alias = strings.TrimSuffix(alias, ".json")
+		s.Alias = alias
+
+		if err := s.SetTrackingData(); err != nil {
+			return nil, err
+		}
+
+		path, err := s.GetPath()
+		if err != nil {
+			return nil, err
+		}
+
+		if !exists(path) {
+			alias += " - removed"
+		} else {
+			clean, err := file.IsClean(s, s.FileData.Revision)
+			if err != nil {
+				return nil, err
+			}
+
+			if !clean {
+				alias += "*"
+			}
+		}
+
+		result[i] = alias
+	}
+
+	return result, nil
 }

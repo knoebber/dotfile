@@ -54,10 +54,10 @@ func (s *Storage) GetJSON() ([]byte, error) {
 // SetTrackingData reads the tracking data from the filesytem into FileData.
 func (s *Storage) SetTrackingData() error {
 	if s.Alias == "" {
-		return errors.New("alias cannot be empty")
+		return errors.New("cannot set tracking data: alias is empty")
 	}
 	if s.Dir == "" {
-		return errors.New("dir cannot be empty")
+		return errors.New("cannot set tracking data: dir is empty")
 	}
 
 	s.FileData = new(file.TrackingData)
@@ -326,56 +326,6 @@ func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 
 	// This closes storage.
 	return file.Checkout(s, s.FileData.Revision)
-}
-
-// GetLocalFileList returns a list of all locally tracked files.
-// When the file has uncommited changes an asterisks is added to the end.
-func (s *Storage) GetLocalFileList() ([]string, error) {
-	// TODO move to local.go => local.List()
-	var alias string
-
-	files, err := filepath.Glob(filepath.Join(s.Dir, "*.json"))
-	if err != nil {
-		return nil, err
-	}
-	result := make([]string, len(files))
-
-	s.FileData = new(file.TrackingData)
-	for i, filename := range files {
-		parts := strings.Split(filename, "/")
-		if len(parts) != 0 {
-			alias = parts[len(parts)-1]
-		}
-
-		alias = strings.TrimSuffix(alias, ".json")
-		s.Alias = alias
-
-		if err := s.SetTrackingData(); err != nil {
-			return nil, err
-		}
-
-		path, err := s.GetPath()
-		if err != nil {
-			return nil, err
-		}
-
-		if !exists(path) {
-			alias += " - removed"
-		} else {
-			clean, err := file.IsClean(s, s.FileData.Revision)
-			if err != nil {
-				return nil, err
-			}
-
-			if !clean {
-				alias += "*"
-			}
-		}
-
-		result[i] = alias
-	}
-
-	return result, nil
 }
 
 // Move moves the file currently tracked by storage.

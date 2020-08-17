@@ -15,7 +15,6 @@ type listCommand struct {
 func (lc *listCommand) run(ctx *kingpin.ParseContext) (err error) {
 	var result []string
 
-	storage := &local.Storage{Dir: flags.storageDir}
 	client, err := newDotfileClient()
 	if err != nil {
 		return err
@@ -29,7 +28,7 @@ func (lc *listCommand) run(ctx *kingpin.ParseContext) (err error) {
 	if lc.remote {
 		result, err = client.GetFileList()
 	} else {
-		result, err = storage.GetLocalFileList()
+		result, err = local.List(flags.storageDir)
 	}
 	if err != nil {
 		return
