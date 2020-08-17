@@ -354,3 +354,35 @@ func (s *Storage) Move(newPath string, createDirs bool) error {
 
 	return s.save()
 }
+
+// Rename changes a files alias.
+func (s *Storage) Rename(newAlias string) error {
+	newDir := filepath.Join(s.Dir, newAlias)
+	if exists(newDir) {
+		return usererror.Invalid(fmt.Sprintf("%q already exists", newAlias))
+	}
+
+	err := os.Rename(filepath.Join(s.Dir, s.Alias), newDir)
+	if err != nil {
+		return err
+	}
+
+	jsonPath := s.jsonPath()
+	s.Alias = newAlias
+
+	err = os.Rename(jsonPath, s.jsonPath())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Forget removes all tracking information for alias.
+func (s *Storage) Forget() error {
+	if err := os.Remove(s.jsonPath()); err != nil {
+		return err
+	}
+
+	return os.RemoveAll(filepath.Join(s.Dir, s.Alias))
+}

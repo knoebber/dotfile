@@ -69,7 +69,9 @@ func AddCommandsToApplication(app *kingpin.Application) error {
 	addPushSubCommandToApplication(app)
 	addPullSubCommandToApplication(app)
 	addConfigSubCommandToApplication(app)
-	addMVSubCommandToApplication(app)
+	addMoveSubCommandToApplication(app)
+	addRenameSubCommandToApplication(app)
+	addForgetSubCommandToApplication(app)
 
 	return nil
 }
