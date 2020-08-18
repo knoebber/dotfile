@@ -55,10 +55,14 @@ func (c *Client) rawFileURL(alias string) string {
 }
 
 // List lists the files that the remote user has saved.
-func (c *Client) List() ([]string, error) {
+func (c *Client) List(path bool) ([]string, error) {
 	var result []string
 
-	resp, err := c.Client.Get(c.Remote + "/api/" + c.Username)
+	url := c.Remote + "/api/" + c.Username
+	if path {
+		url += "?path=true"
+	}
+	resp, err := c.Client.Get(url)
 	if err != nil {
 		return nil, errors.Wrap(err, "sending request for file list")
 	}

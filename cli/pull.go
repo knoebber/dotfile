@@ -39,7 +39,7 @@ func (pc *pullCommand) run(ctx *kingpin.ParseContext) error {
 }
 
 func pullAll(storage *local.Storage, client *dotfileclient.Client, createDirs bool) error {
-	files, err := client.List()
+	files, err := client.List(false)
 	if err != nil {
 		return err
 	}

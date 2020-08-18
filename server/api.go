@@ -57,6 +57,7 @@ func handleFileListJSON(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	username := vars["username"]
+	addPath := r.URL.Query().Get("path") == "true"
 
 	files, err := db.GetFilesByUsername(username)
 	if err != nil {
@@ -67,6 +68,9 @@ func handleFileListJSON(w http.ResponseWriter, r *http.Request) {
 	result := make([]string, len(files))
 	for i, f := range files {
 		result[i] = f.Alias
+		if addPath {
+			result[i] += " " + f.Path
+		}
 	}
 
 	setJSON(w, result)

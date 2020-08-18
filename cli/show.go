@@ -64,7 +64,7 @@ func addShowSubCommandToApplication(app *kingpin.Application) {
 	sc := new(showCommand)
 	c := app.Command("show", "show the file").Action(sc.run)
 	c.Arg("alias", "the file to show").Required().StringVar(&sc.alias)
-	c.Flag("data", "show the file data in json format").Short('j').BoolVar(&sc.data)
+	c.Flag("data", "show the file data in json format").Short('d').BoolVar(&sc.data)
 	c.Flag("remote", "show the file on remote").Short('r').BoolVar(&sc.remote)
 	c.Flag("username", "show the file owned by username on remote").Short('u').StringVar(&sc.username)
 }

@@ -8,6 +8,7 @@ import (
 )
 
 type listCommand struct {
+	path     bool
 	remote   bool
 	username string
 }
@@ -26,9 +27,9 @@ func (lc *listCommand) run(ctx *kingpin.ParseContext) (err error) {
 	}
 
 	if lc.remote {
-		result, err = client.List()
+		result, err = client.List(lc.path)
 	} else {
-		result, err = local.List(flags.storageDir)
+		result, err = local.List(flags.storageDir, lc.path)
 	}
 	if err != nil {
 		return
@@ -44,6 +45,7 @@ func (lc *listCommand) run(ctx *kingpin.ParseContext) (err error) {
 func addListSubCommandToApplication(app *kingpin.Application) {
 	lc := new(listCommand)
 	c := app.Command("ls", "list all tracked files, an asterisks signifies uncommited changes").Action(lc.run)
+	c.Flag("path", "include path in list").Short('p').BoolVar(&lc.path)
 	c.Flag("remote", "read file list from remote").Short('r').BoolVar(&lc.remote)
 	c.Flag("username", "read files owned by username on remote").Short('u').StringVar(&lc.username)
 }

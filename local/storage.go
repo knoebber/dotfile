@@ -386,3 +386,17 @@ func (s *Storage) Forget() error {
 
 	return os.RemoveAll(filepath.Join(s.Dir, s.Alias))
 }
+
+// Remove deletes the file that is tracked and all its data.
+func (s *Storage) Remove() error {
+	path, err := s.Path()
+	if err != nil {
+		return err
+	}
+
+	if err = os.Remove(path); err != nil {
+		return err
+	}
+
+	return s.Forget()
+}

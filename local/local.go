@@ -128,7 +128,7 @@ func DefaultStorageDir() (storageDir string, err error) {
 
 // List returns a slice of aliases for all locally tracked files.
 // When the file has uncommited changes an asterisks is added to the end.
-func List(storageDir string) ([]string, error) {
+func List(storageDir string, path bool) ([]string, error) {
 	// TODO move to local.go => local.List()
 	var alias string
 
@@ -153,12 +153,12 @@ func List(storageDir string) ([]string, error) {
 			return nil, err
 		}
 
-		path, err := s.Path()
+		fullPath, err := s.Path()
 		if err != nil {
 			return nil, err
 		}
 
-		if !exists(path) {
+		if !exists(fullPath) {
 			alias += " - removed"
 		} else {
 			clean, err := file.IsClean(s, s.FileData.Revision)
@@ -172,6 +172,9 @@ func List(storageDir string) ([]string, error) {
 		}
 
 		result[i] = alias
+		if path {
+			result[i] += " " + s.FileData.Path
+		}
 	}
 
 	return result, nil
