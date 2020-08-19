@@ -52,9 +52,13 @@ CREATE INDEX IF NOT EXISTS users_username_index ON users(username);`
 }
 
 func (u *User) insertStmt(e executor) (sql.Result, error) {
+	var email *string
+	if u.Email != "" {
+		email = &u.Email
+	}
 	return e.Exec("INSERT INTO users(username, email, password_hash, cli_token) VALUES(?, ?, ?, ?)",
 		u.Username,
-		u.Email,
+		email,
 		u.PasswordHash,
 		u.CLIToken,
 	)

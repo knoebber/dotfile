@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUsersTable(t *testing.T) {
+func TestCreateUser(t *testing.T) {
 	createTestDB(t)
 
 	t.Run("username must be unique / case insensitive", func(t *testing.T) {
@@ -19,8 +19,16 @@ func TestUsersTable(t *testing.T) {
 		}
 
 		_, err := insert(u, nil)
-		println(err.Error())
 		assert.Error(t, err)
 
 	})
+
+	t.Run("ok", func(t *testing.T) {
+		_, err := CreateUser("user1", "testpassword")
+		assert.NoError(t, err)
+
+		_, err = CreateUser("user2", "testpassword")
+		assert.NoError(t, err)
+	})
+
 }
