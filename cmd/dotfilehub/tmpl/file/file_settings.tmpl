@@ -1,0 +1,23 @@
+<main>
+  <h1>
+    <a href="/{{ .Session.Username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a> - settings
+  </h1>
+  <fieldset>
+    <legend>Update</legend>
+    <form method="post">
+      <label for="name">Name:</label>
+      <input value="{{ .Vars.alias }}" id="name" name="name" required>
+      <label for="path">Path:</label>
+      <input value="{{ .Data.path }}" id="path" name="path" required>
+      <button>Submit</button>
+    </form>
+  </fieldset>
+  <fieldset>
+    <legend>Delete</legend>
+    <form method="post">
+      <label for="delete">Write the files name:</label>
+      <input id="delete" name="delete" required>
+      <button class="danger">Delete</button>
+    </form>
+  </fieldset>
+</main>

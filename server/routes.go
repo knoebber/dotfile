@@ -57,6 +57,7 @@ func dynamicRoutes(r *mux.Router) {
 	r.HandleFunc("/{username}/{alias}/raw", handleRawFile)
 	r.HandleFunc("/{username}/{alias}/commits", commitsHandler())
 	r.HandleFunc("/{username}/{alias}/edit", editFileHandler())
+	r.HandleFunc("/{username}/{alias}/settings", fileSettingsHandler())
 	r.HandleFunc("/{username}/{alias}/diff", diffHandler())
 	r.HandleFunc("/{username}/{alias}/{hash}", commitHandler())
 	r.HandleFunc("/{username}/{alias}/{hash}/raw", handleRawUncompressedCommit)

@@ -24,7 +24,7 @@ main {
     box-sizing: inherit;
 }
 
-button, a, h1, h2, h3, h4, label, strong, th {
+button, a, h1, h2, h3, h4, label, strong, th, legend {
     color: var(--headline);
 }
 
@@ -69,10 +69,6 @@ button {
 
 button:hover {
     box-shadow: 0 5px 15px -10px rgba(31, 18, 53, 0.6)
-}
-
-label:hover {
-    text-decoration: underline;
 }
 
 form[method="post"]:not(.empty) {

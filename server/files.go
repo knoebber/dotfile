@@ -44,6 +44,39 @@ func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	return true
 }
 
+// Handles submitting the update file form.
+func updateFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+	currentAlias := p.Vars["alias"]
+	alias := r.Form.Get("name")
+	path := r.Form.Get("path")
+
+	// Delete the file when the user types the name of the alias into form.
+	delete := r.Form.Get("delete")
+
+	file, err := db.GetFile(p.Session.Username, currentAlias)
+	if err != nil {
+		return p.setError(w, err)
+	}
+
+	if currentAlias == delete {
+		if err := file.Delete(); err != nil {
+			return p.setError(w, err)
+		}
+
+		http.Redirect(w, r, "/"+p.Session.Username, http.StatusSeeOther)
+		return true
+	} else if delete != "" {
+		return p.setError(w, usererror.Invalid("Name does not match"))
+	}
+
+	if err := file.Update(alias, path); err != nil {
+		return p.setError(w, err)
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/%s/%s", p.Session.Username, alias), http.StatusSeeOther)
+	return true
+}
+
 // Handles submitting the edit file form.
 func editFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	content := r.Form.Get("contents")
@@ -270,6 +303,15 @@ func newFileHandler() http.HandlerFunc {
 		title:        "New File",
 		handleForm:   newTempFile,
 		loadData:     loadTempFileForm,
+		protected:    true,
+	})
+}
+
+func fileSettingsHandler() http.HandlerFunc {
+	return createHandler(&pageDescription{
+		templateName: "file_settings.tmpl",
+		handleForm:   updateFile,
+		loadData:     loadFile,
 		protected:    true,
 	})
 }

@@ -26,6 +26,9 @@
   {{ end }}
   {{ if .Owned }}
   <a href="{{ $fileLink }}/edit{{ if $hash }}?at={{ $hash }}{{ end }}">Edit</a>
+  {{ if not $hash }}
+  <a href="{{ $fileLink }}/settings">Settings</a>
+  {{ end }}
   {{ end }}
   {{ if .Data.current }}
   <strong>Current revision</strong>

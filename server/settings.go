@@ -129,7 +129,7 @@ func loadThemes(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 
 func settingsHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
-		templateName: "settings.tmpl",
+		templateName: "user_settings.tmpl",
 		title:        settingsTitle,
 		loadData:     loadUserSettings,
 		handleForm:   handleEmail,

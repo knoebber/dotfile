@@ -115,22 +115,53 @@ func (f *FileView) scan(row *sql.Row) error {
 }
 
 // Update updates the alias or path if they are different.
-// TODO not using yet - unsure if allowing users to update alias / path is wise.
 func (f *File) Update(newAlias, newPath string) error {
-	if newAlias == "" || newPath == "" {
-		return fmt.Errorf("cannot update to empty value, alias: %#v, path: %#v", newAlias, newPath)
-	}
-
 	if f.Alias == newAlias && f.Path == newPath {
 		return nil
 	}
+
+	if err := checkFile(newAlias, newPath); err != nil {
+		return err
+	}
+
 	_, err := connection.Exec(`
 UPDATE files
 SET alias = ?, path = ?, updated_at = CURRENT_TIMESTAMP
-WHERE file_id = ?
+WHERE id = ?
 `, newAlias, newPath, f.ID)
 	if err != nil {
-		return errors.Wrapf(err, "updating file %d to %#v %#v", f.ID, newAlias, newPath)
+		return errors.Wrapf(err, "updating file %d to %q %q", f.ID, newAlias, newPath)
+	}
+
+	return nil
+}
+
+// Delete deletes the file.
+func (f *File) Delete() error {
+	tx, err := connection.Begin()
+	if err != nil {
+		return errors.Wrap(err, "starting transaction for file delete")
+	}
+
+	_, err = tx.Exec("UPDATE files SET current_commit_id = NULL WHERE id = ?", f.ID)
+	if err != nil {
+		return rollback(tx, errors.Wrapf(err, "setting current commit id to null for file %d %q", f.ID, f.Alias))
+	}
+
+	_, err = tx.Exec("DELETE FROM commits WHERE file_id = ?", f.ID)
+	if err != nil {
+		// This will happen if another file forked this commit (FK constraint)
+		// Not sure what to do about this yet.
+		return rollback(tx, errors.Wrapf(err, "deleting commits for file %d %q", f.ID, f.Alias))
+	}
+
+	_, err = tx.Exec("DELETE FROM files WHERE id = ?", f.ID)
+	if err != nil {
+		return rollback(tx, errors.Wrapf(err, "deleting file %d %q", f.ID, f.Alias))
+	}
+
+	if err = tx.Commit(); err != nil {
+		return errors.Wrap(err, "commit file delete transaction")
 	}
 
 	return nil
