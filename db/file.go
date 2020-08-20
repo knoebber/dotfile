@@ -148,10 +148,18 @@ func (f *File) Delete() error {
 		return rollback(tx, errors.Wrapf(err, "setting current commit id to null for file %d %q", f.ID, f.Alias))
 	}
 
+	_, err = tx.Exec(`
+UPDATE commits SET forked_from = NULL
+WHERE id IN (SELECT forked.id
+             FROM commits
+             JOIN commits AS forked ON forked.forked_from = commits.ID
+             WHERE commits.file_id = ?)`, f.ID)
+	if err != nil {
+		return rollback(tx, errors.Wrapf(err, "setting forked_from to null for file %d %q", f.ID, f.Alias))
+	}
+
 	_, err = tx.Exec("DELETE FROM commits WHERE file_id = ?", f.ID)
 	if err != nil {
-		// This will happen if another file forked this commit (FK constraint)
-		// Not sure what to do about this yet.
 		return rollback(tx, errors.Wrapf(err, "deleting commits for file %d %q", f.ID, f.Alias))
 	}
 
@@ -161,7 +169,7 @@ func (f *File) Delete() error {
 	}
 
 	if err = tx.Commit(); err != nil {
-		return errors.Wrap(err, "commit file delete transaction")
+		return errors.Wrap(err, "commiting file delete transaction")
 	}
 
 	return nil

@@ -25,7 +25,7 @@ const cliTokenLength = 24
 // User is the model for a dotfilehub user.
 type User struct {
 	ID             int64
-	Username       string `validate:"alphanum"`        // TODO make regex, usernames should be allowed to have underscores etc.
+	Username       string `validate:"alphanum"`
 	Email          string `validate:"omitempty,email"` // Not required; users may opt in to enable account recovery.
 	EmailConfirmed bool
 	PasswordHash   []byte
