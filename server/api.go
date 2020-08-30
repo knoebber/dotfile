@@ -176,9 +176,9 @@ func savePushedRevision(ft *db.FileTransaction, p *multipart.Part, commitMap map
 	return nil
 }
 
-// Response body is expected to be multipart.
-// The first part should be a JSON encoding of file.TrackingData
-// Subsequent parts are the new revisions that the server should save.
+// Request body is expected to be multipart.
+// The first part is a JSON encoding of file.TrackingData
+// Subsequent parts are new revisions that need to be saved.
 // Each revision part should have be named as its hash.
 func handlePush(w http.ResponseWriter, r *http.Request) {
 	var mr *multipart.Reader

@@ -2,10 +2,88 @@
 
 Dotfilehub is a web front end for dotfile.
 
+* View File
+Any file is globally viewable at the path ~/{username}/{alias}~. There are no private files.
+If you want to use dotfile to manage secret files then self host it on a private network.
+
+Files only render in HTML if the client sends an accept header that contains ~hmtl~. This allows
+users to download files easily if they are in a new environment that does not have the dotfile CLI installed.
+
+For example:
+#+BEGIN_SRC bash
+curl https://dotfilehub.com/knoebber/bashrc > ~/.bashrc
+#+END_SRC
 * Create a new file
-* Edit a file
-* Update a file
-Warning - updating a files name can break links and pulls.
+  [[/new_file][Create File]]
+
+If you have the CLI installed its easier to use the ~push~ command to upload files.
+** Alias
+The alias must contain only letters, numbers, and underscores.
+** Path
+The path is the location that ~dot pull~ will install the file to.
+This must be either an absolute path, or start with a tilda.
 * Set your timezone
-Use..
+[[/settings/timezone][Set Timezone]]
+
+This will convert timestamps from the database to a timezone. The default is UTC.
+The form expects a string like the "TZ database column" found here:
+[[https://en.wikipedia.org/wiki/List_of_tz_database_time_zones]]
+
+Depending on the server's host the available zones may be different.
+Consult [[https://golang.org/pkg/time/#LoadLocation]] for more information.
+* API
+** List Files
+#+BEGIN_SRC
+GET /api/{username}
+GET /api/{username}?path=true
+#+END_SRC
+Returns a list of aliases for username. Include paths with the ~?path~ parameter.
+** Get File Data
+   #+BEGIN_SRC bash
+GET /api/{username}/{alias}
+#+END_SRC
+Returns a files data in JSON format.
+** Get Revision
+   #+BEGIN_SRC bash
+GET /api/{username}/{alias}/{hash}
+#+END_SRC
+Returns a files compressed revision at hash.
+** Push File
+   #+BEGIN_SRC bash
+POST /api/{username}/{alias}
+#+END_SRC
+Post a file to the server. This can either be a new or existing file.
+The request body is a multipart file upload.
+The first part is a JSON encoding of the file data.
+Every hash that is part of the file's data should have a corresponding file part in the request. 
+The file parts are zlib compressed revisions that are named as its hash.
+
+Request must have basic auth headers with the dotfilehub username and CLI token.
 * Self host
+:PROPERTIES:
+:custom_id: self-host
+:END:
+
+Clone the repository and build the binary. The build step copies all of the required
+assets into the ~/bin~ directory.
+#+BEGIN_SRC bash
+git clone https://github.com/knoebber/dotfile
+cd dotfile
+make dotfilehub
+cd bin
+./dotfilehub
+#+END_SRC
+
+The server is configured through the following flags:
+** -addr
+The address to listen on.
+** -db
+The location of the sqlite database. Creates a new database when it does not yet exist.
+** -host
+The name of the host. Used for displaying the name of the remote in the CLI setup page.
+By default it will use the host header, but this is often incorrect depending on
+how the server is setup.
+** -secure
+Sets the session cookie to HTTPS only.
+** -proxyheaders
+Set the request IP by inspecting the reverse proxy headers.

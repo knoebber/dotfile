@@ -11,6 +11,9 @@ For example: ~dot edit bashrc~.
 Commands may have additional flags that can be used. Use ~dot <command> --help~ to learn more.
 
 * Install Dotfile
+:PROPERTIES:
+:custom_id: install-cli
+:END:
 Dotfile should work on most unix systems. [[https://golang.org][Golang]] is required to build dot. 
 
 ** Install with go get
@@ -37,13 +40,15 @@ For every file that is tracked there is a matching .json file and a directory fo
 
 ** Config
 Dotfile will create a config directory in a location returned by https://golang.org/pkg/os/#UserConfigDir
-You can edit the ~dotfile.json~ manually or with the ~dot config~ command.
 
-~remote~ The remote server to use. Defaults to `https://dotfilehub.com`.
+You can edit ~dotfile.json~ manually or with the ~dot config~ command.
+The config file has the following keys:
 
-~username~ A dotfilehub username. Pull, push, and commands with the ~-r, --remote~ flag will use this for file lookups.
+~remote~  - The remote server to use. Defaults to https://dotfilehub.com
 
-~token~ A secret for allowing write access to a dotfilehub account. Find this under settings =>
+~username~ - A dotfilehub username. Pull, push, and commands with the ~--remote~ flag will use this for lookups.
+
+~token~ - A secret for allowing write access to a dotfilehub account. Find this under settings =>
 Setup CLI in the web interface. Must be set for ~dot push~.
 * Commands
 ** Init
@@ -148,7 +153,7 @@ Alternatively pull a file without using the dotfile CLI:
 curl https://dotfilehub.com/api/knoebber
 # Output: [bashrc, inputrc, vimrc, emacs]
 
-curl https://dotfilehub.com/knoebber/inputrc >> ~/.inputrc
+curl https://dotfilehub.com/knoebber/inputrc > ~/.inputrc
 #+END_SRC
 ** Move
 Change the files stored path and move the file.
