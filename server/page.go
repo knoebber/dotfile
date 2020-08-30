@@ -223,7 +223,7 @@ func loadTemplates() (err error) {
 	baseTemplate, err = template.
 		New("base").
 		Funcs(defaultContentFunction).
-		ParseFiles("tmpl/base.tmpl")
+		ParseFiles("templates/base.tmpl")
 
 	if err != nil {
 		return
@@ -238,7 +238,7 @@ func loadTemplates() (err error) {
 	pageTemplates, err = template.
 		New("pages").
 		Funcs(pageFunctions).
-		ParseGlob("tmpl/*/*.tmpl")
+		ParseGlob("templates/*/*.tmpl")
 	return
 
 }

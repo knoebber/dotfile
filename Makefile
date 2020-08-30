@@ -21,8 +21,8 @@ htmlgen:
 bin/assets:
 	cp -r server/assets bin/assets
 
-bin/tmpl:
-	cp -r server/tmpl bin/tmpl
+bin/templates:
+	cp -r server/templates bin/templates
 
 bin/html:
 	cp -r server/html bin/html
@@ -30,7 +30,7 @@ bin/html:
 htmldocs: htmlgen bin/html
 	bin/htmlgen -in docs/ -out bin/html
 
-dotfilehub: clean bin/tmpl bin/assets htmldocs
+dotfilehub: clean bin/templates bin/assets htmldocs
 	go build -o bin/dotfilehub cmd/dotfilehub/main.go
 
 clean:
