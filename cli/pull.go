@@ -62,5 +62,5 @@ func addPullSubCommandToApplication(app *kingpin.Application) {
 	p.Arg("alias", "the file to pull").StringVar(&pc.alias)
 	p.Flag("username", "override config username").Short('u').StringVar(&pc.username)
 	p.Flag("all", "pull all tracked files").Short('a').BoolVar(&pc.pullAll)
-	p.Flag("create-dirs", "create directories that do not exist").Short('c').BoolVar(&pc.createDirs)
+	p.Flag("parent-dirs", "create parent directories that do not exist").Short('p').BoolVar(&pc.createDirs)
 }

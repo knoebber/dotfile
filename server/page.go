@@ -3,8 +3,10 @@ package server
 import (
 	"bytes"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -14,11 +16,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Titles of pages that live on the nav bar.
+// Titles of pages that have links on the nav bar.
 // Important these stay constant as they are referenced in setLinks()
 const (
 	indexTitle    = "Dotfilehub"
-	aboutTitle    = "About"
+	docsTitle     = "Docs"
 	settingsTitle = "Settings"
 	signupTitle   = "Signup"
 	loginTitle    = "Login"
@@ -41,6 +43,7 @@ type Page struct {
 
 	Session      *db.Session
 	templateName string
+	htmlFile     string
 	// When true restrict page access to logged in page owners.
 	protected bool
 }
@@ -68,9 +71,9 @@ func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
 
 	if db.NotFound(err) {
 		w.WriteHeader(http.StatusNotFound)
-		p.templateName = "not_found.tmpl"
-		if err := p.render(w); err != nil {
-			templateError(w, "404", err)
+		p.htmlFile = "404.html"
+		if err := p.renderHTML(w); err != nil {
+			staticError(w, "404", err)
 		}
 
 		return true
@@ -129,15 +132,14 @@ func (p *Page) setLinks() {
 	p.Links = []Link{
 		newLink("/", indexTitle, p.Title),
 		userLink,
-		newLink("/about", aboutTitle, p.Title),
+		newLink("/docs", docsTitle, p.Title),
 		settingsLink,
 	}
 }
 
-func (p *Page) render(w http.ResponseWriter) error {
+func (p *Page) renderTemplate(w http.ResponseWriter) error {
 	p.setLinks()
 
-	// Clone the base template and add a function that executes the page's template.
 	baseClone, err := baseTemplate.Clone()
 	if err != nil {
 		return err
@@ -147,20 +149,61 @@ func (p *Page) render(w http.ResponseWriter) error {
 		"content": func() (template.HTML, error) {
 			buf := new(bytes.Buffer)
 			err := pageTemplates.ExecuteTemplate(buf, p.templateName, p)
-			return template.HTML(buf.String()), err
+			if err != nil {
+				return template.HTML(""), err
+			}
+
+			return template.HTML(buf.String()), nil
 		},
 	})
 
 	return baseClone.Execute(w, p)
 }
 
-func newPage(w http.ResponseWriter, r *http.Request, templateName, title string, protected bool) (*Page, error) {
+func (p *Page) renderHTML(w http.ResponseWriter) error {
+	p.setLinks()
+
+	baseClone, err := baseTemplate.Clone()
+	if err != nil {
+		return err
+	}
+
+	baseClone.Funcs(template.FuncMap{
+		"content": func() (template.HTML, error) {
+			html, err := ioutil.ReadFile(filepath.Join("html", p.htmlFile))
+			if err != nil {
+				return "", err
+			}
+
+			return template.HTML(string(html)), err
+		},
+	})
+
+	return baseClone.Execute(w, p)
+}
+
+// Returns a page that will use a go template for content.
+func pageFromTemplate(w http.ResponseWriter, r *http.Request, templateName, title string, protected bool) (*Page, error) {
 	p := &Page{
 		Title:        title,
 		Vars:         mux.Vars(r),
 		Data:         make(map[string]interface{}),
 		templateName: templateName,
 		protected:    protected,
+	}
+
+	if err := p.setSession(w, r); err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
+// Returns a page that will use a HTML file for content.
+func pageFromHTML(w http.ResponseWriter, r *http.Request, title, htmlFile string) (*Page, error) {
+	p := &Page{
+		Title:    title,
+		htmlFile: htmlFile,
 	}
 
 	if err := p.setSession(w, r); err != nil {

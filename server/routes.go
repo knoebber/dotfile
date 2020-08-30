@@ -10,30 +10,20 @@ import (
 )
 
 func setupRoutes(r *mux.Router, config Config) {
-	staticRoutes(r, config)
+	staticRoutes(r)
 	assetRoutes(r)
 	apiRoutes(r)
-	// Important to register these last so non dynamic routes take precedence.
-	dynamicRoutes(r)
-
+	dotfileRoutes(r, config)
 	createReservedUsernames(r)
 }
 
-// Pages that do not have a path variables.
-func staticRoutes(r *mux.Router, config Config) {
+// Pages that get their content from the html/ directory.
+func staticRoutes(r *mux.Router) {
 	r.HandleFunc("/", indexHandler())
-	r.HandleFunc("/about", aboutHandler())
-	r.HandleFunc("/acknowledgments", acknowledgmentsHander())
-	r.HandleFunc("/signup", signupHandler(config.Secure))
-	r.HandleFunc("/login", loginHandler(config.Secure))
-	r.HandleFunc("/logout", logoutHandler())
-	r.HandleFunc("/new_file", newFileHandler())
-	r.HandleFunc("/settings", settingsHandler())
-	r.HandleFunc("/settings/email", emailHandler())
-	r.HandleFunc("/settings/timezone", timezoneHandler())
-	r.HandleFunc("/settings/password", passwordHandler())
-	r.HandleFunc("/settings/theme", themeHandler())
-	r.HandleFunc("/settings/cli", cliHandler(config))
+	r.HandleFunc("/docs", createStaticHandler(docsTitle, "docs.html"))
+	r.HandleFunc("/docs/cli", createStaticHandler("CLI Documentation", "cli.html"))
+	r.HandleFunc("/docs/web", createStaticHandler("Web Documentation", "web.html"))
+	r.HandleFunc("/docs/acknowledgments", createStaticHandler("Acknowledgments", "acknowledgments.html"))
 }
 
 func assetRoutes(r *mux.Router) {
@@ -49,7 +39,17 @@ func apiRoutes(r *mux.Router) {
 	r.HandleFunc("/api/{username}/{alias}/{hash}", handleRawCompressedCommit)
 }
 
-func dynamicRoutes(r *mux.Router) {
+func dotfileRoutes(r *mux.Router, config Config) {
+	r.HandleFunc("/signup", signupHandler(config.Secure))
+	r.HandleFunc("/login", loginHandler(config.Secure))
+	r.HandleFunc("/logout", logoutHandler())
+	r.HandleFunc("/new_file", newFileHandler())
+	r.HandleFunc("/settings", settingsHandler())
+	r.HandleFunc("/settings/email", emailHandler())
+	r.HandleFunc("/settings/timezone", timezoneHandler())
+	r.HandleFunc("/settings/password", passwordHandler())
+	r.HandleFunc("/settings/theme", themeHandler())
+	r.HandleFunc("/settings/cli", cliHandler(config))
 	r.HandleFunc("/temp_file/{alias}/create", confirmNewFileHandler())
 	r.HandleFunc("/temp_file/{alias}/commit", confirmEditHandler())
 	r.HandleFunc("/{username}", userHandler())

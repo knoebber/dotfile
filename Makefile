@@ -13,16 +13,25 @@ ci_test:
 	go test $(CI_GO_TEST_FLAGS) $(GO_TEST_TARGET)
 
 dot:
-	go build -o bin/dot cmd/dot/*.go
+	go build -o bin/dot cmd/dot/main.go
+
+htmlgen:
+	go build -o bin/htmlgen cmd/htmlgen/main.go
 
 bin/assets:
-	cp -r cmd/dotfilehub/assets bin/assets
+	cp -r server/assets bin/assets
 
 bin/tmpl:
-	cp -r cmd/dotfilehub/tmpl bin/tmpl
+	cp -r server/tmpl bin/tmpl
 
-dotfilehub: clean bin/tmpl bin/assets
-	go build -o bin/dotfilehub cmd/dotfilehub/*.go
+bin/html:
+	cp -r server/html bin/html
+
+htmldocs: htmlgen bin/html
+	bin/htmlgen -in docs/ -out bin/html
+
+dotfilehub: clean bin/tmpl bin/assets htmldocs
+	go build -o bin/dotfilehub cmd/dotfilehub/main.go
 
 clean:
 	rm -rf bin/*

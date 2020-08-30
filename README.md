@@ -2,40 +2,29 @@
 
 Dotfile is a simple version control system designed for single files.
 
-This repo creates two binaries:
+Dotfile is comprised of two main programs:
 
 `dot` - manage files locally
+[docs](docs/cli.org)
 
 `dotfilehub` - manage files remotely
+[docs](docs/web.org)
 
-## CLI
+[dotfilehub.com](https://dotfilehub.com)
 
-### Installing
+## Example CLI Usage
+Dotfile commands are based on `git` but simplified.
 
-Build: `make dot`
-
-Then either add `bin/` to your path, or copy the binary somewhere else.
-
-### Commands
-
-[Asciinema Demo](https://asciinema.org/a/vEMt14MIf1Imlul8cpaDv9JXh?autoplay=1)
-
-Dotfile commands are based on `git` but simplified. Checking a file in is simple:
+Check a file in:
 
 ```
 dot init ~/.bashrc
 ```
 
-This will create an inital commit with the current time stamp. Dotfile will store the path of the file and
-give it a default alias of `bashrc`. After making changes to `.bashrc` use the alias to refer to it
-regardless of the current directory. Alternatively provide a name when the file is initialized for clarity:
+This creates an initial commit. Dotfile will store the path of the file and
+give it a default alias of `bashrc`. Use the alias to refer to it regardless of the current directory.
 
-```
-dot init ~/.config/i3/config i3
-dot init ~/.emacs.d/init.el emacs
-```
-
-Open a tracked file in `$EDITOR` without having to type its path:
+Open in `$EDITOR`
 
 ```
 dot edit bashrc
@@ -52,27 +41,29 @@ Check the diff after making changes:
 ```
 dot diff bashrc # diff against last commit
 
-dot diff bashrc 42d4220dda4d43d639a6b7ac76f2ff4e04b651a6
 ```
 
-Reverting a file is easy:
+Commit a file's changes:
 
 ```
-dot checkout bashrc # reverts to the last commit
-
-dot checkout bashrc 42d4220dda4d43d639a6b7ac76f2ff4e04b651a6
+dot commit bashrc "Add dotfile alias"
 ```
 
-
-Unlike git, there is no need to stage files before making a commit:
+Revert a file to its last commit:
 
 ```
-dot commit bashrc # Uses the current timestamp as the commit message
+dot checkout bashrc
 
-dot commit emacs "Add dotfile bindings"
 ```
 
-## Dotfilehub
-Use [dotfilehub.com](https://dotfilehub.com) to manage your dotfiles.
+Push changes to a dotfilehub server:
 
-You can also self host. Just build the binary: `make dotfilehub`
+```
+dot push bashrc
+```
+
+Install all of your dotfiles
+
+```
+dot pull --all
+```

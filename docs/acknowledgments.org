@@ -1,0 +1,13 @@
+#+TITLE: Acknowledgments
+
+*Websites*
++ [[https://devinadooley.com][Devin Dooley]] - feedback and web hosting
++ [[https://alexthemitchell.com/][Alex Mitchell]] - contributions and code review
++ [[https://www.happyhues.co/palettes/1][Happy Hues]] - color palette
+
+*Golang Packages*
++ [[https://github.com/gorilla/mux][gorilla/mux]] - http routing
++ [[https://github.com/alecthomas/kingpin][kingpin]] - command line parsing
++ [[https://github.com/sergi/go-diff][go-diff]] - diffing
++ [[https://github.com/niklasfasching/go-org][go-org]] - convert org to html
++ [[https://github.com/stretchr/testify][testify]] - assertions for tests

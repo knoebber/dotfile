@@ -1,0 +1,11 @@
+#+TITLE: Web Documentation
+
+Dotfilehub is a web front end for dotfile.
+
+* Create a new file
+* Edit a file
+* Update a file
+Warning - updating a files name can break links and pulls.
+* Set your timezone
+Use..
+* Self host

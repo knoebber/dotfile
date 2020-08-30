@@ -16,6 +16,7 @@ type pageBuilder func(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 
 type pageDescription struct {
 	templateName string
+	htmlName     string
 	title        string
 
 	loadData   pageBuilder
@@ -25,10 +26,24 @@ type pageDescription struct {
 	protected bool
 }
 
-// Closure that creates http.HandlerFunc's.
+func createStaticHandler(title, htmlFile string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		page, err := pageFromHTML(w, r, title, htmlFile)
+		if err != nil {
+			pageError(w, title, err)
+			return
+		}
+
+		if err := page.renderHTML(w); err != nil {
+			staticError(w, title, err)
+		}
+	}
+
+}
+
 func createHandler(desc *pageDescription) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		page, err := newPage(w, r, desc.templateName, desc.title, desc.protected)
+		page, err := pageFromTemplate(w, r, desc.templateName, desc.title, desc.protected)
 		if err != nil {
 			pageError(w, desc.title, err)
 			return
@@ -65,7 +80,7 @@ func createHandler(desc *pageDescription) http.HandlerFunc {
 			return
 		}
 
-		if err := page.render(w); err != nil {
+		if err := page.renderTemplate(w); err != nil {
 			templateError(w, page.Title, err)
 		}
 	}
@@ -82,6 +97,10 @@ func pageError(w http.ResponseWriter, title string, err error) {
 
 func templateError(w http.ResponseWriter, title string, err error) {
 	log.Print(errors.Wrapf(err, "template error: rendering %#v", title))
+}
+
+func staticError(w http.ResponseWriter, path string, err error) {
+	log.Print(errors.Wrapf(err, "static error: rendering %q", path))
 }
 
 func badRequest(w http.ResponseWriter, err error) {
