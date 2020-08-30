@@ -15,7 +15,7 @@ func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	content := r.Form.Get("contents")
 	path := r.Form.Get("path")
 
-	alias, err := file.GetAlias(r.Form.Get("name"), path)
+	alias, err := file.GetAlias(r.Form.Get("alias"), path)
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -47,10 +47,10 @@ func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 // Handles submitting the update file form.
 func updateFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	currentAlias := p.Vars["alias"]
-	alias := r.Form.Get("name")
+	alias := r.Form.Get("alias")
 	path := r.Form.Get("path")
 
-	// Delete the file when the user types the name of the alias into form.
+	// Delete the file when the user submits the alias into the form.
 	delete := r.Form.Get("delete")
 
 	file, err := db.GetFile(p.Session.Username, currentAlias)
@@ -66,7 +66,7 @@ func updateFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		http.Redirect(w, r, "/"+p.Session.Username, http.StatusSeeOther)
 		return true
 	} else if delete != "" {
-		return p.setError(w, usererror.Invalid("Name does not match"))
+		return p.setError(w, usererror.Invalid("Alias does not match"))
 	}
 
 	if err := file.Update(alias, path); err != nil {

@@ -5,8 +5,8 @@
   <fieldset>
     <legend>Update</legend>
     <form method="post">
-      <label for="name">Name:</label>
-      <input value="{{ .Vars.alias }}" id="name" name="name" required>
+      <label for="alias">Alias:</label>
+      <input value="{{ .Vars.alias }}" id="alias" name="alias" required>
       <label for="path">Path:</label>
       <input value="{{ .Data.path }}" id="path" name="path" required>
       <button>Submit</button>
@@ -15,7 +15,7 @@
   <fieldset>
     <legend>Delete</legend>
     <form method="post">
-      <label for="delete">Write the files name:</label>
+      <label for="delete">Write the file's alias:</label>
       <input id="delete" name="delete" required>
       <button class="danger">Delete</button>
     </form>
