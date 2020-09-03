@@ -1,5 +1,5 @@
 #+TITLE: Dotfile
-Dotfile is a version control system designed for [[https://en.wikipedia.org/wiki/Hidden_file_and_hidden_directory][dotfiles]]
+Dotfile is a version control system designed for [[https://en.wikipedia.org/wiki/Hidden_file_and_hidden_directory][dotfiles]].
 It aliases file paths to short names and provides 
 an interface to manage the file's state. Use a remote server like [[https://dotfilehub.com][dotfilehub.com]] to
 push, pull, or find new files.

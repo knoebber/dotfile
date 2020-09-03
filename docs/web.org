@@ -14,8 +14,6 @@ For example:
 curl https://dotfilehub.com/knoebber/bashrc > ~/.bashrc
 #+END_SRC
 * Create a new file
-  [[/new_file][Create File]]
-
 If you have the CLI installed its easier to use the ~push~ command to upload files.
 ** Alias
 The alias must contain only letters, numbers, and underscores.
@@ -23,8 +21,6 @@ The alias must contain only letters, numbers, and underscores.
 The path is the location that ~dot pull~ will install the file to.
 This must be either an absolute path, or start with a tilda.
 * Set your timezone
-[[/settings/timezone][Set Timezone]]
-
 This will convert timestamps from the database to a timezone. The default is UTC.
 The form expects a string like the "TZ database column" found here:
 [[https://en.wikipedia.org/wiki/List_of_tz_database_time_zones]]
