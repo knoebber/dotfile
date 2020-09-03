@@ -28,7 +28,7 @@ bin/html:
 	cp -r server/html bin/html
 
 htmldocs: htmlgen bin/html
-	bin/htmlgen -in docs/ -out bin/html
+	bin/htmlgen -out bin/html && bin/htmlgen -in docs/ -out bin/html
 
 dotfilehub: clean bin/templates bin/assets htmldocs
 	go build -o bin/dotfilehub cmd/dotfilehub/main.go

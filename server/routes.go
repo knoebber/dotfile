@@ -20,10 +20,10 @@ func setupRoutes(r *mux.Router, config Config) {
 // Pages that get their content from the html/ directory.
 func staticRoutes(r *mux.Router) {
 	r.HandleFunc("/", indexHandler())
-	r.HandleFunc("/docs", createStaticHandler(docsTitle, "docs.html"))
-	r.HandleFunc("/docs/cli", createStaticHandler("CLI Documentation", "cli.html"))
-	r.HandleFunc("/docs/web", createStaticHandler("Web Documentation", "web.html"))
-	r.HandleFunc("/docs/acknowledgments", createStaticHandler("Acknowledgments", "acknowledgments.html"))
+	r.HandleFunc("/README.org", createStaticHandler(aboutTitle, "README.html"))
+	r.HandleFunc("/docs/cli.org", createStaticHandler("CLI Documentation", "cli.html"))
+	r.HandleFunc("/docs/web.org", createStaticHandler("Web Documentation", "web.html"))
+	r.HandleFunc("/docs/acknowledgments.org", createStaticHandler("Acknowledgments", "acknowledgments.html"))
 }
 
 func assetRoutes(r *mux.Router) {

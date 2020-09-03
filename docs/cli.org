@@ -10,9 +10,9 @@ In general ~dot~ commands are structured as followed: ~dot <command> <alias>~.
 For example: ~dot edit bashrc~. 
 Commands may have additional flags that can be used. Use ~dot <command> --help~ to learn more.
 
-* Install Dotfile
+* Install
 :PROPERTIES:
-:custom_id: install-cli
+:custom_id: install
 :END:
 Dotfile should work on most unix systems. [[https://golang.org][Golang]] is required to build dot. 
 

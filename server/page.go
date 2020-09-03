@@ -20,7 +20,7 @@ import (
 // Important these stay constant as they are referenced in setLinks()
 const (
 	indexTitle    = "Dotfilehub"
-	docsTitle     = "Docs"
+	aboutTitle    = "About"
 	settingsTitle = "Settings"
 	signupTitle   = "Signup"
 	loginTitle    = "Login"
@@ -132,7 +132,7 @@ func (p *Page) setLinks() {
 	p.Links = []Link{
 		newLink("/", indexTitle, p.Title),
 		userLink,
-		newLink("/docs", docsTitle, p.Title),
+		newLink("/README.org", aboutTitle, p.Title),
 		settingsLink,
 	}
 }
