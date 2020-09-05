@@ -7,15 +7,15 @@ push, pull, or find new files.
 * Getting Started
 1. [[docs/cli.org#install][Install]] the CLI.
 2. [[https://dotfilehub.com/signup][Create a dotfilehub]] account to share files between machines. 
-3. [[https://dotfilehub.com/settings/cli][Setup the CLI]] to use remote functions 
+3. [[https://dotfilehub.com/settings/cli][Setup the CLI]] to use remote functions.
 
 [[docs/web.org#self-host][Self host]] if you want to manage files privately.
 * Reference
-+ [[docs/cli.org][CLI]]
-+ [[docs/web.org][Web]]
++ [[docs/cli.org][CLI Documentation]]
++ [[docs/web.org][Web Documentation]]
 + [[docs/acknowledgments.org][Acknowledgments]]
 * Example CLI usage
-Dotfile commands like git but simplified.
+Dotfile commands are like git but simplified.
 
 Check a file in:
 #+BEGIN_SRC bash
@@ -23,14 +23,14 @@ dot init ~/.bashrc
 #+END_SRC
 
 This creates an initial commit. Dotfile will store the path of the file and
-give it a default alias of ~bashrc~. Use the alias to refer to it regardless of the current directory.
+give it a default alias of =bashrc=. Use the alias to refer to it regardless of the current directory.
 
-Open your bashrc in in ~$EDITOR~
+Open your bashrc in in =$EDITOR=:
 #+BEGIN_SRC bash
 dot edit bashrc
 #+END_SRC
 
-View its commit history
+View its commit history:
 #+BEGIN_SRC bash
 dot log bashrc
 #+END_SRC
@@ -59,3 +59,7 @@ Install all of your dotfiles:
 #+BEGIN_SRC bash
 dot pull --all
 #+END_SRC
+* Contribute
+Want to contribute? Open a pull request at [[https://github.com/knoebber/dotfile][github.com/knoebber/dotfile]]
+
+Feedback is always appreciated - contact me at [[mailto:knoebber@gmail.com][knoebber@gmail.com]]

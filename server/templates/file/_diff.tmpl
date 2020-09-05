@@ -35,7 +35,7 @@
     </form>
     {{ end }}
   </div>
-  <pre><code>
+  <pre class="file-content"><code>
     {{- range .Data.diffs -}}
     {{- if eq .Type 1 -}}
     <ins>{{- .Text -}}</ins>

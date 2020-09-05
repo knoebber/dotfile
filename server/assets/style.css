@@ -28,7 +28,7 @@ button, a, h1, h2, h3, h4, label, strong, th, legend {
     color: var(--headline);
 }
 
-em, p, li, pre, td, textarea, input {
+em, p, li, pre, code, td, textarea, input {
     color: var(--paragraph);
 }
 
@@ -90,16 +90,18 @@ input {
     font-size: 1.1rem;
 }
 
-input, textarea {
+input, textarea, pre, code {
     background-color: var(--main);
+}
+
+pre, code {
+    font-family: source-code-pro,Menlo,Monaco,Consolas,Courier New,monospace;
+    border-radius: 3px;
 }
 
 pre {
     padding: 10px;
     margin-top: 0;
-    font-family: source-code-pro,Menlo,Monaco,Consolas,Courier New,monospace;
-    background: var(--main);
-    border-radius: 0 0 3px 3px;
     overflow: auto;
     max-height: 60vh;
     border: solid 1px var(--paragraph);
@@ -172,6 +174,10 @@ del {
     min-width: unset;
     padding: 0 1rem 0 1rem;
     margin-left: 1rem;
+}
+
+.file-content {
+    border-radius: 0 0 3px 3px;
 }
 
 @media (min-width: 1051px) {

@@ -1,20 +1,20 @@
 #+TITLE: CLI Documentation
 * Introduction
-The dotfile command line interface, ~dot~, is a version control system for single files.
+The dotfile command line interface, =dot=, is a version control system for single files.
 When a file is checked in to dotfile an *alias* is created. The alias is mapped to its tracking
-data. For example an alias for ~~/.bashrc~ might be ~bashrc~. 
-Most dotfile commands use the alias as their first argument. 
+data. For example an alias for =.bashrc= might be =bashrc=.
+Most dotfile commands use the alias as their first argument.
 This allows the user to manage their dotfiles easily regardless of their working directory.
 
-In general ~dot~ commands are structured as followed: ~dot <command> <alias>~. 
-For example: ~dot edit bashrc~. 
-Commands may have additional flags that can be used. Use ~dot <command> --help~ to learn more.
+In general =dot= commands are structured as followed: =dot <command> <alias>=.
+For example: =dot edit bashrc=.
+Commands may have additional flags that can be used. Use =dot <command> --help= to learn more.
 
 * Install
 :PROPERTIES:
 :custom_id: install
 :END:
-Dotfile should work on most unix systems. [[https://golang.org][Golang]] is required to build dot. 
+Dotfile should work on most unix systems. [[https://golang.org][Golang]] is required to build dot.
 
 ** Install with go get
 #+BEGIN_SRC bash
@@ -29,27 +29,51 @@ make dot
 # copy bin/dot to somewhere in $PATH.
 #+END_SRC
 * Storage
-Dotfile will create new directories in your home directory. 
-One for storing tracking data and one for storing user settings.
-** Tracking
-By default dotfile stores tracking information in ~~/.local/share/dotfile~. 
-If its parent directory does not exist it will fallback to ~~/.dotfile~. 
-This can be overriden by using the ~--storage-dir~ flag. 
+Dotfile will create new directories in your home directory.
+They are used for storing tracking data and user settings.
+** Tracking Data
+By default dotfile stores tracking information in =~/.local/share/dotfile=.
+If its parent directory does not exist it will fallback to =~/.dotfile=.
+This can be overriden by using the =--storage-dir= flag.
+For every file that is tracked there is a matching =.json= file and a directory for its commits.
 
-For every file that is tracked there is a matching .json file and a directory for its commits. 
-
+*Example: ~/.local/share/dotfile/bash_profile.json*
+#+BEGIN_SRC javascript
+{
+  "path": "~/.bash_profile",
+  "revision": "599a1af0398b7c518bc46aaa4a9e8ae72c2d28cb",
+  "commits": [
+    {
+      "hash": "d47481afa38dcab0d8c8d163aa75e0cf5af6e355",
+      "message": "Initial commit",
+      "timestamp": 1590956605
+    },
+    {
+      "hash": "599a1af0398b7c518bc46aaa4a9e8ae72c2d28cb",
+      "message": "Remove unused function",
+      "timestamp": 1593576508
+    }
+  ]
+}
+#+END_SRC
 ** Config
 Dotfile will create a config directory in a location returned by https://golang.org/pkg/os/#UserConfigDir
 
-You can edit ~dotfile.json~ manually or with the ~dot config~ command.
+You can edit =config.json= manually or with the =dot config= command.
 The config file has the following keys:
 
-~remote~  - The remote server to use. Defaults to https://dotfilehub.com
++ *remote*  - The remote server to use. Defaults to https://dotfilehub.com
++ *username* - A dotfilehub username. Pull, push, and commands with the =--remote= flag will use this for lookups.
++ *token* - A secret for allowing write access to a remote server. Find this under "Settings" / "Setup CLI" in the web interface.
 
-~username~ - A dotfilehub username. Pull, push, and commands with the ~--remote~ flag will use this for lookups.
-
-~token~ - A secret for allowing write access to a dotfilehub account. Find this under settings =>
-Setup CLI in the web interface. Must be set for ~dot push~.
+*Example: ~/.config/dotfile/config.json*
+#+BEGIN_SRC javascript
+{
+  "remote": "https://dotfilehub.com",
+  "token": "eb19981fa4a7d29a42be2ed46790bf4ff307ba20d454ee06",
+  "username": "knoebber"
+}
+#+END_SRC
 * Commands
 ** Init
 Initialize a file.
@@ -64,36 +88,40 @@ dot init ~/.bashrc
 #+END_SRC
 Initialize as "i3"
 #+BEGIN_SRC bash
-dot init ~/.config/i3/confg i3
+dot init ~/.config/i3/config i3
 #+END_SRC
+When the file is in the home directory =$HOME= will be replaced with "~" in the file's saved path.
+This allows the file to be installed to the same relative location regardless of user.
+
+If the file's path is outside of the home directory then it will be
+saved as an absolute path. In this example
+#+BEGIN_SRC bash
+dot init /etc/X11/xorg.conf
+#+END_SRC
+=xorg= will always install to its absolute path.
 ** Show
 Show a file.
 #+BEGIN_SRC bash
 dot show <alias>
 #+END_SRC
-~-d, --data~ Show the files tracking data
-
-~-r, --remote~ Show a file on a remote server
-
-~-u, --username~ Override ~config.username~
-
++ =-d, --data= Show the file's data.
++ =-r, --remote= Show a file on a remote server.
++ =-u, --username= Override =config.username=.
 ** List
 List tracked files. Asterisks are added to files that have uncommited changes.
 #+BEGIN_SRC bash
 dot ls
 #+END_SRC
-~--path~ Include the files path in the list.
-
-~--remote~ List all of a user's files on a remote server.
-
-~--username~ Override ~config.username~.
++ =-p, --path= Include the files path in the list.
++ =-r, --remote= List the remote users files.
++ =-u, --username= Override =config.username=.
 ** Edit
-Open a file in ~$EDITOR~
+Open a file in =$EDITOR=
 #+BEGIN_SRC bash
 dot edit <alias>
 #+END_SRC
 ** Diff
-Print a diff of a tracked file vs a commit. 
+Print the changes of a file and a past commit.
 Commit hash is optional - defaults to the current commit.
 #+BEGIN_SRC bash
 dot diff <alias> <commit-hash>
@@ -117,7 +145,7 @@ dot checkout <alias> <hash>
 Hash is optional. When empty it will default to the current revision. This will remove any
 changes on the file since the last commit or checkout command.
 
-To checkout to a specific revision use the ~dot log~ command to find the hash.
+To checkout to a specific revision use the =dot log= command to find the hash.
 ** Config
 Read and set dotfile config.
 #+BEGIN_SRC bash
@@ -125,14 +153,13 @@ dot config <keyname> <value>
 #+END_SRC Set a config value
 Keyname and value are optional. When empty it will print the current config.
 
-Valid values for keyname are ~username~, ~remote~, or ~token~.
+Valid values for keyname are =username=, =remote=, or =token=.
 ** Push
 Push a file and its revisions to a remote server.
 #+BEGIN_SRC bash
 dot push <alias>
 #+END_SRC
-This command expects the user on the remote server specified by config to have a file named
-alias. The remote file will be updated to the current revision of the local file. All
+The remote file will either be created or updated to the current revision of the local file. All
 new local revisions will be saved to the remote server as well.
 ** Pull
 Pull a file and its revisions from a remote server. Creates a new file at
@@ -140,14 +167,11 @@ path when it does not yet exist.
 #+BEGIN_SRC bash
 dot pull <alias>
 #+END_SRC
-~-u, --username~ Override config.username
-
-~-a, --all~ Pull all files
-
-~-p, --parent-dirs~ Create parent directories that do not yet exist.
++ =-u, --username= Override config.username
++ =-a, --all= Pull all files
++ =-p, --parent-dirs= Create parent directories that do not yet exist.
 
 Alternatively pull a file without using the dotfile CLI:
-
 #+BEGIN_SRC bash
 # Get a list of user's files:
 curl https://dotfilehub.com/api/knoebber
@@ -157,13 +181,11 @@ curl https://dotfilehub.com/knoebber/inputrc > ~/.inputrc
 #+END_SRC
 ** Move
 Change the files stored path and move the file.
-
 #+BEGIN_SRC bash
 dot mv <alias> <path>
 #+END_SRC
 ** Rename
 Change a files alias.
-
 #+BEGIN_SRC bash
 dot rename <alias> <new-alias>
 #+END_SRC
