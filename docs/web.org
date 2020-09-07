@@ -1,13 +1,11 @@
 #+TITLE: Web Documentation
-
-Dotfilehub is a web front end for dotfile.
-
+[[https://dotfilehub.com][Dotfilehub]] is a web front end for dotfile.
 * View File
 Any file is globally viewable at the path =/{username}/{alias}=. There are no private files.
 If you want to use dotfile to manage secret files then self host it on a private network.
 
-Files only render in HTML if the client sends an accept header that contains =hmtl=. This allows
-users to download files easily if they are in a new environment that does not have the dotfile CLI installed.
+Files will only render in HTML if the client sends an accept header that contains =hmtl=. This allows
+users to download files easily if they are in a environment without the dotfile CLI.
 
 For example:
 #+BEGIN_SRC bash
@@ -28,6 +26,8 @@ The form expects a string like the /TZ database name/ column found here:
 Depending on the server's host the available zones may be different.
 Consult [[https://golang.org/pkg/time/#LoadLocation]] for more information.
 * API
+See https://github.com/knoebber/dotfile/tree/web-server/dotfileclient for an example of building
+a client for the dotfile API.
 ** List Files
 #+BEGIN_SRC
 GET /api/{username}
@@ -59,7 +59,6 @@ Request must have basic auth headers with the dotfilehub username and CLI token.
 :PROPERTIES:
 :custom_id: self-host
 :END:
-
 Clone the repository and build the binary. The build step copies all of the required
 assets into the =/bin= directory.
 #+BEGIN_SRC bash

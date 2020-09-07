@@ -14,7 +14,7 @@ push, pull, or find new files.
 + [[docs/cli.org][CLI Documentation]]
 + [[docs/web.org][Web Documentation]]
 + [[docs/acknowledgments.org][Acknowledgments]]
-* Example CLI usage
+* Examples
 Dotfile commands are like git but simplified.
 
 Check a file in:
