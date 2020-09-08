@@ -95,7 +95,7 @@ input, textarea, pre, code {
 }
 
 pre, code {
-    font-family: source-code-pro,Menlo,Monaco,Consolas,Courier New,monospace;
+    font-family: source-code-pro, Menlo, Monaco, Consolas, Courier New, monospace;
     border-radius: 3px;
 }
 
@@ -108,11 +108,11 @@ pre {
 }
 
 table {
-  width: 100%;
+    width: 100%;
 }
 
 th, td {
-  letter-spacing: 1px;
+    letter-spacing: 1px;
 }
 
 th {
@@ -148,6 +148,7 @@ del {
     justify-content: space-between;
     align-items: end;
 }
+
 .table-wrapper {
     min-width: 800px;
     height: 60vh;
@@ -182,7 +183,6 @@ del {
 
 @media (min-width: 1051px) {
     /* Break point for desktop views */
-
     html {
         /* Create a margin the size of the scroll bar.
          * Prevents layout from jumping between pages with and without vertical scroll bar */
@@ -196,6 +196,7 @@ del {
     body {
         margin: 0 2rem 1rem 2rem;
     }
+
     main {
         margin: unset;
     }
@@ -216,9 +217,11 @@ del {
         align-items: center;
         letter-spacing: 2px;
     }
+
     nav > a {
         padding: 0;
     }
+
     nav > a:nth-child(3) {
         margin-left: unset;
     }

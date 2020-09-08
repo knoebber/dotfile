@@ -127,9 +127,8 @@ func DefaultStorageDir() (storageDir string, err error) {
 }
 
 // List returns a slice of aliases for all locally tracked files.
-// When the file has uncommited changes an asterisks is added to the end.
+// When the file has uncommitted changes an asterisks is added to the end.
 func List(storageDir string, path bool) ([]string, error) {
-	// TODO move to local.go => local.List()
 	var alias string
 
 	files, err := filepath.Glob(filepath.Join(storageDir, "*.json"))
