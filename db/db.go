@@ -51,7 +51,6 @@ func createTables() error {
 		new(User),
 		new(ReservedUsername),
 		new(Session),
-		new(SessionLocation),
 		new(File),
 		new(TempFile),
 		new(Commit),

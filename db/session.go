@@ -18,7 +18,7 @@ type Session struct {
 	UserID    int64  `validate:"required"`
 	Username  string
 	Theme     UserTheme
-	LastIP    *string
+	IP        string
 	CreatedAt time.Time
 	DeletedAt *time.Time
 }
@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS sessions(
 id         INTEGER PRIMARY KEY,
 session    TEXT NOT NULL UNIQUE,
 user_id    INTEGER NOT NULL REFERENCES users,
+ip         TEXT NOT NULL,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 deleted_at DATETIME
 );
@@ -37,10 +38,10 @@ CREATE INDEX IF NOT EXISTS sessions_user_index ON sessions(user_id);`
 }
 
 func (s *Session) insertStmt(e executor) (sql.Result, error) {
-	return e.Exec("INSERT INTO sessions(session, user_id) VALUES(?, ?)", s.Session, s.UserID)
+	return e.Exec("INSERT INTO sessions(session, user_id, ip) VALUES(?, ?, ?)", s.Session, s.UserID, s.IP)
 }
 
-func createSession(username string) (*Session, error) {
+func createSession(username, ip string) (*Session, error) {
 	var userID int64
 
 	err := connection.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userID)
@@ -56,6 +57,7 @@ func createSession(username string) (*Session, error) {
 	s := &Session{
 		Session: session,
 		UserID:  userID,
+		IP:      ip,
 	}
 
 	id, err := insert(s, nil)
@@ -78,8 +80,7 @@ func session() (string, error) {
 }
 
 // CheckSession checks if session is valid.
-// Adds a new row to session_locations if the IP is different than the last time it was checked.
-func CheckSession(session, ip string) (*Session, error) {
+func CheckSession(session string) (*Session, error) {
 	s := new(Session)
 
 	err := connection.
@@ -89,11 +90,9 @@ SELECT sessions.id,
        users.id,
        username,
        theme,
-       sessions.created_at,
-       session_locations.ip
+       sessions.created_at
 FROM sessions
 JOIN users ON users.id = user_id
-LEFT JOIN session_locations ON session_id = sessions.id AND last = 1
 WHERE deleted_at IS NULL AND session = ?`, session).
 		Scan(
 			&s.ID,
@@ -102,19 +101,10 @@ WHERE deleted_at IS NULL AND session = ?`, session).
 			&s.Username,
 			&s.Theme,
 			&s.CreatedAt,
-			&s.LastIP,
 		)
 
 	if err != nil {
 		return nil, errors.Wrapf(err, "querying for session %#v", session)
-	}
-
-	if s.LastIP != nil && *s.LastIP == ip {
-		return s, nil
-	}
-
-	if err = addSessionLocation(s.ID, ip); err != nil {
-		return nil, err
 	}
 
 	return s, nil

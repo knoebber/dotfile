@@ -27,7 +27,7 @@ func createHandleLogin(secure bool) pageBuilder {
 }
 
 func login(w http.ResponseWriter, r *http.Request, p *Page, secure bool) (done bool) {
-	s, err := db.UserLogin(r.Form.Get("username"), r.Form.Get("password"))
+	s, err := db.UserLogin(r.Form.Get("username"), r.Form.Get("password"), r.RemoteAddr)
 	if err != nil {
 		// Print the real error and show the user a generic catch all.
 		log.Print(err)

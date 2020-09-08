@@ -291,12 +291,12 @@ func UpdateTheme(username string, theme UserTheme) error {
 
 // UserLogin checks a username / password.
 // If the credentials are valid, returns a new session.
-func UserLogin(username, password string) (*Session, error) {
+func UserLogin(username, password, ip string) (*Session, error) {
 	if err := compareUserPassword(username, password); err != nil {
 		return nil, err
 	}
 
-	return createSession(username)
+	return createSession(username, ip)
 }
 
 func cliToken() (string, error) {

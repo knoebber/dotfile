@@ -90,6 +90,7 @@ func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
 	return false
 }
 
+// Sets p.Session when session cookie exists.
 func (p *Page) setSession(w http.ResponseWriter, r *http.Request) error {
 	cookie, err := r.Cookie(sessionCookie)
 	if errors.Is(err, http.ErrNoCookie) {
@@ -98,7 +99,7 @@ func (p *Page) setSession(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	p.Session, err = db.CheckSession(cookie.Value, r.RemoteAddr)
+	p.Session, err = db.CheckSession(cookie.Value)
 	if db.NotFound(err) {
 		// Session in cookie does not exist in DB.
 		// Unset it.
