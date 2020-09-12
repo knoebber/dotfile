@@ -10,11 +10,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-// File models the files table.
+// FileRecord models the files table.
 // It stores the contents of a file at the current revision hash.
 //
 // Both aliases and paths must be unique for each user.
-type File struct {
+type FileRecord struct {
 	ID              int64
 	UserID          int64  `validate:"required"`
 	Alias           string `validate:"required"` // Friendly name for a file: bashrc
@@ -22,9 +22,9 @@ type File struct {
 	CurrentCommitID *int64 // The commit that the file is at.
 }
 
-// FileView contains a file record and its commits uncompressed contents.
+// FileView contains a file record and its uncompressed content.
 type FileView struct {
-	File
+	FileRecord
 	Content []byte
 	Hash    string
 }
@@ -38,7 +38,7 @@ type FileSummary struct {
 }
 
 // Unique indexes prevent a user from having duplicate alias / path.
-func (*File) createStmt() string {
+func (*FileRecord) createStmt() string {
 	return `
 CREATE TABLE IF NOT EXISTS files(
 id                 INTEGER PRIMARY KEY,
@@ -56,7 +56,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS files_user_path_index ON files(user_id, path);
 `
 }
 
-func (f *File) check() error {
+func (f *FileRecord) check() error {
 	var count int
 
 	if err := checkFile(f.Alias, f.Path); err != nil {
@@ -83,7 +83,7 @@ func (f *File) check() error {
 	return nil
 }
 
-func (f *File) insertStmt(e executor) (sql.Result, error) {
+func (f *FileRecord) insertStmt(e executor) (sql.Result, error) {
 	return e.Exec(`
 INSERT INTO files(user_id, alias, path, current_commit_id) VALUES(?, ?, ?, ?)`,
 		f.UserID,
@@ -115,7 +115,7 @@ func (f *FileView) scan(row *sql.Row) error {
 }
 
 // Update updates the alias or path if they are different.
-func (f *File) Update(newAlias, newPath string) error {
+func (f *FileRecord) Update(newAlias, newPath string) error {
 	if f.Alias == newAlias && f.Path == newPath {
 		return nil
 	}
@@ -137,7 +137,7 @@ WHERE id = ?
 }
 
 // Delete deletes the file.
-func (f *File) Delete() error {
+func (f *FileRecord) Delete() error {
 	tx, err := connection.Begin()
 	if err != nil {
 		return errors.Wrap(err, "starting transaction for file delete")
@@ -175,8 +175,8 @@ WHERE id IN (SELECT forked.id
 	return nil
 }
 
-// GetFile retrieves a user's file by their username.
-func GetFile(username string, alias string) (*FileView, error) {
+// File retrieves a file.
+func File(username string, alias string) (*FileView, error) {
 	fv := new(FileView)
 
 	row := connection.QueryRow(`
@@ -200,8 +200,8 @@ WHERE username = ? AND alias = ?
 	return fv, nil
 }
 
-// GetFilesByUsername gets a summary of all a users files.
-func GetFilesByUsername(username string) ([]FileSummary, error) {
+// FilesByUsername returns all of a users files.
+func FilesByUsername(username string) ([]FileSummary, error) {
 	var (
 		alias, path, timezone *string
 		updatedAt             time.Time
@@ -259,12 +259,12 @@ func ForkFile(username, alias, hash string, newUserID int64) error {
 		return errors.Wrap(err, "starting fork file transaction")
 	}
 
-	fileForkee, err := GetFile(username, alias)
+	fileForkee, err := File(username, alias)
 	if err != nil {
 		return rollback(tx, err)
 	}
 
-	newFile := &File{
+	newFile := &FileRecord{
 		UserID: newUserID,
 		Alias:  alias,
 		Path:   fileForkee.Path,
@@ -275,7 +275,7 @@ func ForkFile(username, alias, hash string, newUserID int64) error {
 		return err
 	}
 
-	commitForkee, err := GetCommit(username, alias, hash)
+	commitForkee, err := Commit(username, alias, hash)
 	if err != nil {
 		return rollback(tx, err)
 	}
@@ -283,7 +283,8 @@ func ForkFile(username, alias, hash string, newUserID int64) error {
 	newCommit := commitForkee
 	newCommit.FileID = newFileID
 	newCommit.ForkedFrom = &commitForkee.ID
-	newCommit.Message = fmt.Sprintf("/%s/%s/%s", username, alias, hash)
+	newCommit.Message = fmt.Sprintf("Forked from %s", username)
+	newCommit.Timestamp = time.Now().Unix()
 
 	newCommitID, err := insert(newCommit, tx)
 	if err != nil {

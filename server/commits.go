@@ -10,7 +10,7 @@ import (
 
 func loadCommits(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	alias := p.Vars["alias"]
-	commits, err := db.GetCommitList(p.Vars["username"], alias)
+	commits, err := db.CommitList(p.Vars["username"], alias)
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -30,7 +30,7 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	hash := p.Vars["hash"]
 	username := p.Vars["username"]
 
-	commit, err := db.GetUncompressedCommit(username, alias, hash)
+	commit, err := db.UncompressedCommit(username, alias, hash)
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -41,7 +41,7 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	p.Data["content"] = string(commit.Content)
 	p.Data["path"] = commit.Path
 	p.Data["current"] = commit.Current
-	p.Data["forkedFrom"] = commit.ForkedFrom
+	p.Data["forkedFromUsername"] = commit.ForkedFromUsername
 
 	p.Title = fmt.Sprintf("%s@%s", alias, hash)
 

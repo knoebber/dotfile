@@ -1,12 +1,14 @@
 <main>
   <h1>
+    {{ $username := .Vars.username }}
+    {{ $alias := .Vars.alias }}
     {{ if not .Owned }}
-    <a href="/{{ .Vars.username }}">{{ .Vars.username -}}</a> / 
+    <a href="/{{ $username }}">{{ $alias -}}</a> / 
     {{ end }}
-    <a href="/{{ .Vars.username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a>
+    <a href="/{{ $username }}/{{ $alias }}">{{ $alias }}</a>
     commits
   </h1>
-  <div class="table-wrapper"><!-- TODO make table scroll; needs more css -->
+  <div class="table-wrapper">
     <table>
       <thead>
         <tr>
@@ -16,16 +18,14 @@
         </tr>
       </thead>
       <tbody>
-        {{ $username := .Vars.username }}
-        {{ $alias := .Vars.alias }}
         {{ range .Data.commits }}
         <tr>
           <td>
             <a {{ if .Current }}class="active"{{ end }} href="/{{ $username }}/{{ $alias }}/{{ .Hash }}">{{ shortenHash .Hash }}</a>
           </td>
           <td>
-            {{ if .ForkedFrom }}
-            <a href="{{.Message }}">Forked from</a>
+            {{ if .ForkedFromUsername }}
+            <a href="/{{ .ForkedFromUsername }}/{{ $alias }}/{{ .Hash }}">Forked from</a>
             {{ else }}
             {{ .Message }}
             {{ end }}
