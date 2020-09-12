@@ -71,7 +71,7 @@ button:hover {
     box-shadow: 0 5px 15px -10px rgba(31, 18, 53, 0.6)
 }
 
-form[method="post"]:not(.empty) {
+form:not(.inline) {
     display: grid;
     max-width: 500px;
     gap: 1rem;
@@ -108,6 +108,7 @@ pre {
 }
 
 table {
+    min-width: 800px;
     width: 100%;
 }
 
@@ -150,8 +151,6 @@ del {
 }
 
 .table-wrapper {
-    min-width: 800px;
-    height: 60vh;
     overflow: auto;
 }
 
@@ -224,5 +223,13 @@ del {
 
     nav > a:nth-child(3) {
         margin-left: unset;
+    }
+
+    pre {
+        max-height: unset;
+    }
+
+    .file-controls {
+        flex-direction: column;
     }
 }

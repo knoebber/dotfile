@@ -10,7 +10,7 @@
     <pre><code>dot config username {{ .Session.Username }}</code></pre>
     <pre><code>dot config token {{ .Data.token }}</code></pre>
     <pre><code>dot config remote {{ .Data.remote }}</code></pre>
-  <form method="post" class="empty">
+  <form method="post" class="inline">
     <input type="hidden" name="token" value="{{ .Data.token }}">
     <button class="success">Rotate Token</button>
   </form>

@@ -1,33 +1,29 @@
 {{ define "diff" }}
 <div>
+  <!-- TODO diff is displaying with extra newlines on some files like ps1_config -->
   <div class="file-controls flex-between">
     <strong>{{ .Data.path }}</strong>
     {{ if .Data.commits }}
     {{ $on := .Data.on }}
     {{ $against := .Data.against }}
-    <form>
-      <select name="on">
+
+    <em>Compare Hashes</em>
+    <form class="inline">
+      <label for="on">On</label>
+      <select id="on" name="on">
         {{ range .Data.commits }}
         <option{{ if eq .Hash $on }} selected="selected"{{ end }} value="{{ .Hash }}" >
           {{ shortenHash .Hash }}
-          {{ if .ForkedFrom }}
-          Fork commit
-          {{ else }}
           "{{ .Message }}"
-          {{ end }}
         </option>
         {{ end }}
       </select>
-      <em>against</em>
+      <label for="against">Against</label>
       <select name="against" id="against">
         {{ range .Data.commits }}
         <option{{ if eq .Hash $against }} selected="selected"{{ end }} value="{{ .Hash }}">
           {{ shortenHash .Hash }}
-          {{ if .ForkedFrom }}
-          Fork commit
-          {{ else }}
           "{{ .Message }}"
-          {{ end }}
         </option>
         {{ end }}
       </select>
