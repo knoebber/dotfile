@@ -25,13 +25,13 @@ func handleFileJSON(w http.ResponseWriter, r *http.Request) {
 	username := vars["username"]
 	alias := vars["alias"]
 
-	fileRecord, err := db.GetFile(username, alias)
+	fileRecord, err := db.File(username, alias)
 	if err != nil {
 		apiError(w, err)
 		return
 	}
 
-	commits, err := db.GetCommitList(username, alias)
+	commits, err := db.CommitList(username, alias)
 	if err != nil {
 		apiError(w, err)
 		return
@@ -59,7 +59,7 @@ func handleFileListJSON(w http.ResponseWriter, r *http.Request) {
 	username := vars["username"]
 	addPath := r.URL.Query().Get("path") == "true"
 
-	files, err := db.GetFilesByUsername(username)
+	files, err := db.FilesByUsername(username)
 	if err != nil {
 		apiError(w, err)
 		return
@@ -79,7 +79,7 @@ func handleFileListJSON(w http.ResponseWriter, r *http.Request) {
 func handleRawCompressedCommit(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	commit, err := db.GetCommit(vars["username"], vars["alias"], vars["hash"])
+	commit, err := db.Commit(vars["username"], vars["alias"], vars["hash"])
 	if err != nil {
 		rawContentError(w, err)
 		return
@@ -94,14 +94,14 @@ func handleRawCompressedCommit(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func validateAPIUser(w http.ResponseWriter, r *http.Request) *db.User {
+func validateAPIUser(w http.ResponseWriter, r *http.Request) *db.UserRecord {
 	username, password, ok := r.BasicAuth()
 	if !ok {
 		authError(w, errors.New("basic auth not provided"))
 		return nil
 	}
 
-	user, err := db.GetUser(username)
+	user, err := db.User(username)
 	if err != nil {
 		authError(w, err)
 		return nil
@@ -115,7 +115,7 @@ func validateAPIUser(w http.ResponseWriter, r *http.Request) *db.User {
 	return user
 }
 
-func getMultipartReader(w http.ResponseWriter, r *http.Request) *multipart.Reader {
+func multipartReader(w http.ResponseWriter, r *http.Request) *multipart.Reader {
 	mediaType, params, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil {
 		apiError(w, err)
@@ -192,7 +192,7 @@ func handlePush(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if mr = getMultipartReader(w, r); mr == nil {
+	if mr = multipartReader(w, r); mr == nil {
 		return
 	}
 

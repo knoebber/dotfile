@@ -36,7 +36,7 @@
 <body>
   <nav>
     {{ range .Links }}
-    <a class="{{.GetClass}}" href="{{.URL}}">{{ .Title }}</a>
+    <a class="{{.Class}}" href="{{.URL}}">{{ .Title }}</a>
     {{ end }}
   </nav>
   {{ if .SuccessMessage }}

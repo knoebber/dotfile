@@ -101,19 +101,19 @@ func MergeTrackingData(old, new *TrackingData) (merged *TrackingData, newHashes 
 	return
 }
 
-// GetAlias creates an alias when the passed in alias is empty.
+// Alias creates an alias when the passed in alias is empty.
 // It works by removing leading dots and file extensions from the path.
 // Examples: ~/.vimrc: vimrc
 //           ~/.config/i3/config: config
 //           ~/.config/alacritty/alacritty.yml: alacritty
-func GetAlias(alias, path string) (string, error) {
+func Alias(alias, path string) (string, error) {
 	if alias != "" {
 		return alias, nil
 	}
 
 	matches := pathToAliasRegex.FindStringSubmatch(path)
 	if len(matches) < 2 {
-		return "", fmt.Errorf("creating alias for %#v", path)
+		return "", fmt.Errorf("creating alias for %q", path)
 	}
 	return matches[1], nil
 }
@@ -121,7 +121,7 @@ func GetAlias(alias, path string) (string, error) {
 // CheckAlias checks whether the alias format is allowed.
 func CheckAlias(alias string) error {
 	if !validAliasRegex.Match([]byte(alias)) {
-		return usererror.Invalid(fmt.Sprintf("%#v has non word characters", alias))
+		return usererror.Invalid(fmt.Sprintf("%q has non word characters", alias))
 	}
 
 	return nil
@@ -130,7 +130,7 @@ func CheckAlias(alias string) error {
 // CheckPath checks whether the alias format is allowed.
 func CheckPath(path string) error {
 	if !validPathRegex.Match([]byte(path)) {
-		return usererror.Invalid(fmt.Sprintf("%#v is not a valid file path", path))
+		return usererror.Invalid(fmt.Sprintf("%q is not a valid file path", path))
 	}
 
 	return nil

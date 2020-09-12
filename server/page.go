@@ -41,7 +41,7 @@ type Page struct {
 	Vars           map[string]string
 	Data           map[string]interface{}
 
-	Session      *db.Session
+	Session      *db.SessionRecord
 	templateName string
 	htmlFile     string
 	// When true restrict page access to logged in page owners.
@@ -99,7 +99,7 @@ func (p *Page) setSession(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	p.Session, err = db.CheckSession(cookie.Value)
+	p.Session, err = db.Session(cookie.Value)
 	if db.NotFound(err) {
 		// Session in cookie does not exist in DB.
 		// Unset it.

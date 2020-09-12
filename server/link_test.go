@@ -6,7 +6,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLink_GetClass(t *testing.T) {
-	l := &Link{Active: true}
-	assert.NotEmpty(t, l.GetClass())
+func TestLink_Class(t *testing.T) {
+	t.Run("active", func(t *testing.T) {
+		l := newLink("test", "test", "test")
+		assert.NotEmpty(t, l.Class())
+	})
+	t.Run("not active", func(t *testing.T) {
+		l := newLink("test", "test", "")
+		assert.Empty(t, l.Class())
+	})
 }

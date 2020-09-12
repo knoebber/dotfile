@@ -7,8 +7,8 @@ type Link struct {
 	Active bool
 }
 
-// GetClass returns a class name for active styling.
-func (l *Link) GetClass() string {
+// Class returns a class name for active styling.
+func (l *Link) Class() string {
 	if l.Active {
 		return "active"
 	}

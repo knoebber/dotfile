@@ -10,13 +10,14 @@ import (
 	"strings"
 )
 
-// ReservedUsername stores usernames that are not allowed to be registered.
-type ReservedUsername struct {
+// ReservedUsernameRecord models the reserved_usernames table.
+// It stores usernames that are not allowed to be registered.
+type ReservedUsernameRecord struct {
 	Username  string
 	CreatedAt time.Time
 }
 
-func (*ReservedUsername) createStmt() string {
+func (*ReservedUsernameRecord) createStmt() string {
 	return `
 CREATE TABLE IF NOT EXISTS reserved_usernames(
 id              INTEGER PRIMARY KEY,
@@ -25,7 +26,7 @@ created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );`
 }
 
-func (ru *ReservedUsername) insertStmt(e executor) (sql.Result, error) {
+func (ru *ReservedUsernameRecord) insertStmt(e executor) (sql.Result, error) {
 	return e.Exec("INSERT INTO reserved_usernames(username)", ru.Username)
 }
 

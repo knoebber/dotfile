@@ -9,7 +9,7 @@ import (
 
 func TestFilesTable(t *testing.T) {
 	createTestDB(t)
-	f := &File{
+	f := &FileRecord{
 		UserID: testUserID,
 		Alias:  testAlias,
 		Path:   testPath,
@@ -82,7 +82,7 @@ func TestForkFile(t *testing.T) {
 		initialCommit, _ := initTestFileAndCommit(t)
 
 		assert.NoError(t, ForkFile(testUsername, testAlias, initialCommit.Hash, otherUserID))
-		f, err := GetFile(otherUsername, testAlias)
+		f, err := File(otherUsername, testAlias)
 		failIf(t, err)
 		assert.Equal(t, testContent, string(f.Content))
 
@@ -102,7 +102,7 @@ func TestSetFileToHash(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		err := SetFileToHash(testUsername, testAlias, initial.Hash)
 		assert.NoError(t, err)
-		f, err := GetFile(testUsername, testAlias)
+		f, err := File(testUsername, testAlias)
 		assert.NoError(t, err)
 		assert.Equal(t, initial.Hash, f.Hash)
 	})

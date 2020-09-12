@@ -13,7 +13,7 @@ const (
 	defaultDB      = ".dotfilehub.db"
 )
 
-func getConfig() server.Config {
+func config() server.Config {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
@@ -37,5 +37,5 @@ func getConfig() server.Config {
 }
 
 func main() {
-	server.Start(getConfig())
+	server.Start(config())
 }

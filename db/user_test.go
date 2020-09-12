@@ -12,7 +12,7 @@ func TestCreateUser(t *testing.T) {
 
 	t.Run("username must be unique / case insensitive", func(t *testing.T) {
 		createTestUser(t, testUserID, testUsername, testEmail)
-		u := &User{
+		u := &UserRecord{
 			Username:     strings.Title(testUsername),
 			CLIToken:     testCliToken,
 			PasswordHash: []byte(testPassword),

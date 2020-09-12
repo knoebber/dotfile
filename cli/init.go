@@ -14,7 +14,7 @@ type initCommand struct {
 }
 
 func (ic *initCommand) run(ctx *kingpin.ParseContext) error {
-	alias, err := file.GetAlias(ic.alias, ic.path)
+	alias, err := file.Alias(ic.alias, ic.path)
 	if err != nil {
 		return err
 	}

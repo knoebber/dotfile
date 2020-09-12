@@ -10,7 +10,7 @@ import (
 func TestCommitsTable(t *testing.T) {
 	createTestDB(t)
 
-	c := &Commit{
+	c := &CommitRecord{
 		Hash:      testHash,
 		Message:   testMessage,
 		Revision:  []byte(testContent),

@@ -13,23 +13,23 @@ import (
 
 const defaultRemote = "https://dotfilehub.com"
 
-// UserConfig contains local user settings for dotfile.
-type UserConfig struct {
+// Config contains local user settings for dotfile.
+type Config struct {
 	Remote   string `json:"remote"`
 	Username string `json:"username"`
 	Token    string `json:"token"`
 }
 
-func (uc *UserConfig) String() string {
-	return fmt.Sprintf("remote: %#v\nusername: %#v\ntoken: %#v",
-		uc.Remote,
-		uc.Username,
-		uc.Token,
+func (c *Config) String() string {
+	return fmt.Sprintf("remote: %q\nusername: %q\ntoken: %q",
+		c.Remote,
+		c.Username,
+		c.Token,
 	)
 }
 
 func createDefaultConfig(path string) ([]byte, error) {
-	newCfg := UserConfig{Remote: defaultRemote}
+	newCfg := Config{Remote: defaultRemote}
 
 	bytes, err := json.MarshalIndent(newCfg, "", jsonIndent)
 	if err != nil {
@@ -43,7 +43,7 @@ func createDefaultConfig(path string) ([]byte, error) {
 	return bytes, nil
 }
 
-func getConfigBytes(path string) ([]byte, error) {
+func configBytes(path string) ([]byte, error) {
 	if !exists(path) {
 		return createDefaultConfig(path)
 	}
@@ -71,17 +71,17 @@ func configPath() (string, error) {
 	return filepath.Join(dotfileDir, "dotfile.json"), nil
 }
 
-// GetUserConfig reads the user config.
+// ReadConfig reads the user's config.
 // Creates a default file when it doesn't yet exist.
-func GetUserConfig() (*UserConfig, error) {
+func ReadConfig() (*Config, error) {
 	path, err := configPath()
 	if err != nil {
 		return nil, err
 	}
 
-	cfg := new(UserConfig)
+	cfg := new(Config)
 
-	bytes, err := getConfigBytes(path)
+	bytes, err := configBytes(path)
 	if err != nil {
 		return nil, err
 	}
@@ -93,8 +93,8 @@ func GetUserConfig() (*UserConfig, error) {
 	return cfg, nil
 }
 
-// SetUserConfig sets a value in the dotfile config json file.
-func SetUserConfig(key string, value string) error {
+// SetConfig sets a value in the dotfile config json file.
+func SetConfig(key string, value string) error {
 	cfg := make(map[string]*string)
 
 	path, err := configPath()
@@ -102,7 +102,7 @@ func SetUserConfig(key string, value string) error {
 		return err
 	}
 
-	bytes, err := getConfigBytes(path)
+	bytes, err := configBytes(path)
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func SetUserConfig(key string, value string) error {
 	}
 
 	if _, ok := cfg[key]; !ok {
-		return usererror.Invalid(fmt.Sprintf("%#v is not a valid config key", key))
+		return usererror.Invalid(fmt.Sprintf("%q is not a valid config key", key))
 	}
 
 	cfg[key] = &value

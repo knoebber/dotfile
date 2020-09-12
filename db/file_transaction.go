@@ -20,7 +20,7 @@ type FileTransaction struct {
 	CurrentCommitID int64
 	Hash            string
 	Path            string
-	Staged          *TempFile
+	Staged          *TempFileRecord
 }
 
 // NewFileTransaction loads file information into a file transaction.
@@ -69,7 +69,7 @@ func StageFile(username string, alias string) (ft *FileTransaction, err error) {
 		return
 	}
 
-	ft.Staged, err = GetTempFile(username, alias)
+	ft.Staged, err = TempFile(username, alias)
 	if err != nil {
 		return nil, ft.Rollback(err)
 	}
@@ -91,7 +91,7 @@ func StageFile(username string, alias string) (ft *FileTransaction, err error) {
 // SaveFile saves a new file that does yet have any commits.
 // Callers should call SaveCommit in the same transaction.
 func (ft *FileTransaction) SaveFile(userID int64, alias, path string) error {
-	f := &File{
+	f := &FileRecord{
 		UserID: userID,
 		Alias:  alias,
 		Path:   path,
@@ -130,7 +130,7 @@ func (ft *FileTransaction) Content() ([]byte, error) {
 // SaveCommit saves a commit to the database.
 // The files current revision will be set to the new commit.
 func (ft *FileTransaction) SaveCommit(buff *bytes.Buffer, c *file.Commit) error {
-	commit := &Commit{
+	commit := &CommitRecord{
 		FileID:    ft.FileID,
 		Revision:  buff.Bytes(),
 		Hash:      c.Hash,
@@ -149,12 +149,12 @@ func (ft *FileTransaction) SaveCommit(buff *bytes.Buffer, c *file.Commit) error 
 
 // Revision returns the compressed content at hash.
 func (ft *FileTransaction) Revision(hash string) ([]byte, error) {
-	revision, err := getRevision(ft.FileID, hash)
+	r, err := revision(ft.FileID, hash)
 	if err != nil {
 		return nil, ft.Rollback(err)
 	}
 
-	return revision, nil
+	return r, nil
 }
 
 // SetRevision sets the file to the commit at hash.

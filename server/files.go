@@ -15,13 +15,13 @@ func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	content := r.Form.Get("contents")
 	path := r.Form.Get("path")
 
-	alias, err := file.GetAlias(r.Form.Get("alias"), path)
+	alias, err := file.Alias(r.Form.Get("alias"), path)
 	if err != nil {
 		return p.setError(w, err)
 	}
 
 	// Expect not found error.
-	_, err = db.GetFile(p.Session.Username, alias)
+	_, err = db.File(p.Session.Username, alias)
 	if err == nil {
 		return p.setError(w, usererror.Duplicate("File", alias))
 	}
@@ -29,7 +29,7 @@ func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, err)
 	}
 
-	tempFile := &db.TempFile{
+	tempFile := &db.TempFileRecord{
 		UserID:  p.Session.UserID,
 		Alias:   alias,
 		Path:    path,
@@ -53,7 +53,7 @@ func updateFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	// Delete the file when the user submits the alias into the form.
 	delete := r.Form.Get("delete")
 
-	file, err := db.GetFile(p.Session.Username, currentAlias)
+	file, err := db.File(p.Session.Username, currentAlias)
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -81,7 +81,7 @@ func updateFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 func editFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	content := r.Form.Get("contents")
 
-	existingFile, err := db.GetFile(p.Session.Username, p.Vars["alias"])
+	existingFile, err := db.File(p.Session.Username, p.Vars["alias"])
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -89,7 +89,7 @@ func editFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	alias := existingFile.Alias
 	path := existingFile.Path
 
-	tempFile := &db.TempFile{
+	tempFile := &db.TempFileRecord{
 		UserID:  p.Session.UserID,
 		Alias:   alias,
 		Path:    path,
@@ -176,7 +176,7 @@ func loadFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	username := p.Vars["username"]
 	alias := p.Vars["alias"]
 
-	file, err := db.GetFile(username, alias)
+	file, err := db.File(username, alias)
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -214,7 +214,7 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 		return
 	}
 	if editing {
-		tempFile, err := db.GetTempFile(p.Session.Username, pageAlias)
+		tempFile, err := db.TempFile(p.Session.Username, pageAlias)
 		if err != nil && !db.NotFound(err) {
 			return p.setError(w, err)
 		}
@@ -230,7 +230,7 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 
 	if at == "" {
 		// Load the current content.
-		file, err := db.GetFile(p.Vars["username"], pageAlias)
+		file, err := db.File(p.Vars["username"], pageAlias)
 		if err != nil {
 			return p.setError(w, err)
 		}
@@ -238,7 +238,7 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 		p.Data["content"] = string(file.Content)
 		return
 	} else if !newFile && !editing && at != "" {
-		commit, err := db.GetUncompressedCommit(p.Vars["username"], pageAlias, at)
+		commit, err := db.UncompressedCommit(p.Vars["username"], pageAlias, at)
 		if err != nil {
 			return p.setError(w, err)
 		}
@@ -254,7 +254,7 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	alias := p.Vars["alias"]
 
-	f, err := db.GetFile(p.Session.Username, alias)
+	f, err := db.File(p.Session.Username, alias)
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -276,7 +276,7 @@ func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bo
 
 // Loads the contents of a users temp file for the new file page.
 func loadNewFileConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	tempFile, err := db.GetTempFile(p.Session.Username, p.Vars["alias"])
+	tempFile, err := db.TempFile(p.Session.Username, p.Vars["alias"])
 	if err != nil {
 		return p.setError(w, err)
 	}

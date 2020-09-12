@@ -16,7 +16,7 @@ func loadDiff(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	on := r.URL.Query().Get("on")
 	against := r.URL.Query().Get("against")
 
-	commits, err := db.GetCommitList(username, alias)
+	commits, err := db.CommitList(username, alias)
 	if err != nil {
 		return p.setError(w, err)
 	}

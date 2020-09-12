@@ -14,15 +14,15 @@ type configCommand struct {
 
 func (cc *configCommand) run(ctx *kingpin.ParseContext) error {
 	if cc.key != "" {
-		return local.SetUserConfig(cc.key, cc.value)
+		return local.SetConfig(cc.key, cc.value)
 	}
 
-	user, err := local.GetUserConfig()
+	config, err := local.ReadConfig()
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(user)
+	fmt.Println(config)
 	return nil
 }
 

@@ -48,12 +48,12 @@ type checker interface {
 // Creates the required tables if they doesn't exist
 func createTables() error {
 	for _, model := range []tableCreator{
-		new(User),
-		new(ReservedUsername),
-		new(Session),
-		new(File),
-		new(TempFile),
-		new(Commit),
+		new(UserRecord),
+		new(ReservedUsernameRecord),
+		new(SessionRecord),
+		new(FileRecord),
+		new(TempFileRecord),
+		new(CommitRecord),
 	} {
 		_, err := connection.Exec(model.createStmt())
 		if err != nil {

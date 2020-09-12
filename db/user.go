@@ -22,8 +22,8 @@ const (
 
 const cliTokenLength = 24
 
-// User is the model for a dotfilehub user.
-type User struct {
+// UserRecord models the user table.
+type UserRecord struct {
 	ID             int64
 	Username       string `validate:"alphanum"`
 	Email          string `validate:"omitempty,email"` // Not required; users may opt in to enable account recovery.
@@ -35,7 +35,7 @@ type User struct {
 	CreatedAt      string
 }
 
-func (*User) createStmt() string {
+func (*UserRecord) createStmt() string {
 	return `
 CREATE TABLE IF NOT EXISTS users(
 id              INTEGER PRIMARY KEY,
@@ -51,7 +51,7 @@ created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 CREATE INDEX IF NOT EXISTS users_username_index ON users(username);`
 }
 
-func (u *User) insertStmt(e executor) (sql.Result, error) {
+func (u *UserRecord) insertStmt(e executor) (sql.Result, error) {
 	var email *string
 	if u.Email != "" {
 		email = &u.Email
@@ -64,7 +64,7 @@ func (u *User) insertStmt(e executor) (sql.Result, error) {
 	)
 }
 
-func (u *User) check() error {
+func (u *UserRecord) check() error {
 	var count int
 
 	if err := checkUsernameAllowed(u.Username); err != nil {
@@ -125,16 +125,15 @@ func compareUserPassword(username string, password string) error {
 
 }
 
-// GetUser gets a user.
-// Only one argument is required - userID will be used if both are present.
+// User returns the user with username.
 // This does not scan password_hash.
-func GetUser(username string) (*User, error) {
+func User(username string) (*UserRecord, error) {
 	var (
 		email, timezone *string
 		createdAt       time.Time
 	)
 
-	user := new(User)
+	user := new(UserRecord)
 
 	err := connection.QueryRow(`
 SELECT id,
@@ -172,7 +171,7 @@ WHERE username = ?
 }
 
 // CreateUser inserts a new user into the users table.
-func CreateUser(username, password string) (*User, error) {
+func CreateUser(username, password string) (*UserRecord, error) {
 	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 	if err != nil {
 		return nil, err
@@ -183,7 +182,7 @@ func CreateUser(username, password string) (*User, error) {
 		return nil, err
 	}
 
-	u := &User{
+	u := &UserRecord{
 		Username:     username,
 		PasswordHash: hashed,
 		CLIToken:     cliToken,
@@ -291,7 +290,7 @@ func UpdateTheme(username string, theme UserTheme) error {
 
 // UserLogin checks a username / password.
 // If the credentials are valid, returns a new session.
-func UserLogin(username, password, ip string) (*Session, error) {
+func UserLogin(username, password, ip string) (*SessionRecord, error) {
 	if err := compareUserPassword(username, password); err != nil {
 		return nil, err
 	}

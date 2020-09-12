@@ -13,7 +13,7 @@ type FileContent struct {
 
 // Content returns the content from the users temp_file.
 func (fc *FileContent) Content() ([]byte, error) {
-	temp, err := GetTempFile(fc.Username, fc.Alias)
+	temp, err := TempFile(fc.Username, fc.Alias)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func (fc *FileContent) Content() ([]byte, error) {
 
 // Revision returns the compressed content at hash.
 func (fc *FileContent) Revision(hash string) ([]byte, error) {
-	commit, err := GetCommit(fc.Username, fc.Alias, hash)
+	commit, err := Commit(fc.Username, fc.Alias, hash)
 	if err != nil {
 		return nil, err
 	}

@@ -83,7 +83,7 @@ func createLoadUserCLI(config Config) pageBuilder {
 	return func(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		var remote string
 
-		user, err := db.GetUser(p.Session.Username)
+		user, err := db.User(p.Session.Username)
 		if err != nil {
 			return p.setError(w, err)
 		}
@@ -107,10 +107,7 @@ func createLoadUserCLI(config Config) pageBuilder {
 }
 
 func loadUserSettings(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	username := p.Session.Username
-
-	user, err := db.GetUser(username)
-
+	user, err := db.User(p.Session.Username)
 	if err != nil {
 		return p.setError(w, err)
 	}

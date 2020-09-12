@@ -10,9 +10,9 @@ import (
 
 const sessionLength = 24
 
-// Session is the model for the sessions table.
+// SessionRecord models the sessions table.
 // It tracks a user's active sessions.
-type Session struct {
+type SessionRecord struct {
 	ID        int64
 	Session   string `validate:"required"`
 	UserID    int64  `validate:"required"`
@@ -23,7 +23,7 @@ type Session struct {
 	DeletedAt *time.Time
 }
 
-func (*Session) createStmt() string {
+func (*SessionRecord) createStmt() string {
 	return `
 CREATE TABLE IF NOT EXISTS sessions(
 id         INTEGER PRIMARY KEY,
@@ -37,11 +37,11 @@ deleted_at DATETIME
 CREATE INDEX IF NOT EXISTS sessions_user_index ON sessions(user_id);`
 }
 
-func (s *Session) insertStmt(e executor) (sql.Result, error) {
+func (s *SessionRecord) insertStmt(e executor) (sql.Result, error) {
 	return e.Exec("INSERT INTO sessions(session, user_id, ip) VALUES(?, ?, ?)", s.Session, s.UserID, s.IP)
 }
 
-func createSession(username, ip string) (*Session, error) {
+func createSession(username, ip string) (*SessionRecord, error) {
 	var userID int64
 
 	err := connection.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userID)
@@ -54,7 +54,7 @@ func createSession(username, ip string) (*Session, error) {
 		return nil, err
 	}
 
-	s := &Session{
+	s := &SessionRecord{
 		Session: session,
 		UserID:  userID,
 		IP:      ip,
@@ -79,9 +79,9 @@ func session() (string, error) {
 	return base64.URLEncoding.EncodeToString(buff), nil
 }
 
-// CheckSession checks if session is valid.
-func CheckSession(session string) (*Session, error) {
-	s := new(Session)
+// Session returns a valid session.
+func Session(session string) (*SessionRecord, error) {
+	s := new(SessionRecord)
 
 	err := connection.
 		QueryRow(`

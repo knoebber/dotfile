@@ -8,12 +8,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TempFile models the temp_files table.
+// TempFileRecord models the temp_files table.
 // It represents a changed/new file that has not yet been commited.
 // Similar to an untracked or dirty file on the filesystem.
 // This allows the user to "stage" a file and view results before saving.
 // User to TempFile is a one to one relationship.
-type TempFile struct {
+type TempFileRecord struct {
 	ID        int64
 	UserID    int64  `validate:"required"`
 	Alias     string `validate:"required"`
@@ -22,7 +22,7 @@ type TempFile struct {
 	CreatedAt time.Time
 }
 
-func (*TempFile) createStmt() string {
+func (*TempFileRecord) createStmt() string {
 	return `
 CREATE TABLE IF NOT EXISTS temp_files(
 id         INTEGER PRIMARY KEY,
@@ -36,7 +36,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS temp_files_user_index ON temp_files(user_id);
 `
 }
 
-func (f *TempFile) check() error {
+func (f *TempFileRecord) check() error {
 	if err := checkFile(f.Alias, f.Path); err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (f *TempFile) check() error {
 
 // Inserts or updates a user's previous temp file.
 // Uses an UPSERT statement: https://sqlite.org/lang_UPSERT.html
-func (f *TempFile) insertStmt(e executor) (sql.Result, error) {
+func (f *TempFileRecord) insertStmt(e executor) (sql.Result, error) {
 	compressed, err := file.Compress(f.Content)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ SET alias = ?, path = ?, content = ?`,
 }
 
 // Create creates a new temp file.
-func (f *TempFile) Create() error {
+func (f *TempFileRecord) Create() error {
 	id, err := insert(f, nil)
 	if err != nil {
 		return err
@@ -85,8 +85,8 @@ func (f *TempFile) Create() error {
 	return nil
 }
 
-func (f *TempFile) save(tx *sql.Tx) (newFileID int64, err error) {
-	newFile := &File{
+func (f *TempFileRecord) save(tx *sql.Tx) (newFileID int64, err error) {
+	newFile := &FileRecord{
 		UserID: f.UserID,
 		Alias:  f.Alias,
 		Path:   f.Path,
@@ -105,11 +105,11 @@ func (f *TempFile) save(tx *sql.Tx) (newFileID int64, err error) {
 	return
 }
 
-// GetTempFile finds a user's temp file.
+// TempFile finds a user's temp file.
 // Users can only have one temp file at a time so alias can be empty.
 // When alias is present, ensures that temp file exists with alias.
-func GetTempFile(username string, alias string) (*TempFile, error) {
-	res := new(TempFile)
+func TempFile(username string, alias string) (*TempFileRecord, error) {
+	res := new(TempFileRecord)
 
 	if err := connection.
 		QueryRow(`

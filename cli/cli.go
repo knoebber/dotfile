@@ -16,12 +16,12 @@ type globalFlags struct {
 var flags globalFlags
 
 func newDotfileClient() (*dotfileclient.Client, error) {
-	user, err := local.GetUserConfig()
+	config, err := local.ReadConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	return dotfileclient.New(user.Remote, user.Username, user.Token), nil
+	return dotfileclient.New(config.Remote, config.Username, config.Token), nil
 }
 
 func loadFile(alias string) (*local.Storage, error) {

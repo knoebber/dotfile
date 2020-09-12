@@ -11,7 +11,7 @@ import (
 func handleRawFile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	file, err := db.GetFile(vars["username"], vars["alias"])
+	file, err := db.File(vars["username"], vars["alias"])
 	if err != nil {
 		rawContentError(w, err)
 		return
@@ -28,7 +28,7 @@ func handleRawFile(w http.ResponseWriter, r *http.Request) {
 func handleRawUncompressedCommit(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	commit, err := db.GetUncompressedCommit(vars["username"], vars["alias"], vars["hash"])
+	commit, err := db.UncompressedCommit(vars["username"], vars["alias"], vars["hash"])
 	if err != nil {
 		rawContentError(w, err)
 		return

@@ -69,10 +69,10 @@ VALUES(?, ?, ?, ?, ?)`,
 	}
 }
 
-func createTestTempFile(t *testing.T, content string) *TempFile {
+func createTestTempFile(t *testing.T, content string) *TempFileRecord {
 	createTestUser(t, testUserID, testUsername, testEmail)
 
-	testTempFile := &TempFile{
+	testTempFile := &TempFileRecord{
 		UserID:  testUserID,
 		Alias:   testAlias,
 		Path:    testPath,
@@ -127,7 +127,7 @@ func initTestFile(t *testing.T) *FileView {
 	failIf(t, file.Init(ft, testPath, testAlias), "initialing test file")
 	failIf(t, ft.Close())
 
-	f, err := GetFile(testUsername, testAlias)
+	f, err := File(testUsername, testAlias)
 	failIf(t, err, "getting file by username in init test file")
 	return f
 }
@@ -148,14 +148,14 @@ func initTestFileAndCommit(t *testing.T) (initialCommit CommitSummary, currentCo
 	failIf(t, file.NewCommit(ft, "Commiting test updated content"))
 	failIf(t, ft.Close())
 
-	lst, err := GetCommitList(testUsername, testAlias)
+	lst, err := CommitList(testUsername, testAlias)
 	failIf(t, err, "getting test commit")
 
 	if len(lst) != 2 {
 		t.Fatalf("expected commit list to be length 2, got %d", len(lst))
 	}
 
-	f, err := GetFile(testUsername, testAlias)
+	f, err := File(testUsername, testAlias)
 	failIf(t, err, "initTestFileAndCommit: GetFileByUsername")
 
 	currentCommit = lst[0]
