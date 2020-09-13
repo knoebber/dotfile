@@ -42,6 +42,8 @@ func apiRoutes(r *mux.Router) {
 func dotfileRoutes(r *mux.Router, config Config) {
 	r.HandleFunc("/signup", signupHandler(config.Secure))
 	r.HandleFunc("/login", loginHandler(config.Secure))
+	r.HandleFunc("/account_recovery", accountRecoveryHandler(config))
+	r.HandleFunc("/reset_password", resetPasswordHandler())
 	r.HandleFunc("/logout", logoutHandler())
 	r.HandleFunc("/new_file", newFileHandler())
 	r.HandleFunc("/settings", settingsHandler())

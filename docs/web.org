@@ -12,14 +12,18 @@ For example:
 curl https://dotfilehub.com/knoebber/bashrc > ~/.bashrc
 #+END_SRC
 * Create a new file
-If you have the CLI installed its easier to use the =push= command to upload files.
+If you have the CLI installed its easier to use the =push= command to
+upload files.
 ** Alias
 The alias must contain only letters, numbers, and underscores.
 When alias is omitted it will be generated from the path.
 ** Path
 The path is the location that =dot pull= will install the file to.
-This must be either an absolute path, or start with a tilda.
+This must be either an absolute path or start with =~=.
 * Set your timezone
+:PROPERTIES:
+:custom_id: set-your-timezone
+:END:
 This will convert timestamps from the database to a timezone. The default is UTC.
 The form expects a string like the /TZ database name/ column found here:
 [[https://en.wikipedia.org/wiki/List_of_tz_database_time_zones]]
@@ -60,8 +64,8 @@ Request must have basic auth headers with the dotfilehub username and CLI token.
 :PROPERTIES:
 :custom_id: self-host
 :END:
-Clone the repository and build the binary. The build step copies all of the required
-assets into the =/bin= directory.
+Clone the repository and build the binary. The build step copies all
+of the required assets into the =/bin= directory.
 #+BEGIN_SRC bash
 git clone https://github.com/knoebber/dotfile
 cd dotfile
@@ -69,17 +73,33 @@ make dotfilehub
 cd bin
 ./dotfilehub
 #+END_SRC
-
-The server is configured through the following flags:
+The server is configured through the following optional flags:
 ** -addr
-The address to listen on.
+The address to listen on. Defaults to =localhost:3000=.
 ** -db
-The location of the sqlite database. Creates a new database when it does not yet exist.
+The location of the sqlite database. Creates a new database when it
+does not yet exist.
+Defaults to =~/.dotfilehub.db=.
 ** -host
-The name of the host. Used for displaying the name of the remote in the CLI setup page.
-By default it will use the host header, but this is often incorrect depending on
-how the server is setup.
+The name of the host. Used for displaying the host name in
+the CLI setup page and the password reset email.
+If this is not set the server will use the host header which is often
+incorrect. This shouldn't contain =http://= or =https://=.
 ** -secure
-Sets the session cookie to HTTPS only.
+Sets the session cookie to HTTPS only. It is also used for formatting
+the host name along with the -host flag.
 ** -proxyheaders
 Set the request IP by inspecting the reverse proxy headers.
+** -smtp-config-path
+Sets up a SMTP client for account recovery. The value should be a
+path to a JSON file. The file must contain the following keys:
+#+BEGIN_SRC javascript
+{
+    "host": "",
+    "port": 0,
+    "username": "",
+    "password": "",
+    "sender": ""
+}
+#+END_SRC
+The client will use PLAIN authentication.

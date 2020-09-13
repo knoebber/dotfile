@@ -9,7 +9,7 @@ import (
 	"github.com/knoebber/dotfile/usererror"
 )
 
-const minPassLength = 8
+const passwordResetSubject = "Dotfilehub Password Reset"
 
 // Redirects to index when session exists.
 func checkSession(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
@@ -20,10 +20,72 @@ func checkSession(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	return false
 }
 
-func createHandleLogin(secure bool) pageBuilder {
+func handleLogin(secure bool) pageBuilder {
 	return func(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return login(w, r, p, secure)
 	}
+}
+
+func handleAccountRecovery(config Config) pageBuilder {
+	return func(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+		if config.SMTP == nil {
+			return p.setError(w, usererror.Invalid("This server isn't configured for SMTP."))
+		}
+		email := r.Form.Get("email")
+
+		// Don't let people see if emails exist or not by checking how long the page takes to load.
+		go func() {
+			token, err := db.SetPasswordResetToken(r.Form.Get("email"))
+			if err != nil {
+				// Log the error but don't tell the user.
+				log.Print("reset password form: ", err)
+				return
+			}
+
+			resetURL := fmt.Sprintf("%s/reset_password?token=%s", config.URL(r), token)
+			body := "Please click the following link to reset your dotfilehub account:\n" + resetURL
+			if err := mail(config.SMTP, email, passwordResetSubject, body); err != nil {
+				log.Print(err)
+			} else {
+				log.Printf("sent mail to %q for password reset", email)
+			}
+		}()
+
+		p.flashSuccess("Request processed.")
+		return
+	}
+}
+
+func loadAccountRecovery(config Config) pageBuilder {
+	return func(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+		if config.SMTP == nil {
+			p.Data["disabled"] = true
+			return
+		}
+
+		p.Data["sender"] = config.SMTP.Sender
+		p.Data["subject"] = passwordResetSubject
+		return
+	}
+}
+
+func handlePasswordReset(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+	token := r.URL.Query().Get("token")
+	password := r.Form.Get("password")
+	confirm := r.Form.Get("confirm")
+
+	if password != confirm {
+		return p.setError(w, usererror.Invalid("Passwords do not match."))
+	}
+
+	username, err := db.ResetPassword(token, password)
+	if err != nil {
+		return p.setError(w, err)
+	}
+
+	log.Printf("reset password for %q", username)
+	p.flashSuccess(fmt.Sprintf("Password updated. Your username is %q", username))
+	return
 }
 
 func login(w http.ResponseWriter, r *http.Request, p *Page, secure bool) (done bool) {
@@ -45,16 +107,11 @@ func login(w http.ResponseWriter, r *http.Request, p *Page, secure bool) (done b
 	return true
 }
 
-func createHandleSignup(secure bool) pageBuilder {
+func handleSignup(secure bool) pageBuilder {
 	return func(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		username := r.Form.Get("username")
 		password := r.Form.Get("password")
 		confirm := r.Form.Get("confirm")
-
-		if len(password) < minPassLength {
-			msg := fmt.Sprintf("Password must be at least %d characters.", minPassLength)
-			return p.setError(w, usererror.Invalid(msg))
-		}
 
 		if password != confirm {
 			p.setError(w, usererror.Invalid("Passwords do not match."))
@@ -89,7 +146,7 @@ func loginHandler(secure bool) http.HandlerFunc {
 		templateName: "login.tmpl",
 		title:        loginTitle,
 		loadData:     checkSession,
-		handleForm:   createHandleLogin(secure),
+		handleForm:   handleLogin(secure),
 	})
 }
 
@@ -98,7 +155,7 @@ func signupHandler(secure bool) http.HandlerFunc {
 		templateName: "signup.tmpl",
 		title:        "Signup",
 		loadData:     checkSession,
-		handleForm:   createHandleSignup(secure),
+		handleForm:   handleSignup(secure),
 	})
 }
 
@@ -106,5 +163,22 @@ func logoutHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		handleForm: handleLogout,
 		protected:  true,
+	})
+}
+
+func accountRecoveryHandler(config Config) http.HandlerFunc {
+	return createHandler(&pageDescription{
+		templateName: "account_recovery.tmpl",
+		title:        "Account Recovery",
+		loadData:     loadAccountRecovery(config),
+		handleForm:   handleAccountRecovery(config),
+	})
+}
+
+func resetPasswordHandler() http.HandlerFunc {
+	return createHandler(&pageDescription{
+		templateName: "reset_password.tmpl",
+		title:        "Reset Password",
+		handleForm:   handlePasswordReset,
 	})
 }

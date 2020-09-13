@@ -14,34 +14,60 @@ import (
 
 // Config configures the server.
 type Config struct {
-	Addr         string // Address to listen at.
-	DBPath       string // The path to store the sqlite database file.
-	Secure       bool   // Sets session cookie to HTTPS only.
-	ProxyHeaders bool   // Sets request IP from reverse proxy headers.
-	Host         string // Overrides http.Request.Host when not empty.
+	Addr           string      // Address to listen at.
+	DBPath         string      // The path to store the sqlite database file.
+	Secure         bool        // Tell the server code that the host is using https.
+	ProxyHeaders   bool        // Sets request IP from reverse proxy headers.
+	Host           string      // Overrides http.Request.Host when not empty.
+	SMTP           *SMTPConfig // Sets up a SMTP Client
+	SMTPConfigPath string      // Sets SMTP from this file's JSON when not empty.
+}
+
+// URL returns the configured url.
+// If c.Host is not set it will use the requests host header.
+func (c Config) URL(r *http.Request) string {
+	protocol := "http://"
+	if c.Secure {
+		protocol = "https://"
+	}
+
+	if c.Host == "" {
+		return protocol + r.Host
+	}
+
+	return protocol + c.Host
 }
 
 const timeout = 10 * time.Second
 
 // Start starts the dotfile web server.
 // Expects an assets folder in the same directory from where the binary is ran.
-func Start(cfg Config) {
-	if err := db.Start(cfg.DBPath); err != nil {
+func Start(config Config) {
+	var err error
+
+	if err = db.Start(config.DBPath); err != nil {
 		log.Panicf("starting database connection: %v", err)
 	}
 	defer db.Close()
 
+	if config.SMTPConfigPath != "" {
+		config.SMTP, err = smtpConfig(config.SMTPConfigPath)
+		if err != nil {
+			log.Panic(err)
+		}
+	}
+
 	r := mux.NewRouter()
 
-	setupRoutes(r, cfg)
+	setupRoutes(r, config)
 
 	s := &http.Server{
-		Addr:         cfg.Addr,
+		Addr:         config.Addr,
 		WriteTimeout: timeout,
 		ReadTimeout:  timeout,
 	}
 
-	if cfg.ProxyHeaders {
+	if config.ProxyHeaders {
 		s.Handler = handlers.LoggingHandler(os.Stdout, handlers.ProxyHeaders(r))
 	} else {
 		s.Handler = handlers.LoggingHandler(os.Stdout, r)
@@ -51,7 +77,7 @@ func Start(cfg Config) {
 		log.Panic(err)
 	}
 
-	log.Printf("using sqlite3 database %s", cfg.DBPath)
-	log.Println("serving dotfiles at", cfg.Addr)
+	log.Printf("using sqlite3 database %s", config.DBPath)
+	log.Println("serving dotfiles at", config.Addr)
 	log.Panicf("starting dotfile server: %v", s.ListenAndServe())
 }

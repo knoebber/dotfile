@@ -2,7 +2,7 @@
   {{ template "settings_header" . }}
   {{ if not .Data.authenticated }}
   <form method="post">
-    <label for="password">Password</label>
+    <label for="password">Password:</label>
     <input id="password" name="password" type="password" required>
     <button>Submit</button>
   </form>

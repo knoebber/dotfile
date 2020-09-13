@@ -25,14 +25,16 @@ func config() server.Config {
 	host := flag.String("host", "", "Override the host header for remote name display")
 	secure := flag.Bool("secure", false, "Set session cookie to HTTPS only")
 	proxyHeaders := flag.Bool("proxyheaders", false, "Set request IP by inspecting reverse proxy headers")
+	smtpConfigPath := flag.String("smtp-config-path", "", "Sets up a SMTP client for account recovery.")
 	flag.Parse()
 
 	return server.Config{
-		Addr:         *addr,
-		DBPath:       *dbPath,
-		Secure:       *secure,
-		ProxyHeaders: *proxyHeaders,
-		Host:         *host,
+		Addr:           *addr,
+		DBPath:         *dbPath,
+		Secure:         *secure,
+		ProxyHeaders:   *proxyHeaders,
+		Host:           *host,
+		SMTPConfigPath: *smtpConfigPath,
 	}
 }
 

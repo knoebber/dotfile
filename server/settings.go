@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/knoebber/dotfile/db"
@@ -20,7 +19,7 @@ func handleEmail(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 
 func handleTokenForm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	if token := r.Form.Get("token"); token != "" {
-		if err := db.RotateToken(p.Session.UserID, token); err != nil {
+		if err := db.RotateCLIToken(p.Session.UserID, token); err != nil {
 			return p.setError(w, err)
 		}
 
@@ -42,10 +41,6 @@ func handlePassword(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 
 	newPass := r.Form.Get("new")
 	confirm := r.Form.Get("confirm")
-
-	if len(newPass) < minPassLength {
-		return p.setError(w, usererror.Invalid(fmt.Sprintf("Password must be %d or more characters.", minPassLength)))
-	}
 
 	if newPass != confirm {
 		return p.setError(w, usererror.Invalid("Confirm does not match."))
@@ -79,28 +74,15 @@ func handleTimezone(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 	return
 }
 
-func createLoadUserCLI(config Config) pageBuilder {
+func loadUserCLI(config Config) pageBuilder {
 	return func(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-		var remote string
-
 		user, err := db.User(p.Session.Username)
 		if err != nil {
 			return p.setError(w, err)
 		}
 
 		p.Data["token"] = user.CLIToken
-		if config.Secure {
-			remote = "https://"
-		} else {
-			remote = "http://"
-		}
-		if config.Host != "" {
-			remote += config.Host
-		} else {
-			remote += r.Host
-		}
-
-		p.Data["remote"] = remote
+		p.Data["remote"] = config.URL(r)
 
 		return
 	}
@@ -138,7 +120,7 @@ func cliHandler(config Config) http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "cli.tmpl",
 		title:        "CLI Setup",
-		loadData:     createLoadUserCLI(config),
+		loadData:     loadUserCLI(config),
 		handleForm:   handleTokenForm,
 		protected:    true,
 	})

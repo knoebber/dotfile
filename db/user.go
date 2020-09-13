@@ -20,33 +20,35 @@ const (
 	UserThemeDark  UserTheme = "Dark"
 )
 
-const cliTokenLength = 24
+const tokenLength = 24
 
 // UserRecord models the user table.
 type UserRecord struct {
-	ID             int64
-	Username       string `validate:"alphanum"`
-	Email          string `validate:"omitempty,email"` // Not required; users may opt in to enable account recovery.
-	EmailConfirmed bool
-	PasswordHash   []byte
-	CLIToken       string `validate:"required"` // Allows CLI to write to server.
-	Theme          string
-	Timezone       string
-	CreatedAt      string
+	ID                 int64
+	Username           string `validate:"alphanum"`
+	Email              string `validate:"omitempty,email"` // Not required; users may opt in to enable account recovery.
+	EmailConfirmed     bool
+	PasswordHash       []byte
+	CLIToken           string `validate:"required"` // Allows CLI to write to server.
+	PasswordResetToken *string
+	Theme              string
+	Timezone           string
+	CreatedAt          string
 }
 
 func (*UserRecord) createStmt() string {
 	return `
 CREATE TABLE IF NOT EXISTS users(
-id              INTEGER PRIMARY KEY,
-username        TEXT NOT NULL UNIQUE COLLATE NOCASE,
-email           TEXT UNIQUE,
-email_confirmed INTEGER NOT NULL DEFAULT 0,
-password_hash   BLOB NOT NULL,
-cli_token       TEXT NOT NULL,
-timezone        TEXT,
-theme           TEXT NOT NULL DEFAULT "Light",
-created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+id                   INTEGER PRIMARY KEY,
+username             TEXT NOT NULL UNIQUE COLLATE NOCASE,
+email                TEXT UNIQUE,
+email_confirmed      INTEGER NOT NULL DEFAULT 0,
+password_hash        BLOB NOT NULL,
+cli_token            TEXT NOT NULL,
+password_reset_token TEXT,
+timezone             TEXT,
+theme                TEXT NOT NULL DEFAULT "Light",
+created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS users_username_index ON users(username);`
 }
@@ -125,8 +127,88 @@ func compareUserPassword(username string, password string) error {
 
 }
 
+// SetPasswordResetToken creates and saves a reset token for the user.
+// Returns the newly created token.
+func SetPasswordResetToken(email string) (string, error) {
+	token, err := token()
+	if err != nil {
+		return "", err
+	}
+
+	res, err := connection.Exec(`
+UPDATE users
+SET password_reset_token = ?
+WHERE email = ?`, token, email)
+	if err != nil {
+		return "", errors.Wrapf(err, "setting password reset token for %q", email)
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return "", err
+	}
+
+	if affected == 0 {
+		return "", fmt.Errorf("email %q does not exist", email)
+	}
+
+	return token, nil
+}
+
+// CheckPasswordResetToken checks if the password reset token exists.
+// Returns username for the token on success.
+func CheckPasswordResetToken(token string) (string, error) {
+	var (
+		count    int
+		username *string
+	)
+
+	err := connection.
+		QueryRow(`
+SELECT COUNT(*),
+       username
+FROM users
+WHERE password_reset_token = ?`, token).
+		Scan(&count, &username)
+	if err != nil {
+		return "", errors.Wrap(err, "counting users for password reset")
+	}
+	if count == 0 {
+		return "", usererror.Invalid("Token not found")
+	}
+	if count > 1 {
+		return "", fmt.Errorf("token %q has %d matches", token, count)
+	}
+
+	return *username, nil
+
+}
+
+// ResetPassword hashes and sets a new password to the user with the password reset token.
+func ResetPassword(token, newPassword string) (string, error) {
+	username, err := CheckPasswordResetToken(token)
+	if err != nil {
+		return "", err
+	}
+
+	passwordHash, err := hashPassword(newPassword)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = connection.Exec(`
+UPDATE users
+SET password_hash = ?, password_reset_token = NULL
+WHERE username = ?`, passwordHash, username)
+	if err != nil {
+		return "", errors.Wrapf(err, "resetting %q password", username)
+	}
+
+	return username, nil
+}
+
 // User returns the user with username.
-// This does not scan password_hash.
+// This does not set password_hash or password_reset_token.
 func User(username string) (*UserRecord, error) {
 	var (
 		email, timezone *string
@@ -157,7 +239,7 @@ WHERE username = ?
 		&createdAt,
 	)
 	if err != nil {
-		return nil, errors.Wrapf(err, "querying for user %#v", username)
+		return nil, errors.Wrapf(err, "querying for user %q", username)
 	}
 	if email != nil {
 		user.Email = *email
@@ -172,19 +254,19 @@ WHERE username = ?
 
 // CreateUser inserts a new user into the users table.
 func CreateUser(username, password string) (*UserRecord, error) {
-	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	passwordHash, err := hashPassword(password)
 	if err != nil {
 		return nil, err
 	}
 
-	cliToken, err := cliToken()
+	cliToken, err := token()
 	if err != nil {
 		return nil, err
 	}
 
 	u := &UserRecord{
 		Username:     username,
-		PasswordHash: hashed,
+		PasswordHash: passwordHash,
 		CLIToken:     cliToken,
 	}
 
@@ -222,9 +304,9 @@ func UpdateTimezone(userID int64, timezone string) error {
 	return err
 }
 
-// RotateToken creates a new token for the user.
-func RotateToken(userID int64, currentToken string) error {
-	newToken, err := cliToken()
+// RotateCLIToken creates a new CLI token for the user.
+func RotateCLIToken(userID int64, currentToken string) error {
+	newToken, err := token()
 	if err != nil {
 		return err
 	}
@@ -264,17 +346,20 @@ func CheckPassword(username, password string) error {
 
 // UpdatePassword updates a users password.
 // currentPass must match the current hash.
-func UpdatePassword(username string, currentPass, newPass string) error {
+func UpdatePassword(username string, currentPass, newPassword string) error {
 	if err := CheckPassword(username, currentPass); err != nil {
 		return err
 	}
 
-	hashed, err := bcrypt.GenerateFromPassword([]byte(newPass), bcrypt.MinCost)
+	passwordHash, err := hashPassword(newPassword)
 	if err != nil {
 		return err
 	}
 
-	_, err = connection.Exec("UPDATE users SET password_hash = ? WHERE username = ?", hashed, username)
+	_, err = connection.Exec(`
+UPDATE users
+SET password_hash = ?
+WHERE username = ?`, passwordHash, username)
 	return err
 }
 
@@ -282,7 +367,7 @@ func UpdatePassword(username string, currentPass, newPass string) error {
 func UpdateTheme(username string, theme UserTheme) error {
 	_, err := connection.Exec("UPDATE users SET theme = ? WHERE username = ?", theme, username)
 	if err != nil {
-		return errors.Wrapf(err, "updating %#v to theme %#v", username, theme)
+		return errors.Wrapf(err, "updating %q to theme %q", username, theme)
 	}
 
 	return nil
@@ -298,10 +383,10 @@ func UserLogin(username, password, ip string) (*SessionRecord, error) {
 	return createSession(username, ip)
 }
 
-func cliToken() (string, error) {
-	buff, err := randomBytes(cliTokenLength)
+func token() (string, error) {
+	buff, err := randomBytes(tokenLength)
 	if err != nil {
-		return "", errors.Wrap(err, "generating cli token")
+		return "", errors.Wrap(err, "generating token")
 	}
 
 	return fmt.Sprintf("%x", buff), nil

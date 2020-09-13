@@ -1,0 +1,20 @@
+<main>
+  <h1>{{ .Title }}</h1>
+  {{ if .Data.disabled }}
+  <p>Account recovery is disabled.
+    Configure this server for SMTP to enable.
+    See <a href="/docs/web.org#self-host">web docs</a> for more
+    information.</p>
+  {{ else }}
+  <p>
+    Enter your email below to reset your password.
+    The mail will be sent from <strong>{{ .Data.sender }}</strong>
+    and the subject will be <strong>{{ .Data.subject }}</strong>.
+  </p>
+  <form method="post">
+    <label for="email">Email</label>
+    <input name="email" type="email" id="email" required>
+    <button>Submit</button>
+  </form>
+  {{ end }}
+</main>

@@ -15,4 +15,5 @@ coverage.txt
 *.swp
 
 testdata/
+*.json
 

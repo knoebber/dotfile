@@ -11,6 +11,7 @@ import (
 
 	"github.com/knoebber/dotfile/file"
 	"github.com/knoebber/dotfile/usererror"
+	"golang.org/x/crypto/bcrypt"
 	// Driver for sql
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
@@ -22,6 +23,7 @@ const (
 	maxFilesPerUser        = 100
 	maxCommitsPerFile      = 100
 	maxBlobSizeBytes       = 15000
+	minPasswordLength      = 8
 )
 
 var (
@@ -159,6 +161,20 @@ func checkFile(alias, path string) error {
 		return err
 	}
 	return nil
+}
+
+func hashPassword(password string) ([]byte, error) {
+
+	if len(password) < minPasswordLength {
+		return nil, usererror.Invalid(fmt.Sprintf("Password must be at least %d characters.", minPasswordLength))
+	}
+
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	if err != nil {
+		return nil, errors.Wrap(err, "hashing password")
+	}
+
+	return passwordHash, nil
 }
 
 // NotFound returns whether err is wrapping a no rows error.
