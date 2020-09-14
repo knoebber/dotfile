@@ -1,51 +1,51 @@
-{{ define "file_content" }}
-{{ $owned := .Owned }}
-{{ $saved := not .Data.editAction }}
-{{ $username := .Vars.username }}
-{{ $alias := .Vars.alias }}
-{{ $hash := .Vars.hash }}
-{{ $currentHash := .Data.hash }}
-{{ $fileLink := printf "/%s/%s" $username $alias }}
+{{- define "file_content" -}}
+{{- $owned := .Owned }}
+{{- $saved := not .Data.editAction }}
+{{- $username := .Vars.username }}
+{{- $alias := .Vars.alias }}
+{{- $hash := .Vars.hash }}
+{{- $currentHash := .Data.hash }}
+{{- $fileLink := printf "/%s/%s" $username $alias -}}
 <h1>
-  {{ if $username }}
+  {{- if $username }}
   <a href="/{{ $username }}">{{ $username }}</a> / 
   <a href="/{{ $username }}/{{ $alias }}">{{ $alias }}</a>
-  {{ if $hash }} @ {{ shortenHash $hash }} {{ end }}
-  {{ else }} {{ $alias }}
-  {{ end }}
+  {{- if $hash }} @ {{ shortenHash $hash }} {{ end }}
+  {{- else }} {{ $alias }}
+  {{- end }}
 </h1>
 <div class="file-controls flex-between">
   <strong>{{ .Data.path }}</strong>
-  {{ if $saved }}
+  {{- if $saved }}
   <a href="{{ $fileLink }}/commits">Commits</a>
   <a href="{{ $fileLink }}/diff?against={{ $currentHash }}">Diff</a>
-  {{ if $hash }}
+  {{- if $hash }}
   <a href="{{ $fileLink }}/{{ $hash }}/raw">Raw</a>
-  {{ else }}
+  {{- else }}
   <a href="{{ $fileLink }}/raw">Raw</a>
-  {{ end }}
-  {{ if .Owned }}
+  {{- end }}
+  {{- if .Owned }}
   <a href="{{ $fileLink }}/edit{{ if $hash }}?at={{ $hash }}{{ end }}">Edit</a>
-  {{ if not $hash }}
+  {{- if not $hash }}
   <a href="{{ $fileLink }}/settings">Settings</a>
-  {{ end }}
-  {{ end }}
-  {{ if .Data.current }}
+  {{- end }}
+  {{- end }}
+  {{- if .Data.current }}
   <strong>Current revision</strong>
-  {{ else if and .Owned $hash }}
+  {{- else if and .Owned $hash }}
   <form method="post" class="inline">
     <button class="success">Restore</button>
   </form>
-  {{ end }}
-  {{ if and (not $owned) .Session }}
+  {{- end }}
+  {{- if and (not $owned) .Session }}
   <form method="post" class="inline" action="/{{ .Session.Username }}/{{ $alias }}">
     <input type="hidden" name="username" value="{{ $username }}">
     <input type="hidden" name="alias" value="{{ $alias }}">
     <input type="hidden" name="hash" value="{{ .Data.hash }}">
     <button class="success">Fork</button>
   </form>
-  {{ end }}
-  {{ end }}
+  {{- end }}
+  {{- end }}
 </div>
 <pre class="file-content"><code>{{ .Data.content }}</code></pre>
-{{ end }}
+{{- end }}

@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/knoebber/dotfile/db"
+	"github.com/pkg/errors"
 )
 
 // Config configures the server.
@@ -42,24 +43,26 @@ const timeout = 10 * time.Second
 
 // Start starts the dotfile web server.
 // Expects an assets folder in the same directory from where the binary is ran.
-func Start(config Config) {
+func Start(config Config) error {
 	var err error
 
 	if err = db.Start(config.DBPath); err != nil {
-		log.Panicf("starting database connection: %v", err)
+		errors.Wrapf(err, "starting database connection")
 	}
 	defer db.Close()
 
 	if config.SMTPConfigPath != "" {
 		config.SMTP, err = smtpConfig(config.SMTPConfigPath)
 		if err != nil {
-			log.Panic(err)
+			return err
 		}
 	}
 
 	r := mux.NewRouter()
 
-	setupRoutes(r, config)
+	if err := setupRoutes(r, config); err != nil {
+		return err
+	}
 
 	s := &http.Server{
 		Addr:         config.Addr,
@@ -74,10 +77,12 @@ func Start(config Config) {
 	}
 
 	if err := loadTemplates(); err != nil {
-		log.Panic(err)
+		return err
 	}
 
 	log.Printf("using sqlite3 database %s", config.DBPath)
 	log.Println("serving dotfiles at", config.Addr)
-	log.Panicf("starting dotfile server: %v", s.ListenAndServe())
+
+	log.Panicf("dotfilehub listen and serve: %v", s.ListenAndServe())
+	return nil
 }

@@ -1,20 +1,20 @@
 package server
 
 import (
-	"log"
 	"net/http"
 	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/knoebber/dotfile/db"
+	"github.com/pkg/errors"
 )
 
-func setupRoutes(r *mux.Router, config Config) {
+func setupRoutes(r *mux.Router, config Config) error {
 	staticRoutes(r)
 	assetRoutes(r)
 	apiRoutes(r)
 	dotfileRoutes(r, config)
-	createReservedUsernames(r)
+	return createReservedUsernames(r)
 }
 
 // Pages that get their content from the html/ directory.
@@ -67,7 +67,7 @@ func dotfileRoutes(r *mux.Router, config Config) {
 
 // Prevent users for registering any username that conflicts with an existing route.
 // For example a user named "about" wouldn't be able to see their files.
-func createReservedUsernames(r *mux.Router) {
+func createReservedUsernames(r *mux.Router) error {
 	reserved := []interface{}{}
 	err := r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		pathTemplate, err := route.GetPathTemplate()
@@ -85,10 +85,12 @@ func createReservedUsernames(r *mux.Router) {
 	})
 
 	if err != nil {
-		log.Fatalf("walking routes: %s", err)
+		return errors.Wrapf(err, "walking routes")
 	}
 
 	if err := db.SeedReservedUsernames(reserved); err != nil {
-		log.Fatal(err)
+		return err
 	}
+
+	return nil
 }

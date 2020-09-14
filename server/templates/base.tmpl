@@ -1,14 +1,13 @@
-{{ define "base" }}
+{{ define "base" -}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Version control for dotfiles">
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="description" content="Version control for dotfiles"/>
   <style>
-   {{ if not .Dark }}
-   :root {
-       /* Light theme */
+   {{- if not .Dark }}
+   :root { /* Light theme */
        --background: #fffffe;
        --headline: #181818;
        --paragraph: #2e2e2e;
@@ -18,8 +17,7 @@
        --tertiary: #fbdd74;
    }
    {{ else }}
-   /* Dark theme */
-   :root {
+   :root { /* Dark theme */
        --background: #16161a;
        --headline: #fffffe;
        --paragraph: #fffffe;
@@ -28,28 +26,28 @@
        --secondary: #2cb67d;
        --tertiary: #ff4b55;
    }
-   {{ end }}
+   {{ end -}}
   </style>
   <link rel="stylesheet" type="text/css" href="/style.css" />
   <title>{{ .Title }}</title>
 </head>
 <body>
   <nav>
-    {{ range .Links }}
+    {{- range .Links }}
     <a class="{{.Class}}" href="{{.URL}}">{{ .Title }}</a>
-    {{ end }}
+    {{- end }}
   </nav>
-  {{ if .SuccessMessage }}
+  {{- if .SuccessMessage }}
   <div class="flash-success">
     {{ .SuccessMessage }}
   </div>
   {{ end }}
-  {{ if .ErrorMessage }}
+  {{- if .ErrorMessage }}
   <div class="flash-error">
     {{ .ErrorMessage }}
   </div>
   {{ end }}
-  {{ content }}
+  {{- content -}}
 </body>
 </html>
-{{ end }}
+{{- end }}

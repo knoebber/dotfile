@@ -1,9 +1,9 @@
 <main>
   <h1><a href="/{{ .Vars.username }}">{{ .Vars.username }}</a></h1>
-  {{ if .Owned }}
+  {{- if .Owned }}
   <p><a href="/new_file">Add a new file</a></p>
-  {{ end }}
-  {{ if .Data.files  }}
+  {{- end }}
+  {{- if .Data.files }}
   <div class="table-wrapper">
     <table>
       <thead>
@@ -15,8 +15,8 @@
         </tr>
       </thead>
       <tbody>
-        {{ $username := .Vars.username }}
-        {{ range .Data.files }}
+        {{- $username := .Vars.username }}
+        {{- range .Data.files }}
         <tr>
           <td>
             <a href="/{{ $username }}/{{ .Alias }}">{{ .Alias }}</a>
@@ -25,11 +25,11 @@
           <td>{{ .NumCommits }}</td>
           <td>{{ .UpdatedAt }}</td>
         </tr>
-        {{ end }}
+        {{- end }}
       </tbody>
     </table>
   </div>
-  {{ else }}
+  {{- else }}
   <p>No files uploaded</p>
-  {{ end }}
+  {{- end }}
 </main>

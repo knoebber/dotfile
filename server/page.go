@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -72,7 +73,7 @@ func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
 	if db.NotFound(err) {
 		w.WriteHeader(http.StatusNotFound)
 		p.htmlFile = "404.html"
-		if err := p.renderHTML(w); err != nil {
+		if err := p.writeFromHTML(w); err != nil {
 			staticError(w, "404", err)
 		}
 
@@ -138,7 +139,8 @@ func (p *Page) setLinks() {
 	}
 }
 
-func (p *Page) renderTemplate(w http.ResponseWriter) error {
+// Writes content from the templates/ directory.
+func (p *Page) writeFromTemplate(w io.Writer) error {
 	p.setLinks()
 
 	baseClone, err := baseTemplate.Clone()
@@ -161,7 +163,8 @@ func (p *Page) renderTemplate(w http.ResponseWriter) error {
 	return baseClone.Execute(w, p)
 }
 
-func (p *Page) renderHTML(w http.ResponseWriter) error {
+// Writes content from the html/ directory.
+func (p *Page) writeFromHTML(w io.Writer) error {
 	p.setLinks()
 
 	baseClone, err := baseTemplate.Clone()

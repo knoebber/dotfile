@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -39,5 +40,8 @@ func config() server.Config {
 }
 
 func main() {
-	server.Start(config())
+	if err := server.Start(config()); err != nil {
+		fmt.Println("failed to start dotfilehub server:", err)
+		os.Exit(1)
+	}
 }

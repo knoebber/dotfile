@@ -2,23 +2,21 @@
   <h1>Dotfilehub</h1>
   <form method="get">
     <label for="q">Find Files</label>
-    <input value="{{ .Data.query }}" id="q" name="q" type="search" placeholder="~/.vimrc">
+    <input value="{{ .Data.query }}" id="q" name="q" type="search" placeholder="~/.vimrc"/>
     <button type="submit">Submit</button>
   </form>
-  {{ if .Data.files  }}
+  {{- if .Data.files }}
   <hr>
   <div class="table-wrapper">
     <table>
-      <thead>
       <tr>
+      <thead>
         <th>Alias</th>
         <th>Path</th>
         <th>User</th>
         <th>Updated At</th>
-      </tr>
-      </thead>
       <tbody>
-        {{ range .Data.files }}
+        {{- range .Data.files }}
         <tr>
           <td>
             <a href="/{{ .Username }}/{{ .Alias }}">{{ .Alias }}</a>
@@ -29,11 +27,11 @@
           </td>
           <td>{{ .UpdatedAt }}</td>
         </tr>
-        {{ end }}
+        {{ end -}}
       </tbody>
     </table>
   </div>
-  {{ else if and (not .Data.files) .Data.query }}
+  {{- else if and (not .Data.files) .Data.query }}
   <strong>No results</strong>
-  {{ end }}
+  {{ end -}}
 </main>

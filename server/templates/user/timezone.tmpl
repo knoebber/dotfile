@@ -1,8 +1,9 @@
 <main>
-  {{ template "settings_header" . }}
+  {{- template "settings_header" . }}
+  <p>Change your account timezone by entering a TZ database location. See <a href="/docs/web.org#set-your-timezone">web docs</a> for more information.</p>
   <form method="post">
     <label for="timezone">Timezone:</label>
-    <input value="{{ .Data.user.Timezone }}" id="timezone" name="timezone" required>
+    <input value="{{ .Data.user.Timezone }}" id="timezone" name="timezone" required="required"/>
     <button>Submit</button>
   </form>
 </main>

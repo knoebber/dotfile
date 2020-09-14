@@ -1,11 +1,11 @@
 <main>
-  {{ template "file_content" . }}
+  {{- template "file_content" . }}
   <div class="flex-between">
     <form method="post">
       <button class="success">Create</button>
     </form>
     <form method="get" action="{{ .Data.editAction }}">
-      <input type="hidden" name="edit" value="true">
+      <input type="hidden" name="edit" value="true"/>
       <button class="danger">Edit</button>
     </form>
   </div>

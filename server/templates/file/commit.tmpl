@@ -1,11 +1,11 @@
 <main>
-  {{ template "file_content" . }}
+  {{- template "file_content" . }}
   <p>{{ .Data.dateString }}</p>
   <p>
-    {{ if .Data.forkedFromUsername }}
+    {{- if .Data.forkedFromUsername }}
     <a href="/{{ .Data.forkedFromUsername }}/{{ .Vars.alias }}/{{.Data.hash }}">Forked from</a>
-    {{ else }}
+    {{- else }}
     <em>{{ .Data.message }}</em>
-    {{ end }}
+    {{- end }}
   </p>
 </main>

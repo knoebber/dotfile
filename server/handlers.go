@@ -34,7 +34,7 @@ func createStaticHandler(title, htmlFile string) http.HandlerFunc {
 			return
 		}
 
-		if err := page.renderHTML(w); err != nil {
+		if err := page.writeFromHTML(w); err != nil {
 			staticError(w, title, err)
 		}
 	}
@@ -62,7 +62,7 @@ func createHandler(desc *pageDescription) http.HandlerFunc {
 		// Optionally handle a form.
 		if r.Method == "POST" && desc.handleForm != nil {
 			if err := r.ParseForm(); err != nil {
-				badRequest(w, errors.Wrapf(err, "parsing form %#v", page.Title))
+				badRequest(w, errors.Wrapf(err, "parsing form %q", page.Title))
 				return
 			}
 
@@ -80,7 +80,7 @@ func createHandler(desc *pageDescription) http.HandlerFunc {
 			return
 		}
 
-		if err := page.renderTemplate(w); err != nil {
+		if err := page.writeFromTemplate(w); err != nil {
 			templateError(w, page.Title, err)
 		}
 	}
@@ -89,14 +89,14 @@ func createHandler(desc *pageDescription) http.HandlerFunc {
 func pageError(w http.ResponseWriter, title string, err error) {
 	setError(
 		w,
-		errors.Wrapf(err, "creating page %#v", title),
-		fmt.Sprintf("Failed to create page %#v", title),
+		errors.Wrapf(err, "creating page %q", title),
+		fmt.Sprintf("Failed to create page %q", title),
 		http.StatusInternalServerError,
 	)
 }
 
 func templateError(w http.ResponseWriter, title string, err error) {
-	log.Print(errors.Wrapf(err, "template error: rendering %#v", title))
+	log.Print(errors.Wrapf(err, "template error: rendering %q", title))
 }
 
 func staticError(w http.ResponseWriter, path string, err error) {
@@ -108,7 +108,7 @@ func badRequest(w http.ResponseWriter, err error) {
 }
 
 func permissionDenied(w http.ResponseWriter, user, owner string) {
-	err := fmt.Errorf("%#v attempted to modify user %#v resource", user, owner)
+	err := fmt.Errorf("%q attempted to modify user %q resource", user, owner)
 	setError(w, err, "Permission denied", http.StatusForbidden)
 }
 

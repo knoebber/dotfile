@@ -1,22 +1,22 @@
 <main>
-  {{ template "settings_header" . }}
-  {{ $email := .Data.user.Email }}
-  {{ $timezone := .Data.user.Timezone -}}
+  {{- template "settings_header" . }}
+  {{- $email := .Data.user.Email }}
+  {{- $timezone := .Data.user.Timezone }}
   <section>
     <h2>User Data</h2>
     <p>Joined: <strong>{{ .Data.user.CreatedAt }}</strong></p>
-    {{ if $email }}
+    {{- if $email }}
     <p>Email:
       <strong>{{ $email }}</strong>
       <a href="/settings/email">(edit)</a>
     </p>
-    {{ end }}
-    {{ if $timezone }}
+    {{- end }}
+    {{- if $timezone }}
     <p>Timezone:
       <strong>{{ $timezone }}</strong>
       <a href="/settings/timezone">(edit)</a>
     </p>
-    {{ end }}
+    {{- end }}
     <p>Theme:
       <strong>{{ .Data.user.Theme }}</strong>
       <a href="/settings/theme">(edit)</a>
@@ -25,12 +25,12 @@
   <section>
     <h2>Options</h2>
     <p><a href="/settings/cli">Setup CLI</a></p>
-    {{ if not $email }}
+    {{- if not $email }}
     <p><a href="/settings/email">Enable account recovery</a></p>
-    {{ end }}
-    {{ if not $timezone }}
+    {{- end }}
+    {{- if not $timezone }}
     <p><a href="/settings/timezone">Set timezone</a></p>
-    {{ end }}
+    {{- end }}
     <p><a href="/settings/password">Update password</a></p>
   </section>
   <form action="/logout" method="post" class="inline">

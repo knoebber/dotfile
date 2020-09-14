@@ -1,10 +1,10 @@
 <main>
   <h1>
-    {{ $username := .Vars.username }}
-    {{ $alias := .Vars.alias }}
-    {{ if not .Owned }}
+    {{- $username := .Vars.username }}
+    {{- $alias := .Vars.alias }}
+    {{- if not .Owned }}
     <a href="/{{ $username }}">{{ $alias -}}</a> / 
-    {{ end }}
+    {{- end }}
     <a href="/{{ $username }}/{{ $alias }}">{{ $alias }}</a>
     commits
   </h1>
@@ -18,17 +18,17 @@
         </tr>
       </thead>
       <tbody>
-        {{ range .Data.commits }}
+        {{- range .Data.commits }}
         <tr>
           <td>
             <a {{ if .Current }}class="active"{{ end }} href="/{{ $username }}/{{ $alias }}/{{ .Hash }}">{{ shortenHash .Hash }}</a>
           </td>
           <td>
-            {{ if .ForkedFromUsername }}
+            {{- if .ForkedFromUsername }}
             <a href="/{{ .ForkedFromUsername }}/{{ $alias }}/{{ .Hash }}">Forked from</a>
-            {{ else }}
+            {{- else }}
             {{ .Message }}
-            {{ end }}
+            {{ end -}}
           </td>
           <td>{{ .DateString }}</td>
         </tr>
