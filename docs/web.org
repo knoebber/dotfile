@@ -2,7 +2,7 @@
 [[https://dotfilehub.com][Dotfilehub]] is a web front end for dotfile.
 * View File
 Any file is globally viewable at the path =/{username}/{alias}=. There are no private files.
-If you want to use dotfile to manage secret files then self host it on a private network.
+If you want to use dotfilehub to manage secrets then you could self host it on a private network.
 
 Files will only render in HTML if the client sends an accept header that contains =hmtl=. This allows
 users to download files easily if they are in a environment without the dotfile CLI.
@@ -19,7 +19,7 @@ The alias must contain only letters, numbers, and underscores.
 When alias is omitted it will be generated from the path.
 ** Path
 The path is the location that =dot pull= will install the file to.
-This must be either an absolute path or start with =~=.
+This must be either an absolute path or start with =~/=.
 * Set your timezone
 :PROPERTIES:
 :custom_id: set-your-timezone
@@ -86,10 +86,11 @@ the CLI setup page and the password reset email.
 If this is not set the server will use the host header which is often
 incorrect. This shouldn't contain =http://= or =https://=.
 ** -secure
-Sets the session cookie to HTTPS only. It is also used for formatting
-the host name along with the -host flag.
+Boolean flag, defaults false.
+Set this to true when the host is using HTTPS.
 ** -proxyheaders
-Set the request IP by inspecting the reverse proxy headers.
+Boolean flag, defaults false.
+When true, the server will log request IPs by inspecting reverse proxy headers.
 ** -smtp-config-path
 Sets up a SMTP client for account recovery. The value should be a
 path to a JSON file. The file must contain the following keys:
