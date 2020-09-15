@@ -7,6 +7,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -21,9 +22,6 @@ var (
 
 	// Alias must only be words.
 	validAliasRegex = regexp.MustCompile(`^\w+$`)
-
-	// Must start in ~/ or /, cannot end in /
-	validPathRegex = regexp.MustCompile(`^~?/.+[^/]$`)
 
 	// ErrNoChanges is returned when a diff operation finds no changes.
 	ErrNoChanges = usererror.Invalid("No changes")
@@ -129,8 +127,21 @@ func CheckAlias(alias string) error {
 
 // CheckPath checks whether the alias format is allowed.
 func CheckPath(path string) error {
-	if !validPathRegex.Match([]byte(path)) {
-		return usererror.Invalid(fmt.Sprintf("%q is not a valid file path", path))
+	l := len(path)
+	if l == 0 {
+		return usererror.Invalid("File path cannot be empty")
+	}
+
+	if path[l-1] == filepath.Separator {
+		return usererror.Invalid("File path cannot be directory")
+	}
+
+	if len(path) > 2 && path[:2] == "~/" {
+		return nil
+	}
+
+	if !filepath.IsAbs(path) {
+		return usererror.Invalid("File path cannot be relative")
 	}
 
 	return nil
