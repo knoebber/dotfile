@@ -18,7 +18,7 @@ Dotfile commands are like git but simplified.
 
 Check a file in:
 #+BEGIN_SRC bash
-dot init ~/.bashrc
+dotfile init ~/.bashrc
 #+END_SRC
 
 This creates an initial commit. Dotfile will store the path of the file and
@@ -27,37 +27,37 @@ at anytime.
 
 Open your bashrc in in =$EDITOR=:
 #+BEGIN_SRC bash
-dot edit bashrc
+dotfile edit bashrc
 #+END_SRC
 
 View its commit history:
 #+BEGIN_SRC bash
-dot log bashrc
+dotfile log bashrc
 #+END_SRC
 
 Check the diff after making changes:
 #+BEGIN_SRC bash
-dot diff bashrc
+dotfile diff bashrc
 #+END_SRC
 
 Commit its changes:
 #+BEGIN_SRC bash
-dot commit bashrc "Add dotfile alias"
+dotfile commit bashrc "Add dotfile alias"
 #+END_SRC
 
 Revert its uncommited changes:
 #+BEGIN_SRC bash
-dot checkout bashrc
+dotfile checkout bashrc
 #+END_SRC
 
 Push to a remote server:
 #+BEGIN_SRC bash
-dot push bashrc
+dotfile push bashrc
 #+END_SRC
 
 Install all of your dotfiles:
 #+BEGIN_SRC bash
-dot pull --all
+dotfile pull --all
 #+END_SRC
 * Contribute
 Want to contribute? Open a pull request at [[https://github.com/knoebber/dotfile][github.com/knoebber/dotfile]]

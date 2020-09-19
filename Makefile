@@ -12,8 +12,8 @@ deep_test:
 ci_test:
 	go test $(CI_GO_TEST_FLAGS) $(GO_TEST_TARGET)
 
-dot:
-	go build -o bin/dot cmd/dot/main.go
+dotfile:
+	go build -o bin/dotfile cmd/dotfile/main.go
 
 htmlgen:
 	go build -o bin/htmlgen cmd/htmlgen/main.go

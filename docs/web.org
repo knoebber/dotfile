@@ -18,7 +18,7 @@ upload files.
 The alias must contain only letters, numbers, and underscores.
 When alias is omitted it will be generated from the path.
 ** Path
-The path is the location that =dot pull= will install the file to.
+The path is the location that =dotfile pull= will install the file to.
 This must be either an absolute path or start with =~/=.
 * Set your timezone
 :PROPERTIES:

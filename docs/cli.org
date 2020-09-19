@@ -1,32 +1,32 @@
 #+TITLE: CLI Documentation
 * Introduction
-The dotfile command line interface, =dot=, is a version control system for single files.
+The dotfile command line interface, =dotfile=, is a version control system for single files.
 When a file is checked in to dotfile an *alias* is created. The alias is mapped to its tracking
 data. For example an alias for =~/.bashrc= might be =bashrc=.
 Most dotfile commands use the alias as their first argument.
 This allows the user to manage their dotfiles easily regardless of their working directory.
 
-In general =dot= commands are structured as followed: =dot <command> <alias>=.
-For example: =dot edit bashrc=.
-Commands may have additional flags that can be used. Use =dot <command> --help= to learn more.
+In general =dotfile= commands are structured as followed: =dotfile <command> <alias>=.
+For example: =dotfile edit bashrc=.
+Commands may have additional flags that can be used. Use =dotfile <command> --help= to learn more.
 
 * Install
 :PROPERTIES:
 :custom_id: install
 :END:
-Dotfile should work on most unix systems. [[https://golang.org][Golang]] is required to build dot.
+Dotfile should work on most unix systems. [[https://golang.org][Golang]] is required to build dotfile.
 
 *Install with go get*
 #+BEGIN_SRC bash
-go get github.com/knoebber/dotfile/cmd/dot
+go get github.com/knoebber/dotfile/cmd/dotfile
 #+END_SRC
 
 *Install with make*
 #+BEGIN_SRC bash
 git clone https://github.com/knoebber/dotfile
 cd dotfile
-make dot
-# copy bin/dot to somewhere in $PATH.
+make dotfile
+# copy bin/dotfile to somewhere in $PATH.
 #+END_SRC
 * Tracking Data
 By default dotfile stores tracking information in =~/.local/share/dotfile=.
@@ -56,7 +56,7 @@ For every file that is tracked there is a matching =.json= file and a directory 
 * Config
 Dotfile will create a config directory in a location returned by https://golang.org/pkg/os/#UserConfigDir
 
-You can edit =config.json= manually or with the =dot config= command.
+You can edit =config.json= manually or with the =dotfile config= command.
 The config file has the following keys:
 
 + *remote*  - The remote server to use. Defaults to https://dotfilehub.com
@@ -74,17 +74,17 @@ The config file has the following keys:
 * Init
 Initialize a file.
 #+BEGIN_SRC bash
-dot init <path> <alias>
+dotfile init <path> <alias>
 #+END_SRC
 When alias is omitted init will generate the alias from the path.
 
 Initialize as "bashrc"
 #+BEGIN_SRC bash
-dot init ~/.bashrc
+dotfile init ~/.bashrc
 #+END_SRC
 Initialize as "i3"
 #+BEGIN_SRC bash
-dot init ~/.config/i3/config i3
+dotfile init ~/.config/i3/config i3
 #+END_SRC
 When the file is in the home directory =$HOME= will be replaced with "~" in the file's saved path.
 This allows the file to be installed to the same relative location regardless of user.
@@ -92,13 +92,13 @@ This allows the file to be installed to the same relative location regardless of
 If the file's path is outside of the home directory then it will be
 saved as an absolute path. In this example
 #+BEGIN_SRC bash
-dot init /etc/X11/xorg.conf
+dotfile init /etc/X11/xorg.conf
 #+END_SRC
 =xorg= will always install to its absolute path.
 * Show
 Show a file.
 #+BEGIN_SRC bash
-dot show <alias>
+dotfile show <alias>
 #+END_SRC
 + =-d, --data= Show the file's data.
 + =-r, --remote= Show a file on a remote server.
@@ -106,7 +106,7 @@ dot show <alias>
 * List
 List tracked files. Asterisks are added to files that have uncommited changes.
 #+BEGIN_SRC bash
-dot ls
+dotfile ls
 #+END_SRC
 + =-p, --path= Include the files path in the list.
 + =-r, --remote= List the remote users files.
@@ -114,38 +114,38 @@ dot ls
 * Edit
 Open a file in =$EDITOR=
 #+BEGIN_SRC bash
-dot edit <alias>
+dotfile edit <alias>
 #+END_SRC
 * Diff
 Print the changes of a file and a past commit.
 Commit hash is optional - defaults to the current commit.
 #+BEGIN_SRC bash
-dot diff <alias> <commit-hash>
+dotfile diff <alias> <commit-hash>
 #+END_SRC
 * Log
 Print a log of commits for a file.
 #+BEGIN_SRC bash
-dot log <alias>
+dotfile log <alias>
 #+END_SRC
 * Commit
 Save the current revision of the file.
 #+BEGIN_SRC bash
-dot commit <alias> <message>
+dotfile commit <alias> <message>
 #+END_SRC
 Message is optional.
 * Checkout
 Revert a file to a past revision.
 #+BEGIN_SRC bash
-dot checkout <alias> <hash>
+dotfile checkout <alias> <hash>
 #+END_SRC
 Hash is optional. When empty it will default to the current revision. This will remove any
 changes on the file since the last commit or checkout command.
 
-To checkout to a specific revision use the =dot log= command to find the hash.
+To checkout to a specific revision use the =dotfile log= command to find the hash.
 * Config
 Read and set dotfile config.
 #+BEGIN_SRC bash
-dot config <keyname> <value>
+dotfile config <keyname> <value>
 #+END_SRC Set a config value
 Keyname and value are optional. When empty it will print the current config.
 
@@ -153,7 +153,7 @@ Valid values for keyname are =username=, =remote=, or =token=.
 * Push
 Push a file and its revisions to a remote server.
 #+BEGIN_SRC bash
-dot push <alias>
+dotfile push <alias>
 #+END_SRC
 The remote file will either be created or updated to the current revision of the local file. All
 new local revisions will be saved to the remote server as well.
@@ -161,7 +161,7 @@ new local revisions will be saved to the remote server as well.
 Pull a file and its revisions from a remote server. Creates a new file at
 path when it does not yet exist.
 #+BEGIN_SRC bash
-dot pull <alias>
+dotfile pull <alias>
 #+END_SRC
 + =-u, --username= Override the configured username.
 + =-a, --all= Pull all files
@@ -178,21 +178,21 @@ curl https://dotfilehub.com/knoebber/inputrc > ~/.inputrc
 * Move
 Change the files stored path and move the file.
 #+BEGIN_SRC bash
-dot mv <alias> <path>
+dotfile mv <alias> <path>
 #+END_SRC
 * Rename
 Change a files alias.
 #+BEGIN_SRC bash
-dot rename <alias> <new-alias>
+dotfile rename <alias> <new-alias>
 #+END_SRC
 * Forget
 Untrack a file - removes all tracking data. Leaves the file in its current state on
 the filesystem.
 #+BEGIN_SRC bash
-dot forget <alias>
+dotfile forget <alias>
 #+END_SRC
 * Remove
 Untrack and remove the file from the filesystem.
 #+BEGIN_SRC bash
-dot rm <alias>
+dotfile rm <alias>
 #+END_SRC
