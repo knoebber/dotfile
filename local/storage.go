@@ -387,6 +387,24 @@ func (s *Storage) Forget() error {
 	return os.RemoveAll(filepath.Join(s.Dir, s.Alias))
 }
 
+// RemoveCommits removes all commits except for the current.
+func (s *Storage) RemoveCommits() error {
+	var current file.Commit
+
+	for _, c := range s.FileData.Commits {
+		if c.Hash == s.FileData.Revision {
+			current = c
+			continue
+		}
+		if err := os.Remove(filepath.Join(s.Dir, s.Alias, c.Hash)); err != nil {
+			return err
+		}
+	}
+	s.FileData.Commits = []file.Commit{current}
+
+	return s.save()
+}
+
 // Remove deletes the file that is tracked and all its data.
 func (s *Storage) Remove() error {
 	path, err := s.Path()
