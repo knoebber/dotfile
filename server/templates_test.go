@@ -17,6 +17,9 @@ func TestTemplatesHTML(t *testing.T) {
 	}
 
 	testData := make(map[string]interface{})
+	vars := make(map[string]string)
+	vars["username"] = "testusername"
+	vars["alias"] = "testalias"
 	testSession := &db.SessionRecord{}
 
 	for _, template := range pageTemplates.Templates() {
@@ -30,6 +33,7 @@ func TestTemplatesHTML(t *testing.T) {
 		p := Page{
 			Title:        "Test Page",
 			Data:         testData,
+			Vars:         vars,
 			Session:      testSession,
 			templateName: curr,
 		}
@@ -64,7 +68,7 @@ func assertHTMLResponse(t *testing.T, body, name string) {
 		case nil:
 		default:
 			t.Log(body)
-			t.Fatalf("%q body is not valid html: %v", name, err)
+			t.Fatalf("%q: %v", name, err)
 		}
 	}
 

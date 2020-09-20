@@ -1,8 +1,6 @@
 <main>
-  <h1>
-    <a href="/{{ .Session.Username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a> - confirm changes
-  </h1>
-  {{- template "diff" . -}}
+  {{- template "file_header" .}}
+  {{- template "diff" . }}
   <div class="flex-between">
     <form method="post" class="">
       <label for="message">Commit Message</label>

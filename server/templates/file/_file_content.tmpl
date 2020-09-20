@@ -6,14 +6,6 @@
 {{- $hash := .Vars.hash }}
 {{- $currentHash := .Data.hash }}
 {{- $fileLink := printf "/%s/%s" $username $alias -}}
-<h1>
-  {{- if $username }}
-  <a href="/{{ $username }}">{{ $username }}</a> / 
-  <a href="/{{ $username }}/{{ $alias }}">{{ $alias }}</a>
-  {{- if $hash }} @ {{ shortenHash $hash }} {{ end }}
-  {{- else }} {{ $alias }}
-  {{- end }}
-</h1>
 <div class="file-controls flex-between">
   <strong>{{ .Data.path }}</strong>
   {{- if $saved }}
@@ -39,9 +31,9 @@
   {{- end }}
   {{- if and (not $owned) .Session }}
   <form method="post" class="inline" action="/{{ .Session.Username }}/{{ $alias }}">
-    <input type="hidden" name="username" value="{{ $username }}">
-    <input type="hidden" name="alias" value="{{ $alias }}">
-    <input type="hidden" name="hash" value="{{ .Data.hash }}">
+    <input type="hidden" name="username" value="{{ $username }}"/>
+    <input type="hidden" name="alias" value="{{ $alias }}"/>
+    <input type="hidden" name="hash" value="{{ .Data.hash }}"/>
     <button class="success">Fork</button>
   </form>
   {{- end }}

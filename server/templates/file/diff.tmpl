@@ -1,16 +1,4 @@
 <main>
-  <h1>
-    {{- $username := .Vars.username }}
-    {{- $alias := .Vars.alias }}
-    {{- $on := .Data.on }}
-    {{- $against := .Data.against }}
-    <a href="/{{ $username }}">{{ $username }}</a> /
-    <a href="/{{ $username }}/{{ $alias }}">{{ $alias }}</a>
-    {{- if and $on $against }}
-    @
-    <a href="/{{ $username }}/{{ $alias }}/{{ $on }}">{{ shortenHash $on }}</a> against
-    <a href="/{{ $username }}/{{ $alias }}/{{ $against }}">{{ shortenHash $against }}</a>
-    {{ end -}}
-  </h1>
+  {{- template "file_header" . }}
   {{- template "diff" . -}}
 </main>

@@ -1,13 +1,7 @@
 <main>
-  <h1>
-    {{- $username := .Vars.username }}
-    {{- $alias := .Vars.alias }}
-    {{- if not .Owned }}
-    <a href="/{{ $username }}">{{ $alias -}}</a> / 
-    {{- end }}
-    <a href="/{{ $username }}/{{ $alias }}">{{ $alias }}</a>
-    commits
-  </h1>
+  {{- $username := .Vars.username }}
+  {{- $alias := .Vars.alias }}
+  {{- template "file_header" . }}
   <div class="table-wrapper">
     <table>
       <thead>

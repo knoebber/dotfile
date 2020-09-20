@@ -26,7 +26,7 @@ func loadDiff(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	p.Data["on"] = on
 	p.Data["against"] = against
 
-	p.Title = alias + " - diff"
+	p.Title = "diff"
 
 	if on == "" || against == "" {
 		return

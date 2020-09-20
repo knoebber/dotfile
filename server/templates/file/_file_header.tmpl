@@ -1,0 +1,14 @@
+{{- define "file_header" }}
+<h1>
+  {{- $username := .Vars.username }}
+  {{- $alias := .Vars.alias }}
+  {{- $fileLink := printf "/%s/%s" $username $alias }}
+  <a href="/{{ $username }}">{{ $username }}</a> /
+  <a href="{{ $fileLink }}">{{ $alias }}</a>
+  {{- if and .Data.on .Data.against }}
+  / <a href="{{ $fileLink }}/{{ .Data.on }}">{{ shortenHash .Data.on }}</a>
+  vs. <a href="{{ $fileLink }}/{{ .Data.against }}">{{ shortenHash .Data.against }}</a>
+  {{- else if not (eq .Title $alias )}} / <a href="">{{ .Title }}</a>
+  {{- end }}
+</h1>
+{{- end }}

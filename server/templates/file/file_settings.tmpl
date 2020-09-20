@@ -1,7 +1,5 @@
 <main>
-  <h1>
-    <a href="/{{ .Session.Username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a> - settings
-  </h1>
+  {{- template "file_header" . }}
   <fieldset>
     <legend>Update</legend>
     <form method="post">

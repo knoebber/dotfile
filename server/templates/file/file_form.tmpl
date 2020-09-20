@@ -3,7 +3,7 @@
     {{- if .Data.newFile }}
     {{ .Title }}
     {{ else }}
-    <a href="/{{ .Session.Username }}/{{ .Vars.alias }}">{{ .Vars.alias }}</a> - edit
+    {{- template "file_header" . }}
     {{ end -}}
   </h1>
   <form method="post">

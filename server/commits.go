@@ -1,11 +1,11 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/knoebber/dotfile/db"
+	"github.com/knoebber/dotfile/file"
 )
 
 func loadCommits(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
@@ -16,7 +16,7 @@ func loadCommits(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	}
 
 	p.Data["commits"] = commits
-	p.Title = fmt.Sprintf("%s commits", alias)
+	p.Title = "commits"
 	return
 }
 
@@ -43,7 +43,7 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	p.Data["current"] = commit.Current
 	p.Data["forkedFromUsername"] = commit.ForkedFromUsername
 
-	p.Title = fmt.Sprintf("%s@%s", alias, hash)
+	p.Title = file.ShortenHash(hash)
 
 	return
 }

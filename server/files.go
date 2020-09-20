@@ -40,7 +40,7 @@ func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, err)
 	}
 
-	http.Redirect(w, r, "/temp_file/"+alias+"/create", http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/%s/%s/init", p.Session.Username, alias), http.StatusSeeOther)
 	return true
 }
 
@@ -100,8 +100,7 @@ func editFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, err)
 	}
 
-	http.Redirect(w, r, "/temp_file/"+alias+"/commit", http.StatusSeeOther)
-
+	http.Redirect(w, r, fmt.Sprintf("/%s/%s/commit", p.Session.Username, alias), http.StatusSeeOther)
 	return true
 }
 
@@ -198,9 +197,9 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 	p.Data["newFile"] = newFile
 
 	if newFile {
-		p.Title = "New File"
+		p.Title = "new file"
 	} else {
-		p.Title = pageAlias + " - Edit"
+		p.Title = "edit"
 	}
 
 	// Edit from a specific hash with the at param.
@@ -270,7 +269,7 @@ func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bo
 	p.Data["alias"] = f.Alias
 	p.Data["path"] = f.Path
 	p.Data["editAction"] = fmt.Sprintf("/%s/%s/edit", p.Session.Username, alias)
-	p.Title = f.Alias + " - edit"
+	p.Title = "commit"
 	return
 }
 
@@ -285,7 +284,7 @@ func loadNewFileConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done b
 	p.Data["path"] = tempFile.Path
 	p.Data["content"] = string(tempFile.Content)
 	p.Data["editAction"] = "/new_file"
-	p.Title = "New File"
+	p.Title = "confirm new file"
 	return
 }
 
@@ -310,6 +309,7 @@ func newFileHandler() http.HandlerFunc {
 func fileSettingsHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "file_settings.tmpl",
+		title:        "Settings",
 		handleForm:   updateFile,
 		loadData:     loadFile,
 		protected:    true,
