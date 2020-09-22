@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -16,7 +16,7 @@ func (c *commitCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
-	if err := file.NewCommit(s, c.commitMessage); err != nil {
+	if err := dotfile.NewCommit(s, c.commitMessage); err != nil {
 		return err
 	}
 

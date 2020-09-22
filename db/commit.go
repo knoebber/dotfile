@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
@@ -275,7 +275,7 @@ WHERE username = ? AND alias = ? AND hash = ?
 		result.ForkedFromUsername = &username
 	}
 
-	uncompressed, err := file.Uncompress(revision)
+	uncompressed, err := dotfile.Uncompress(revision)
 	if err != nil {
 		return nil, err
 	}

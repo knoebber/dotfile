@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/knoebber/dotfile/dotfile"
 	"github.com/knoebber/dotfile/dotfileclient"
-	"github.com/knoebber/dotfile/file"
 	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
@@ -24,9 +24,9 @@ var (
 
 // Storage provides methods for manipulating tracked files on the file system.
 type Storage struct {
-	Alias    string             // The name of the file that is being tracked.
-	Dir      string             // The path to the folder where data will be stored.
-	FileData *file.TrackingData // The current file that storage is tracking.
+	Alias    string                // The name of the file that is being tracked.
+	Dir      string                // The path to the folder where data will be stored.
+	FileData *dotfile.TrackingData // The current file that storage is tracking.
 }
 
 func (s *Storage) jsonPath() string {
@@ -60,7 +60,7 @@ func (s *Storage) SetTrackingData() error {
 		return errors.New("cannot set tracking data: dir is empty")
 	}
 
-	s.FileData = new(file.TrackingData)
+	s.FileData = new(dotfile.TrackingData)
 
 	jsonContent, err := s.JSON()
 	if err != nil {
@@ -101,17 +101,17 @@ func (s *Storage) InitFile(path string) (err error) {
 		return fmt.Errorf("%#v is already tracked", s.Alias)
 	}
 
-	s.FileData = new(file.TrackingData)
+	s.FileData = new(dotfile.TrackingData)
 	s.FileData.Path, err = convertPath(path)
 	if err != nil {
 		return
 	}
 
-	return file.Init(s, s.FileData.Path, s.Alias)
+	return dotfile.Init(s, s.FileData.Path, s.Alias)
 }
 
 // HasCommit return whether the file has a commit with hash.
-// This never returns an error; it's present to satisfy a file.Storer requirement.
+// This never returns an error; it's present to satisfy a dotfile.Storer requirement.
 func (s *Storage) HasCommit(hash string) (exists bool, err error) {
 	if s.FileData == nil {
 		return false, ErrNoData
@@ -155,7 +155,7 @@ func (s *Storage) Content() ([]byte, error) {
 // SaveCommit saves a commit to the file system.
 // Creates a new directory when its the first commit.
 // Updates the file's revision field to point to the new hash.
-func (s *Storage) SaveCommit(buff *bytes.Buffer, c *file.Commit) error {
+func (s *Storage) SaveCommit(buff *bytes.Buffer, c *dotfile.Commit) error {
 	if s.FileData == nil {
 		return ErrNoData
 	}
@@ -232,7 +232,7 @@ func (s *Storage) Push(client *dotfileclient.Client) error {
 			newHashes = append(newHashes, c.Hash)
 		}
 	} else {
-		s.FileData, newHashes, err = file.MergeTrackingData(remoteData, s.FileData)
+		s.FileData, newHashes, err = dotfile.MergeTrackingData(remoteData, s.FileData)
 		if err != nil {
 			return err
 		}
@@ -271,7 +271,7 @@ func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 			return err
 		}
 
-		clean, err := file.IsClean(s, s.FileData.Revision)
+		clean, err := dotfile.IsClean(s, s.FileData.Revision)
 		if err != nil {
 			return err
 		}
@@ -289,7 +289,7 @@ func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 		return fmt.Errorf("%q not found on remote %q", s.Alias, client.Remote)
 	}
 
-	s.FileData, newHashes, err = file.MergeTrackingData(s.FileData, remoteData)
+	s.FileData, newHashes, err = dotfile.MergeTrackingData(s.FileData, remoteData)
 	if err != nil {
 		return err
 	}
@@ -324,7 +324,7 @@ func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 		}
 	}
 
-	return file.Checkout(s, s.FileData.Revision)
+	return dotfile.Checkout(s, s.FileData.Revision)
 }
 
 // Move moves the file currently tracked by storage.
@@ -389,7 +389,7 @@ func (s *Storage) Forget() error {
 
 // RemoveCommits removes all commits except for the current.
 func (s *Storage) RemoveCommits() error {
-	var current file.Commit
+	var current dotfile.Commit
 
 	for _, c := range s.FileData.Commits {
 		if c.Hash == s.FileData.Revision {
@@ -400,7 +400,7 @@ func (s *Storage) RemoveCommits() error {
 			return err
 		}
 	}
-	s.FileData.Commits = []file.Commit{current}
+	s.FileData.Commits = []dotfile.Commit{current}
 
 	return s.save()
 }

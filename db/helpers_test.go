@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -124,7 +124,7 @@ func initTestFile(t *testing.T) *FileView {
 
 	ft, err := StageFile(testUsername, testAlias)
 	failIf(t, err, "new storage in init test file")
-	failIf(t, file.Init(ft, testPath, testAlias), "initialing test file")
+	failIf(t, dotfile.Init(ft, testPath, testAlias), "initialing test file")
 	failIf(t, ft.Close())
 
 	f, err := File(testUsername, testAlias)
@@ -145,7 +145,7 @@ func initTestFileAndCommit(t *testing.T) (initialCommit CommitSummary, currentCo
 	// Ensure that the new commit has a different timestamp - unix time is by the second.
 	time.Sleep(time.Second)
 
-	failIf(t, file.NewCommit(ft, "Commiting test updated content"))
+	failIf(t, dotfile.NewCommit(ft, "Commiting test updated content"))
 	failIf(t, ft.Close())
 
 	lst, err := CommitList(testUsername, testAlias)

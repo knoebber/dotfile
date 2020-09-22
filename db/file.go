@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
@@ -105,7 +105,7 @@ func (f *FileView) scan(row *sql.Row) error {
 	); err != nil {
 		return err
 	}
-	buff, err := file.Uncompress(f.Content)
+	buff, err := dotfile.Uncompress(f.Content)
 	if err != nil {
 		return err
 	}

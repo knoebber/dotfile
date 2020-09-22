@@ -12,7 +12,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/knoebber/dotfile/db"
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
@@ -235,8 +235,8 @@ func loadTemplates() (err error) {
 
 	pageFunctions := template.FuncMap{
 		// Global functions that page templates can call.
-		"shortenHash":      file.ShortenHash,
-		"shortenEqualText": file.ShortenEqualText,
+		"shortenHash":      dotfile.ShortenHash,
+		"shortenEqualText": dotfile.ShortenEqualText,
 	}
 
 	pageTemplates, err = template.

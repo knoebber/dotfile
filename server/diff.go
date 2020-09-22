@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/knoebber/dotfile/db"
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 )
 
 // Loads a diff: ?on VS ?against.
@@ -34,7 +34,7 @@ func loadDiff(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 
 	content := &db.FileContent{Username: username, Alias: alias}
 
-	diffs, err := file.Diff(content, on, against)
+	diffs, err := dotfile.Diff(content, on, against)
 	if err != nil {
 		return p.setError(w, err)
 	}

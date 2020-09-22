@@ -1,5 +1,5 @@
-// Package file provides functions and intefaces for dotfile operations.
-package file
+// Package dotfile provides functions and intefaces for dotfile operations.
+package dotfile
 
 import (
 	"bytes"

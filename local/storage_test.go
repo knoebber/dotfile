@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -54,8 +54,8 @@ func TestStorage_save(t *testing.T) {
 
 func TestStorage_HasCommit(t *testing.T) {
 	s := &Storage{
-		FileData: &file.TrackingData{
-			Commits: []file.Commit{{
+		FileData: &dotfile.TrackingData{
+			Commits: []dotfile.Commit{{
 				Hash: "a",
 			}},
 		}}
@@ -90,7 +90,7 @@ func TestStorage_Revision(t *testing.T) {
 
 func TestStorage_Revert(t *testing.T) {
 	t.Run("error when unable to write", func(t *testing.T) {
-		s := &Storage{FileData: &file.TrackingData{Path: "/not/exists"}}
+		s := &Storage{FileData: &dotfile.TrackingData{Path: "/not/exists"}}
 		assert.Error(t, s.Revert(new(bytes.Buffer), testHash))
 	})
 
@@ -105,28 +105,28 @@ func TestStorage_Revert(t *testing.T) {
 func TestStorage_SaveCommit(t *testing.T) {
 	t.Run("error when tracking data is not set", func(t *testing.T) {
 		s := testStorage()
-		err := s.SaveCommit(new(bytes.Buffer), new(file.Commit))
+		err := s.SaveCommit(new(bytes.Buffer), new(dotfile.Commit))
 		assert.Error(t, err)
 	})
 	t.Run("error when unable to write commit", func(t *testing.T) {
 		s := testStorage()
 		s.Dir = "/not/exist"
-		s.FileData = new(file.TrackingData)
-		err := s.SaveCommit(new(bytes.Buffer), new(file.Commit))
+		s.FileData = new(dotfile.TrackingData)
+		err := s.SaveCommit(new(bytes.Buffer), new(dotfile.Commit))
 		assert.Error(t, err)
 	})
 
 	t.Run("error when unable to create commit file", func(t *testing.T) {
 		s := setupTestFile(t)
 		s.Alias = "/not/exists"
-		err := s.SaveCommit(new(bytes.Buffer), new(file.Commit))
+		err := s.SaveCommit(new(bytes.Buffer), new(dotfile.Commit))
 		assert.Error(t, err)
 	})
 
 	t.Run("ok", func(t *testing.T) {
 		s := setupTestFile(t)
 		timestamp := time.Now()
-		c := &file.Commit{
+		c := &dotfile.Commit{
 			Hash:      testUpdatedHash,
 			Timestamp: time.Now().Unix(),
 			Message:   testMessage,
@@ -149,14 +149,14 @@ func TestStorage_Path(t *testing.T) {
 	})
 	t.Run("error when path is empty", func(t *testing.T) {
 		s := testStorage()
-		s.FileData = new(file.TrackingData)
+		s.FileData = new(dotfile.TrackingData)
 		_, err := s.Path()
 		assert.Error(t, err)
 	})
 
 	t.Run("ok", func(t *testing.T) {
 		s := testStorage()
-		s.FileData = &file.TrackingData{Path: "~/relative-path"}
+		s.FileData = &dotfile.TrackingData{Path: "~/relative-path"}
 
 		path, err := s.Path()
 		assert.NoError(t, err)

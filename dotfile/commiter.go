@@ -1,4 +1,4 @@
-package file
+package dotfile
 
 import (
 	"bytes"
@@ -50,7 +50,7 @@ func NewCommit(c Commiter, message string) error {
 		return err
 	}
 	if exists {
-		return usererror.Invalid(fmt.Sprintf("Commit %#v already exists", hash))
+		return usererror.Invalid(fmt.Sprintf("Commit %q already exists", hash))
 	}
 
 	newCommit := &Commit{

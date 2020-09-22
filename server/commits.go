@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/knoebber/dotfile/db"
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 )
 
 func loadCommits(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
@@ -43,7 +43,7 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	p.Data["current"] = commit.Current
 	p.Data["forkedFromUsername"] = commit.ForkedFromUsername
 
-	p.Title = file.ShortenHash(hash)
+	p.Title = dotfile.ShortenHash(hash)
 
 	return
 }

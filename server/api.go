@@ -13,7 +13,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/knoebber/dotfile/db"
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
@@ -37,10 +37,10 @@ func handleFileJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := &file.TrackingData{
+	result := &dotfile.TrackingData{
 		Path:     fileRecord.Path,
 		Revision: fileRecord.Hash,
-		Commits:  make([]file.Commit, len(commits)),
+		Commits:  make([]dotfile.Commit, len(commits)),
 	}
 
 	for i, c := range commits {
@@ -130,12 +130,12 @@ func multipartReader(w http.ResponseWriter, r *http.Request) *multipart.Reader {
 	return multipart.NewReader(r.Body, params["boundary"])
 }
 
-func readPushedFileData(p *multipart.Part) (*file.TrackingData, error) {
+func readPushedFileData(p *multipart.Part) (*dotfile.TrackingData, error) {
 	if p.Header.Get("Content-Type") != "application/json" {
 		return nil, errors.New("expected json part to be content type application/json")
 	}
 
-	result := new(file.TrackingData)
+	result := new(dotfile.TrackingData)
 	if err := json.NewDecoder(p).Decode(result); err != nil {
 		return nil, errors.Wrap(err, "decoding pushed tracked file")
 	}
@@ -147,7 +147,7 @@ func readPushedFileData(p *multipart.Part) (*file.TrackingData, error) {
 	return result, nil
 }
 
-func savePushedRevision(ft *db.FileTransaction, p *multipart.Part, commitMap map[string]*file.Commit) error {
+func savePushedRevision(ft *db.FileTransaction, p *multipart.Part, commitMap map[string]*dotfile.Commit) error {
 	hash := p.FileName()
 	buff := new(bytes.Buffer)
 
@@ -177,7 +177,7 @@ func savePushedRevision(ft *db.FileTransaction, p *multipart.Part, commitMap map
 }
 
 // Request body is expected to be multipart.
-// The first part is a JSON encoding of file.TrackingData
+// The first part is a JSON encoding of dotfile.TrackingData
 // Subsequent parts are new revisions that need to be saved.
 // Each revision part should have be named as its hash.
 func handlePush(w http.ResponseWriter, r *http.Request) {

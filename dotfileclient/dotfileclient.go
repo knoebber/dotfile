@@ -11,7 +11,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -97,7 +97,7 @@ func (c *Client) TrackingDataBytes(alias string) ([]byte, error) {
 }
 
 // TrackingData returns the file tracking data for alias on remote.
-func (c *Client) TrackingData(alias string) (*file.TrackingData, error) {
+func (c *Client) TrackingData(alias string) (*dotfile.TrackingData, error) {
 	data, err := c.TrackingDataBytes(alias)
 	if err != nil {
 		return nil, err
@@ -106,7 +106,7 @@ func (c *Client) TrackingData(alias string) (*file.TrackingData, error) {
 		return nil, nil
 	}
 
-	result := new(file.TrackingData)
+	result := new(dotfile.TrackingData)
 	if err := json.Unmarshal(data, &result); err != nil {
 		return nil, errors.Wrap(err, "unmarshalling remote tracked file")
 	}
@@ -173,7 +173,7 @@ func (c *Client) Revisions(alias string, hashes []string) ([]*Revision, error) {
 
 // UploadRevisions uploads revisions to remote using a multipart POST request.
 // The first part is the fileData JSON the rest are form files with the revision bytes.
-func (c *Client) UploadRevisions(alias string, data *file.TrackingData, revisions []*Revision) error {
+func (c *Client) UploadRevisions(alias string, data *dotfile.TrackingData, revisions []*Revision) error {
 	var body bytes.Buffer
 	url := c.fileURL(alias)
 

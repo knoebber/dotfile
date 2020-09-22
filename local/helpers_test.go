@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 )
 
 const (
@@ -58,12 +58,12 @@ func setupTestFile(t *testing.T) *Storage {
 	}
 
 	s := testStorage()
-	s.FileData = &file.TrackingData{
+	s.FileData = &dotfile.TrackingData{
 		Path:    fullPath,
-		Commits: []file.Commit{},
+		Commits: []dotfile.Commit{},
 	}
 
-	if err := file.Init(s, fullPath, testAlias); err != nil {
+	if err := dotfile.Init(s, fullPath, testAlias); err != nil {
 		t.Fatalf("initializing test file: %v", err)
 	}
 

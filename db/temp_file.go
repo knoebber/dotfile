@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"github.com/pkg/errors"
 )
 
@@ -47,7 +47,7 @@ func (f *TempFileRecord) check() error {
 // Inserts or updates a user's previous temp file.
 // Uses an UPSERT statement: https://sqlite.org/lang_UPSERT.html
 func (f *TempFileRecord) insertStmt(e executor) (sql.Result, error) {
-	compressed, err := file.Compress(f.Content)
+	compressed, err := dotfile.Compress(f.Content)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ WHERE username = ? AND (? = '' OR alias = ?)`, username, alias, alias).
 		return nil, errors.Wrapf(err, "querying for user %q temp file %q", username, alias)
 	}
 
-	buff, err := file.Uncompress(res.Content)
+	buff, err := dotfile.Uncompress(res.Content)
 	if err != nil {
 		return nil, err
 	}

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/knoebber/dotfile/db"
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"github.com/knoebber/dotfile/usererror"
 )
 
@@ -15,7 +15,7 @@ func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	content := r.Form.Get("contents")
 	path := r.Form.Get("path")
 
-	alias, err := file.Alias(r.Form.Get("alias"), path)
+	alias, err := dotfile.Alias(r.Form.Get("alias"), path)
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -116,9 +116,9 @@ func confirmTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool
 	}
 
 	if !tx.FileExists {
-		err = file.Init(tx, tx.Staged.Path, alias)
+		err = dotfile.Init(tx, tx.Staged.Path, alias)
 	} else {
-		err = file.NewCommit(tx, r.Form.Get("message"))
+		err = dotfile.NewCommit(tx, r.Form.Get("message"))
 	}
 	if err != nil {
 		return p.setError(w, err)
@@ -260,7 +260,7 @@ func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bo
 
 	content := &db.FileContent{Username: p.Session.Username, Alias: alias}
 
-	diffs, err := file.Diff(content, f.Hash, "")
+	diffs, err := dotfile.Diff(content, f.Hash, "")
 	if err != nil {
 		return p.setError(w, err)
 	}

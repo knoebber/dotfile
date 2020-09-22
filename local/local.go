@@ -28,7 +28,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"github.com/pkg/errors"
 )
 
@@ -138,7 +138,7 @@ func List(storageDir string, path bool) ([]string, error) {
 	result := make([]string, len(files))
 
 	s := &Storage{Dir: storageDir}
-	s.FileData = new(file.TrackingData)
+	s.FileData = new(dotfile.TrackingData)
 	for i, filename := range files {
 		parts := strings.Split(filename, "/")
 		if len(parts) != 0 {
@@ -160,7 +160,7 @@ func List(storageDir string, path bool) ([]string, error) {
 		if !exists(fullPath) {
 			alias += " - removed"
 		} else {
-			clean, err := file.IsClean(s, s.FileData.Revision)
+			clean, err := dotfile.IsClean(s, s.FileData.Revision)
 			if err != nil {
 				return nil, err
 			}

@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -19,7 +19,7 @@ func (c *checkoutCommand) run(ctx *kingpin.ParseContext) error {
 		c.commitHash = s.FileData.Revision
 	}
 
-	if err := file.Checkout(s, c.commitHash); err != nil {
+	if err := dotfile.Checkout(s, c.commitHash); err != nil {
 		return err
 	}
 

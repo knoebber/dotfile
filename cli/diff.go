@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -28,7 +28,7 @@ func (d *diffCommand) run(ctx *kingpin.ParseContext) error {
 		d.commitHash = s.FileData.Revision
 	}
 
-	diffs, err := file.Diff(s, d.commitHash, "")
+	diffs, err := dotfile.Diff(s, d.commitHash, "")
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (d *diffCommand) run(ctx *kingpin.ParseContext) error {
 			_, _ = buff.WriteString(text)
 			_, _ = buff.WriteString("\x1b[0m")
 		case diffmatchpatch.DiffEqual:
-			_, _ = buff.WriteString(file.ShortenEqualText(text))
+			_, _ = buff.WriteString(dotfile.ShortenEqualText(text))
 		}
 	}
 

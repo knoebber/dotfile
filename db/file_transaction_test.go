@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +22,7 @@ func TestNewFileTransaction(t *testing.T) {
 
 	buff := bytes.NewBuffer([]byte(testContent))
 
-	assert.NoError(t, ft.SaveCommit(buff, &file.Commit{
+	assert.NoError(t, ft.SaveCommit(buff, &dotfile.Commit{
 		Hash:      testHash,
 		Timestamp: 1,
 		Message:   testMessage,

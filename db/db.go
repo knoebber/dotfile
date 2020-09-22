@@ -9,7 +9,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"github.com/knoebber/dotfile/usererror"
 	"golang.org/x/crypto/bcrypt"
 	// Driver for sql
@@ -153,11 +153,11 @@ func checkSize(content []byte, name string) error {
 }
 
 func checkFile(alias, path string) error {
-	if err := file.CheckAlias(alias); err != nil {
+	if err := dotfile.CheckAlias(alias); err != nil {
 		return err
 	}
 
-	if err := file.CheckPath(path); err != nil {
+	if err := dotfile.CheckPath(path); err != nil {
 		return err
 	}
 	return nil

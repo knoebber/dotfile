@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"github.com/pkg/errors"
 )
 
@@ -53,7 +53,7 @@ WHERE username = ? AND alias = ?`, username, alias)
 	}
 
 	if err != nil {
-		return nil, ft.Rollback(errors.Wrapf(err, "querying for user %q file %q", username, alias))
+		return nil, errors.Wrapf(err, "querying for user %q file %q", username, alias)
 	}
 
 	ft.FileExists = true
@@ -71,7 +71,7 @@ func StageFile(username string, alias string) (ft *FileTransaction, err error) {
 
 	ft.Staged, err = TempFile(username, alias)
 	if err != nil {
-		return nil, ft.Rollback(err)
+		return nil, err
 	}
 
 	if ft.FileExists {
@@ -80,7 +80,7 @@ func StageFile(username string, alias string) (ft *FileTransaction, err error) {
 
 	ft.FileID, err = ft.Staged.save(ft.tx)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	// File still does not exist after this - there is no commit association thus no content.
@@ -111,7 +111,7 @@ func (ft *FileTransaction) SaveFile(userID int64, alias, path string) error {
 func (ft *FileTransaction) HasCommit(hash string) (exists bool, err error) {
 	exists, err = hasCommit(ft.FileID, hash)
 	if err != nil {
-		return false, ft.Rollback(err)
+		return false, err
 	}
 
 	return
@@ -121,7 +121,7 @@ func (ft *FileTransaction) HasCommit(hash string) (exists bool, err error) {
 // Returns an error if the temp file is not set.
 func (ft *FileTransaction) Content() ([]byte, error) {
 	if ft.Staged == nil || len(ft.Staged.Content) == 0 {
-		return nil, ft.Rollback(errors.New("temp file has no content"))
+		return nil, errors.New("temp file has no content")
 	}
 
 	return ft.Staged.Content, nil
@@ -129,7 +129,7 @@ func (ft *FileTransaction) Content() ([]byte, error) {
 
 // SaveCommit saves a commit to the database.
 // The files current revision will be set to the new commit.
-func (ft *FileTransaction) SaveCommit(buff *bytes.Buffer, c *file.Commit) error {
+func (ft *FileTransaction) SaveCommit(buff *bytes.Buffer, c *dotfile.Commit) error {
 	commit := &CommitRecord{
 		FileID:    ft.FileID,
 		Revision:  buff.Bytes(),
@@ -149,12 +149,7 @@ func (ft *FileTransaction) SaveCommit(buff *bytes.Buffer, c *file.Commit) error 
 
 // Revision returns the compressed content at hash.
 func (ft *FileTransaction) Revision(hash string) ([]byte, error) {
-	r, err := revision(ft.FileID, hash)
-	if err != nil {
-		return nil, ft.Rollback(err)
-	}
-
-	return r, nil
+	return revision(ft.FileID, hash)
 }
 
 // SetRevision sets the file to the commit at hash.
@@ -162,8 +157,7 @@ func (ft *FileTransaction) SetRevision(hash string) error {
 	row := ft.tx.QueryRow("SELECT id FROM commits WHERE file_id = ? AND hash = ?", ft.FileID, hash)
 
 	if err := row.Scan(&ft.newCommitID); err != nil {
-		err = errors.Wrapf(err, "setting file %d to revision %q", ft.FileID, hash)
-		return ft.Rollback(err)
+		return errors.Wrapf(err, "setting file %d to revision %q", ft.FileID, hash)
 	}
 
 	return nil

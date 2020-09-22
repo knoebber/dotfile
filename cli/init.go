@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"github.com/knoebber/dotfile/local"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -14,7 +14,7 @@ type initCommand struct {
 }
 
 func (ic *initCommand) run(ctx *kingpin.ParseContext) error {
-	alias, err := file.Alias(ic.alias, ic.path)
+	alias, err := dotfile.Alias(ic.alias, ic.path)
 	if err != nil {
 		return err
 	}
