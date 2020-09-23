@@ -71,6 +71,7 @@ func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
 	var usererr *usererror.Error
 
 	if db.NotFound(err) {
+		log.Printf("resource not found: %s", err)
 		w.WriteHeader(http.StatusNotFound)
 		p.htmlFile = "404.html"
 		if err := p.writeFromHTML(w); err != nil {
