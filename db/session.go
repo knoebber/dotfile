@@ -37,14 +37,14 @@ deleted_at DATETIME
 CREATE INDEX IF NOT EXISTS sessions_user_index ON sessions(user_id);`
 }
 
-func (s *SessionRecord) insertStmt(e executor) (sql.Result, error) {
+func (s *SessionRecord) insertStmt(e Executor) (sql.Result, error) {
 	return e.Exec("INSERT INTO sessions(session, user_id, ip) VALUES(?, ?, ?)", s.Session, s.UserID, s.IP)
 }
 
-func createSession(username, ip string) (*SessionRecord, error) {
+func createSession(e Executor, username, ip string) (*SessionRecord, error) {
 	var userID int64
 
-	err := connection.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userID)
+	err := e.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "querying for userID from %#v", username)
 	}
@@ -60,7 +60,7 @@ func createSession(username, ip string) (*SessionRecord, error) {
 		IP:      ip,
 	}
 
-	id, err := insert(s, nil)
+	id, err := insert(e, s)
 	if err != nil {
 		return nil, err
 	}
@@ -80,11 +80,10 @@ func session() (string, error) {
 }
 
 // Session returns a valid session.
-func Session(session string) (*SessionRecord, error) {
+func Session(e Executor, session string) (*SessionRecord, error) {
 	s := new(SessionRecord)
 
-	err := connection.
-		QueryRow(`
+	err := e.QueryRow(`
 SELECT sessions.id,
        session,
        users.id,
@@ -111,8 +110,8 @@ WHERE deleted_at IS NULL AND session = ?`, session).
 }
 
 // Logout sets the session to deleted.
-func Logout(sessionID int64) error {
-	_, err := connection.Exec("UPDATE sessions SET deleted_at = ? WHERE id = ?", time.Now(), sessionID)
+func Logout(e Executor, sessionID int64) error {
+	_, err := e.Exec("UPDATE sessions SET deleted_at = ? WHERE id = ?", time.Now(), sessionID)
 	if err != nil {
 		return errors.Wrapf(err, "setting session %d to deleted", sessionID)
 	}

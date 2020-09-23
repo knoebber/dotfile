@@ -54,10 +54,10 @@ CREATE INDEX IF NOT EXISTS commits_forked_from_index ON commits(forked_from);
 CREATE UNIQUE INDEX IF NOT EXISTS commits_file_hash_index ON commits(file_id, hash);`
 }
 
-func (c *CommitRecord) check() error {
+func (c *CommitRecord) check(e Executor) error {
 	var count int
 
-	exists, err := hasCommit(c.FileID, c.Hash)
+	exists, err := hasCommit(e, c.FileID, c.Hash)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (c *CommitRecord) check() error {
 		return err
 	}
 
-	if err := connection.
+	if err := e.
 		QueryRow("SELECT COUNT(*) FROM commits WHERE file_id = ?", c.FileID).
 		Scan(&count); err != nil {
 		return errors.Wrapf(err, "counting file %d's commits", c.FileID)
@@ -81,7 +81,7 @@ func (c *CommitRecord) check() error {
 	return nil
 }
 
-func (c *CommitRecord) insertStmt(e executor) (sql.Result, error) {
+func (c *CommitRecord) insertStmt(e Executor) (sql.Result, error) {
 	return e.Exec(`
 INSERT INTO commits(forked_from, file_id, hash, message, revision, timestamp) VALUES(?, ?, ?, ?, ?, ?)`,
 		c.ForkedFrom,
@@ -93,18 +93,18 @@ INSERT INTO commits(forked_from, file_id, hash, message, revision, timestamp) VA
 	)
 }
 
-func (c *CommitRecord) create(tx *sql.Tx) error {
-	id, err := insert(c, tx)
+func (c *CommitRecord) create(e Executor) error {
+	id, err := insert(e, c)
 	if err != nil {
-		return errors.Wrapf(err, "creating commit for file %d at %q", c.FileID, c.Hash)
+		return errors.Wrapf(err, "creating commit for file %d %q", c.FileID, c.Hash)
 	}
 	c.ID = id
 
 	return nil
 }
 
-func revision(fileID int64, hash string) (revision []byte, err error) {
-	err = connection.QueryRow(`
+func revision(e Executor, fileID int64, hash string) (revision []byte, err error) {
+	err = e.QueryRow(`
 SELECT revision
 FROM commits
 JOIN files ON files.id = file_id
@@ -116,10 +116,10 @@ WHERE file_id = ? AND hash = ?
 	return
 }
 
-func hasCommit(fileID int64, hash string) (bool, error) {
+func hasCommit(e Executor, fileID int64, hash string) (bool, error) {
 	var count int
 
-	err := connection.
+	err := e.
 		QueryRow("SELECT COUNT(*) FROM commits WHERE file_id = ? AND hash = ?", fileID, hash).
 		Scan(&count)
 	if err != nil {
@@ -129,10 +129,10 @@ func hasCommit(fileID int64, hash string) (bool, error) {
 
 }
 
-func usernameFromCommitID(commitID int64) (string, error) {
+func usernameFromCommitID(e Executor, commitID int64) (string, error) {
 	var username string
 
-	err := connection.QueryRow(`
+	err := e.QueryRow(`
 SELECT username
 FROM commits
 JOIN files ON commits.file_id = files.id
@@ -146,14 +146,14 @@ WHERE commits.id = ?`, commitID).Scan(&username)
 }
 
 // CommitList gets a summary of all commits for a file.
-func CommitList(username, alias string) ([]CommitSummary, error) {
+func CommitList(e Executor, username, alias string) ([]CommitSummary, error) {
 	var (
 		timezone   *string
 		forkedFrom *int64
 	)
 
 	result := []CommitSummary{}
-	rows, err := connection.Query(`
+	rows, err := e.Query(`
 SELECT hash,
        forked_from,
        message, 
@@ -186,7 +186,7 @@ ORDER BY timestamp DESC
 		}
 		c.DateString = formatTime(time.Unix(c.Timestamp, 0), timezone)
 		if forkedFrom != nil {
-			username, err := usernameFromCommitID(*forkedFrom)
+			username, err := usernameFromCommitID(e, *forkedFrom)
 			if err != nil {
 				return nil, err
 			}
@@ -203,10 +203,10 @@ ORDER BY timestamp DESC
 }
 
 // Commit returns the commit record.
-func Commit(username, alias, hash string) (*CommitRecord, error) {
+func Commit(e Executor, username, alias, hash string) (*CommitRecord, error) {
 	result := new(CommitRecord)
 
-	err := connection.QueryRow(`
+	err := e.QueryRow(`
 SELECT commits.*
 FROM commits
 JOIN files ON commits.file_id = files.id
@@ -229,7 +229,7 @@ WHERE username = ? AND alias = ? AND hash = ?`, username, alias, hash).
 }
 
 // UncompressedCommit gets a commit and uncompresses its contents.
-func UncompressedCommit(username, alias, hash string) (*CommitView, error) {
+func UncompressedCommit(e Executor, username, alias, hash string) (*CommitView, error) {
 	var (
 		timezone   *string
 		forkedFrom *int64
@@ -238,7 +238,7 @@ func UncompressedCommit(username, alias, hash string) (*CommitView, error) {
 	result := new(CommitView)
 	revision := []byte{}
 
-	err := connection.QueryRow(`
+	err := e.QueryRow(`
 SELECT hash,
        forked_from,
        message,
@@ -268,7 +268,7 @@ WHERE username = ? AND alias = ? AND hash = ?
 
 	result.DateString = formatTime(time.Unix(result.Timestamp, 0), timezone)
 	if forkedFrom != nil {
-		username, err := usernameFromCommitID(*forkedFrom)
+		username, err := usernameFromCommitID(e, *forkedFrom)
 		if err != nil {
 			return nil, err
 		}

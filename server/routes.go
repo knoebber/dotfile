@@ -88,7 +88,7 @@ func createReservedUsernames(r *mux.Router) error {
 		return errors.Wrapf(err, "walking routes")
 	}
 
-	if err := db.SeedReservedUsernames(reserved); err != nil {
+	if err := db.SeedReservedUsernames(db.Connection, reserved); err != nil {
 		return err
 	}
 

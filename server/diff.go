@@ -16,7 +16,7 @@ func loadDiff(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	on := r.URL.Query().Get("on")
 	against := r.URL.Query().Get("against")
 
-	commits, err := db.CommitList(username, alias)
+	commits, err := db.CommitList(db.Connection, username, alias)
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -32,7 +32,7 @@ func loadDiff(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return
 	}
 
-	content := &db.FileContent{Username: username, Alias: alias}
+	content := &db.FileContent{Connection: db.Connection, Username: username, Alias: alias}
 
 	diffs, err := dotfile.Diff(content, on, against)
 	if err != nil {

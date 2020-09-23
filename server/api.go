@@ -25,13 +25,13 @@ func handleFileJSON(w http.ResponseWriter, r *http.Request) {
 	username := vars["username"]
 	alias := vars["alias"]
 
-	fileRecord, err := db.File(username, alias)
+	fileRecord, err := db.File(db.Connection, username, alias)
 	if err != nil {
 		apiError(w, err)
 		return
 	}
 
-	commits, err := db.CommitList(username, alias)
+	commits, err := db.CommitList(db.Connection, username, alias)
 	if err != nil {
 		apiError(w, err)
 		return
@@ -59,7 +59,7 @@ func handleFileListJSON(w http.ResponseWriter, r *http.Request) {
 	username := vars["username"]
 	addPath := r.URL.Query().Get("path") == "true"
 
-	files, err := db.FilesByUsername(username)
+	files, err := db.FilesByUsername(db.Connection, username)
 	if err != nil {
 		apiError(w, err)
 		return
@@ -79,7 +79,7 @@ func handleFileListJSON(w http.ResponseWriter, r *http.Request) {
 func handleRawCompressedCommit(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	commit, err := db.Commit(vars["username"], vars["alias"], vars["hash"])
+	commit, err := db.Commit(db.Connection, vars["username"], vars["alias"], vars["hash"])
 	if err != nil {
 		rawContentError(w, err)
 		return
@@ -101,7 +101,7 @@ func validateAPIUser(w http.ResponseWriter, r *http.Request) *db.UserRecord {
 		return nil
 	}
 
-	user, err := db.User(username)
+	user, err := db.User(db.Connection, username)
 	if err != nil {
 		authError(w, err)
 		return nil
@@ -153,19 +153,17 @@ func savePushedRevision(ft *db.FileTransaction, p *multipart.Part, commitMap map
 
 	n, err := buff.ReadFrom(p)
 	if err != nil {
-		err = errors.Wrapf(err, "reading revision %q from push (%d bytes)", hash, n)
-		return ft.Rollback(err)
+		return errors.Wrapf(err, "reading revision %q from push (%d bytes)", hash, n)
 	}
 
 	if err = p.Close(); err != nil {
-		err = errors.Wrap(err, "closing revision part")
-		return ft.Rollback(err)
+		return errors.Wrap(err, "closing revision part")
 	}
 
 	c, ok := commitMap[hash]
 	if !ok {
-		err = fmt.Errorf("pushed revision %q doesn't exist in file data json", hash)
-		return ft.Rollback(err)
+		return fmt.Errorf("pushed revision %q doesn't exist in file data json", hash)
+
 	}
 
 	if err := ft.SaveCommit(buff, c); err != nil {
@@ -208,7 +206,13 @@ func handlePush(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ft, err := db.NewFileTransaction(username, alias)
+	tx, err := db.Connection.Begin()
+	if err != nil {
+		apiError(w, errors.Wrap(err, "starting transaction for handle push"))
+		return
+	}
+
+	ft, err := db.NewFileTransaction(tx, username, alias)
 	if err != nil {
 		apiError(w, err)
 		return
@@ -216,15 +220,14 @@ func handlePush(w http.ResponseWriter, r *http.Request) {
 
 	if !ft.FileExists {
 		if err := ft.SaveFile(user.ID, alias, fileData.Path); err != nil {
-			apiError(w, err)
+			apiError(w, db.Rollback(tx, err))
 			return
 		}
 	} else {
 		if ft.Path != fileData.Path {
 			msg := fmt.Sprintf("local path %q does not match remote path %q", ft.Path, fileData.Path)
-			apiError(w, usererror.Invalid(msg))
-			return
-
+			err := usererror.Invalid(msg)
+			apiError(w, db.Rollback(tx, err))
 		}
 	}
 
@@ -237,24 +240,23 @@ func handlePush(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err != nil {
-			err = ft.Rollback(errors.Wrap(err, "reading revision part"))
-			apiError(w, err)
+			apiError(w, db.Rollback(tx, errors.Wrap(err, "reading revision part")))
 			return
 		}
 
 		if err = savePushedRevision(ft, revisionPart, commitMap); err != nil {
-			apiError(w, err)
+			apiError(w, db.Rollback(tx, err))
 			return
 		}
 	}
 
 	if err = ft.SetRevision(fileData.Revision); err != nil {
-		apiError(w, err)
+		apiError(w, db.Rollback(tx, err))
 		return
 	}
 
-	if err = ft.Close(); err != nil {
-		apiError(w, err)
+	if err := tx.Commit(); err != nil {
+		apiError(w, errors.Wrap(err, "commiting handle push transaction"))
 		return
 	}
 }
@@ -262,7 +264,7 @@ func handlePush(w http.ResponseWriter, r *http.Request) {
 func setJSON(w http.ResponseWriter, body interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(body); err != nil {
-		log.Printf("encoding json body: %v", err)
+		log.Printf("encoding json body: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }

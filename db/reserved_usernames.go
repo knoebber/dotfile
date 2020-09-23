@@ -26,14 +26,14 @@ created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );`
 }
 
-func (ru *ReservedUsernameRecord) insertStmt(e executor) (sql.Result, error) {
+func (ru *ReservedUsernameRecord) insertStmt(e Executor) (sql.Result, error) {
 	return e.Exec("INSERT INTO reserved_usernames(username)", ru.Username)
 }
 
-func checkUsernameAllowed(username string) error {
+func checkUsernameAllowed(e Executor, username string) error {
 	var count int
 
-	err := connection.
+	err := e.
 		QueryRow("SELECT COUNT(*) FROM reserved_usernames WHERE username = ?", username).
 		Scan(&count)
 	if err != nil {
@@ -49,13 +49,13 @@ func checkUsernameAllowed(username string) error {
 
 // SeedReservedUsernames sets usernames which are not allowed to be used.
 // This should be called when the service is started.
-func SeedReservedUsernames(usernames []interface{}) error {
+func SeedReservedUsernames(e Executor, usernames []interface{}) error {
 	var count int64
 
 	placeholders := "(?)" + strings.Repeat(",(?)", len(usernames)-1)
 
 	whereIn := fmt.Sprintf("WHERE username IN (%s)", placeholders)
-	err := connection.
+	err := e.
 		QueryRow("SELECT COUNT(*) FROM users "+whereIn, usernames...).Scan(&count)
 
 	if err != nil {
@@ -70,7 +70,7 @@ INSERT INTO reserved_usernames (username)
 VALUES %s 
 ON CONFLICT DO NOTHING`, placeholders)
 
-	if _, err = connection.Exec(sql, usernames...); err != nil {
+	if _, err = e.Exec(sql, usernames...); err != nil {
 		return errors.Wrap(err, "seeding reserved usernames")
 	}
 

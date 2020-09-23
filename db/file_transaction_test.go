@@ -11,9 +11,10 @@ import (
 func TestNewFileTransaction(t *testing.T) {
 	createTestDB(t)
 	createTestUser(t, testUserID, testUsername, testEmail)
-	defer assertDBNotLocked(t)
 
-	ft, err := NewFileTransaction(testUsername, testAlias)
+	tx, err := Connection.Begin()
+	assert.NoError(t, err)
+	ft, err := NewFileTransaction(tx, testUsername, testAlias)
 
 	assert.NotNil(t, ft)
 	assert.NoError(t, err)
@@ -28,5 +29,5 @@ func TestNewFileTransaction(t *testing.T) {
 		Message:   testMessage,
 	}))
 
-	assert.NoError(t, ft.Close())
+	assert.NoError(t, tx.Commit())
 }

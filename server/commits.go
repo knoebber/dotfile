@@ -10,7 +10,7 @@ import (
 
 func loadCommits(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	alias := p.Vars["alias"]
-	commits, err := db.CommitList(p.Vars["username"], alias)
+	commits, err := db.CommitList(db.Connection, p.Vars["username"], alias)
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -30,7 +30,7 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	hash := p.Vars["hash"]
 	username := p.Vars["username"]
 
-	commit, err := db.UncompressedCommit(username, alias, hash)
+	commit, err := db.UncompressedCommit(db.Connection, username, alias, hash)
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -65,7 +65,7 @@ func restoreFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return true
 	}
 
-	if err := db.SetFileToHash(username, alias, hash); err != nil {
+	if err := db.SetFileToHash(db.Connection, username, alias, hash); err != nil {
 		return p.setError(w, err)
 	}
 

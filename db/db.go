@@ -26,21 +26,25 @@ const (
 	minPasswordLength      = 8
 )
 
-var (
-	connection *sql.DB
-	validate   *validator.Validate
-)
+// Connection is a global database connection.
+// Must call Start() to initialize.
+var Connection *sql.DB
+
+var validate *validator.Validate
+
+// Executor is an inteterface for executing SQL.
+type Executor interface {
+	Exec(string, ...interface{}) (sql.Result, error)
+	Query(string, ...interface{}) (*sql.Rows, error)
+	QueryRow(string, ...interface{}) *sql.Row
+}
 
 type tableCreator interface {
 	createStmt() string
 }
 
-type executor interface {
-	Exec(string, ...interface{}) (sql.Result, error)
-}
-
 type inserter interface {
-	insertStmt(executor) (sql.Result, error)
+	insertStmt(Executor) (sql.Result, error)
 }
 
 type checker interface {
@@ -48,7 +52,7 @@ type checker interface {
 }
 
 // Creates the required tables if they doesn't exist
-func createTables() error {
+func createTables(e Executor) error {
 	for _, model := range []tableCreator{
 		new(UserRecord),
 		new(ReservedUsernameRecord),
@@ -57,7 +61,7 @@ func createTables() error {
 		new(TempFileRecord),
 		new(CommitRecord),
 	} {
-		_, err := connection.Exec(model.createStmt())
+		_, err := e.Exec(model.createStmt())
 		if err != nil {
 			return errors.Wrap(err, "creating tables")
 		}
@@ -65,51 +69,37 @@ func createTables() error {
 	return nil
 }
 
-func insert(i inserter, tx *sql.Tx) (id int64, err error) {
-	handleErr := func(err error) error {
-		if tx != nil {
-			return rollback(tx, err)
-		}
-		return err
-	}
-
-	var res sql.Result
-
+func insert(e Executor, i inserter) (id int64, err error) {
 	if err = validate.Struct(i); err != nil {
 		log.Print(err)
-		invalidError := usererror.Invalid("Values are missing or improperly formatted.")
-		return 0, handleErr(invalidError)
+		return 0, usererror.Invalid("Values are missing or improperly formatted.")
 	}
 
 	if c, ok := i.(checker); ok {
 		if err := c.check(); err != nil {
-			return 0, handleErr(err)
+			return 0, err
 		}
 	}
 
-	if tx != nil {
-		res, err = i.insertStmt(tx)
-	} else {
-		res, err = i.insertStmt(connection)
-	}
+	res, err := i.insertStmt(e)
 	if err != nil {
-		return 0, handleErr(err)
+		return 0, err
 	}
 
 	id, err = res.LastInsertId()
 
 	if err != nil {
-		return 0, handleErr(err)
+		return 0, err
 	}
 
 	return id, nil
 }
 
-// Rolls back a database transaction.
-// It always returns an error.
-func rollback(tx *sql.Tx, err error) error {
+// Rollback reverts a database transaction.
+// Always returns an error.
+func Rollback(tx *sql.Tx, err error) error {
 	if rbError := tx.Rollback(); rbError != nil {
-		return errors.Wrapf(err, "rolling back database transaction: %s", rbError)
+		return errors.Wrapf(err, "failed to rollback database transaction: %v", rbError)
 	}
 
 	return errors.Wrap(err, "rolled back from error")
@@ -186,18 +176,18 @@ func NotFound(err error) bool {
 // Creates a new sqlite database with all required tables when not found.
 func Start(dbPath string) (err error) {
 	dsn := "?_foreign_keys=true"
-	connection, err = sql.Open("sqlite3", dbPath+dsn)
+	Connection, err = sql.Open("sqlite3", dbPath+dsn)
 	if err != nil {
 		return err
 	}
 
 	validate = validator.New()
-	return createTables()
+	return createTables(Connection)
 }
 
 // Close closes the connection.
 func Close() {
-	if err := connection.Close(); err != nil {
+	if err := Connection.Close(); err != nil {
 		log.Printf("failed to close database: %v", err)
 	}
 }

@@ -13,7 +13,7 @@ type SearchResult struct {
 }
 
 // Search looks for files by their alias or path.
-func Search(q string) ([]SearchResult, error) {
+func Search(e Executor, q string) ([]SearchResult, error) {
 	var (
 		timezone  *string
 		updatedAt time.Time
@@ -22,7 +22,7 @@ func Search(q string) ([]SearchResult, error) {
 	q = "%" + q + "%"
 	current := SearchResult{}
 	result := []SearchResult{}
-	rows, err := connection.Query(`
+	rows, err := e.Query(`
 SELECT 
        username,
        alias,

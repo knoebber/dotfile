@@ -10,11 +10,8 @@ import (
 
 // FileTransaction is used for dotfile operations.
 // This should be created with one of the exported functions not a literal.
-// Any errors will result in rollback to initial state.
 type FileTransaction struct {
-	tx          *sql.Tx
-	newCommitID int64
-
+	tx              *sql.Tx
 	FileExists      bool
 	FileID          int64
 	CurrentCommitID int64
@@ -25,23 +22,18 @@ type FileTransaction struct {
 
 // NewFileTransaction loads file information into a file transaction.
 // Exported fields will be zero valued when the file doesn't exist.
-func NewFileTransaction(username, alias string) (ft *FileTransaction, err error) {
-	ft = new(FileTransaction)
-
-	ft.tx, err = connection.Begin()
-	if err != nil {
-		return nil, errors.Wrap(err, "starting storage transaction")
-	}
+func NewFileTransaction(tx *sql.Tx, username, alias string) (*FileTransaction, error) {
+	ft := &FileTransaction{tx: tx}
 
 	row := ft.tx.
 		QueryRow(`
 SELECT files.id, current_commit_id, hash, path
-FROM files 
+FROM files  
 JOIN users ON users.id = user_id
 JOIN commits ON current_commit_id = commits.id
 WHERE username = ? AND alias = ?`, username, alias)
 
-	err = row.Scan(
+	err := row.Scan(
 		&ft.FileID,
 		&ft.CurrentCommitID,
 		&ft.Hash,
@@ -58,18 +50,18 @@ WHERE username = ? AND alias = ?`, username, alias)
 
 	ft.FileExists = true
 
-	return
+	return ft, nil
 }
 
 // StageFile returns a file transaction loaded with a users temp file.
 // Returns an error when the temp file does not exist.
-func StageFile(username string, alias string) (ft *FileTransaction, err error) {
-	ft, err = NewFileTransaction(username, alias)
+func StageFile(tx *sql.Tx, username string, alias string) (*FileTransaction, error) {
+	ft, err := NewFileTransaction(tx, username, alias)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	ft.Staged, err = TempFile(username, alias)
+	ft.Staged, err = TempFile(tx, username, alias)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +77,7 @@ func StageFile(username string, alias string) (ft *FileTransaction, err error) {
 
 	// File still does not exist after this - there is no commit association thus no content.
 	// CurrentCommitID and hash are zero valued.
-	return
+	return ft, nil
 }
 
 // SaveFile saves a new file that does yet have any commits.
@@ -97,7 +89,7 @@ func (ft *FileTransaction) SaveFile(userID int64, alias, path string) error {
 		Path:   path,
 	}
 
-	fileID, err := insert(f, ft.tx)
+	fileID, err := insert(ft.tx, f)
 	if err != nil {
 		return err
 	}
@@ -109,7 +101,7 @@ func (ft *FileTransaction) SaveFile(userID int64, alias, path string) error {
 
 // HasCommit returns whether the file has a commit with hash.
 func (ft *FileTransaction) HasCommit(hash string) (exists bool, err error) {
-	exists, err = hasCommit(ft.FileID, hash)
+	exists, err = hasCommit(ft.tx, ft.FileID, hash)
 	if err != nil {
 		return false, err
 	}
@@ -127,9 +119,8 @@ func (ft *FileTransaction) Content() ([]byte, error) {
 	return ft.Staged.Content, nil
 }
 
-// SaveCommit saves a commit to the database.
-// The files current revision will be set to the new commit.
-func (ft *FileTransaction) SaveCommit(buff *bytes.Buffer, c *dotfile.Commit) error {
+// InsertCommit saves a new commit without changing the files current revision.
+func (ft *FileTransaction) InsertCommit(buff *bytes.Buffer, c *dotfile.Commit) (int64, error) {
 	commit := &CommitRecord{
 		FileID:    ft.FileID,
 		Revision:  buff.Bytes(),
@@ -138,52 +129,39 @@ func (ft *FileTransaction) SaveCommit(buff *bytes.Buffer, c *dotfile.Commit) err
 		Timestamp: c.Timestamp,
 	}
 
-	newCommitID, err := insert(commit, ft.tx)
+	newCommitID, err := insert(ft.tx, commit)
 	if err != nil {
-		return errors.Wrapf(err, "inserting commit for file %d", ft.Staged.ID)
+		return 0, errors.Wrapf(err, "inserting commit for file %d", ft.Staged.ID)
 	}
 
-	ft.newCommitID = newCommitID
-	return nil
+	return newCommitID, nil
+}
+
+// SaveCommit saves a commit to the database.
+// Sets the files current revision to the new commit.
+func (ft *FileTransaction) SaveCommit(buff *bytes.Buffer, c *dotfile.Commit) error {
+	newCommitID, err := ft.InsertCommit(buff, c)
+	if err != nil {
+		return err
+	}
+
+	return setFileToCommitID(ft.tx, ft.FileID, newCommitID)
 }
 
 // Revision returns the compressed content at hash.
 func (ft *FileTransaction) Revision(hash string) ([]byte, error) {
-	return revision(ft.FileID, hash)
+	return revision(ft.tx, ft.FileID, hash)
 }
 
 // SetRevision sets the file to the commit at hash.
 func (ft *FileTransaction) SetRevision(hash string) error {
+	var newCommitID int64
+
 	row := ft.tx.QueryRow("SELECT id FROM commits WHERE file_id = ? AND hash = ?", ft.FileID, hash)
 
-	if err := row.Scan(&ft.newCommitID); err != nil {
+	if err := row.Scan(&newCommitID); err != nil {
 		return errors.Wrapf(err, "setting file %d to revision %q", ft.FileID, hash)
 	}
 
-	return nil
-}
-
-// Close updates a files current commit and closes the transaction.
-func (ft *FileTransaction) Close() error {
-	if ft.CurrentCommitID == 0 && ft.newCommitID == 0 {
-		err := errors.New("attempted to write file with no commit association")
-		return ft.Rollback(err)
-	}
-
-	if ft.newCommitID > 0 && ft.newCommitID != ft.CurrentCommitID {
-		err := setFileToCommitID(ft.tx, ft.FileID, ft.newCommitID)
-		if err != nil {
-			return err
-		}
-	}
-
-	if err := ft.tx.Commit(); err != nil {
-		return errors.Wrapf(err, "closing transaction for file %d", ft.Staged.ID)
-	}
-	return nil
-}
-
-// Rollback rollsback the file transaction to its initial state.
-func (ft *FileTransaction) Rollback(err error) error {
-	return rollback(ft.tx, err)
+	return setFileToCommitID(ft.tx, ft.FileID, newCommitID)
 }

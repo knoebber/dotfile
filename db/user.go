@@ -53,7 +53,7 @@ created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 CREATE INDEX IF NOT EXISTS users_username_index ON users(username);`
 }
 
-func (u *UserRecord) insertStmt(e executor) (sql.Result, error) {
+func (u *UserRecord) insertStmt(e Executor) (sql.Result, error) {
 	var email *string
 	if u.Email != "" {
 		email = &u.Email
@@ -66,15 +66,14 @@ func (u *UserRecord) insertStmt(e executor) (sql.Result, error) {
 	)
 }
 
-func (u *UserRecord) check() error {
+func (u *UserRecord) check(e Executor) error {
 	var count int
 
-	if err := checkUsernameAllowed(u.Username); err != nil {
+	if err := checkUsernameAllowed(e, u.Username); err != nil {
 		return err
 	}
 
-	err := connection.
-		QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", u.Username).
+	err := e.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", u.Username).
 		Scan(&count)
 	if err != nil {
 		return errors.Wrapf(err, "checking if username %#v is unique", u.Username)
@@ -85,20 +84,19 @@ func (u *UserRecord) check() error {
 	}
 
 	if u.Email != "" {
-		return checkUniqueEmail(u.Email)
+		return checkUniqueEmail(e, u.Email)
 	}
 
 	return nil
 }
 
-func checkUniqueEmail(email string) error {
+func checkUniqueEmail(e Executor, email string) error {
 	var count int
 
-	err := connection.
-		QueryRow("SELECT COUNT(*) FROM users WHERE email = ?", email).Scan(&count)
+	err := e.QueryRow("SELECT COUNT(*) FROM users WHERE email = ?", email).Scan(&count)
 
 	if err != nil {
-		return errors.Wrapf(err, "checking if email %#v is unique", email)
+		return errors.Wrapf(err, "checking if email %q is unique", email)
 	}
 
 	if count > 0 {
@@ -109,11 +107,10 @@ func checkUniqueEmail(email string) error {
 }
 
 // Looks up a user by their username and compares the password to the stored hash.
-func compareUserPassword(username string, password string) error {
+func compareUserPassword(e Executor, username string, password string) error {
 	var hash []byte
 
-	err := connection.
-		QueryRow("SELECT password_hash FROM users WHERE username = ?", username).
+	err := e.QueryRow("SELECT password_hash FROM users WHERE username = ?", username).
 		Scan(&hash)
 	if err != nil {
 		return errors.Wrapf(err, "querying for user %q password hash", username)
@@ -129,13 +126,13 @@ func compareUserPassword(username string, password string) error {
 
 // SetPasswordResetToken creates and saves a reset token for the user.
 // Returns the newly created token.
-func SetPasswordResetToken(email string) (string, error) {
+func SetPasswordResetToken(e Executor, email string) (string, error) {
 	token, err := token()
 	if err != nil {
 		return "", err
 	}
 
-	res, err := connection.Exec(`
+	res, err := e.Exec(`
 UPDATE users
 SET password_reset_token = ?
 WHERE email = ?`, token, email)
@@ -157,14 +154,13 @@ WHERE email = ?`, token, email)
 
 // CheckPasswordResetToken checks if the password reset token exists.
 // Returns username for the token on success.
-func CheckPasswordResetToken(token string) (string, error) {
+func CheckPasswordResetToken(e Executor, token string) (string, error) {
 	var (
 		count    int
 		username *string
 	)
 
-	err := connection.
-		QueryRow(`
+	err := e.QueryRow(`
 SELECT COUNT(*),
        username
 FROM users
@@ -185,8 +181,8 @@ WHERE password_reset_token = ?`, token).
 }
 
 // ResetPassword hashes and sets a new password to the user with the password reset token.
-func ResetPassword(token, newPassword string) (string, error) {
-	username, err := CheckPasswordResetToken(token)
+func ResetPassword(e Executor, token, newPassword string) (string, error) {
+	username, err := CheckPasswordResetToken(e, token)
 	if err != nil {
 		return "", err
 	}
@@ -196,7 +192,7 @@ func ResetPassword(token, newPassword string) (string, error) {
 		return "", err
 	}
 
-	_, err = connection.Exec(`
+	_, err = e.Exec(`
 UPDATE users
 SET password_hash = ?, password_reset_token = NULL
 WHERE username = ?`, passwordHash, username)
@@ -209,7 +205,7 @@ WHERE username = ?`, passwordHash, username)
 
 // User returns the user with username.
 // This does not set password_hash or password_reset_token.
-func User(username string) (*UserRecord, error) {
+func User(e Executor, username string) (*UserRecord, error) {
 	var (
 		email, timezone *string
 		createdAt       time.Time
@@ -217,7 +213,7 @@ func User(username string) (*UserRecord, error) {
 
 	user := new(UserRecord)
 
-	err := connection.QueryRow(`
+	err := e.QueryRow(`
 SELECT id,
        username,
        email,
@@ -253,7 +249,7 @@ WHERE username = ?
 }
 
 // CreateUser inserts a new user into the users table.
-func CreateUser(username, password string) (*UserRecord, error) {
+func CreateUser(e Executor, username, password string) (*UserRecord, error) {
 	passwordHash, err := hashPassword(password)
 	if err != nil {
 		return nil, err
@@ -270,7 +266,7 @@ func CreateUser(username, password string) (*UserRecord, error) {
 		CLIToken:     cliToken,
 	}
 
-	id, err := insert(u, nil)
+	id, err := insert(e, u)
 	if err != nil {
 		return nil, errors.Wrapf(err, "creating record for new user %#v", username)
 	}
@@ -281,37 +277,37 @@ func CreateUser(username, password string) (*UserRecord, error) {
 }
 
 // UpdateEmail updates a users email and sets email_confirmed to false.
-func UpdateEmail(userID int64, email string) error {
+func UpdateEmail(e Executor, userID int64, email string) error {
 	if err := validate.Var(email, "email"); err != nil {
 		return err
 	}
-	if err := checkUniqueEmail(email); err != nil {
+	if err := checkUniqueEmail(e, email); err != nil {
 		return err
 	}
 
-	_, err := connection.Exec("UPDATE users SET email = ?, email_confirmed = 0 WHERE id = ?", email, userID)
+	_, err := e.Exec("UPDATE users SET email = ?, email_confirmed = 0 WHERE id = ?", email, userID)
 	return err
 }
 
 // UpdateTimezone checks if the timezone is able to be loaded and updates the user record.
-func UpdateTimezone(userID int64, timezone string) error {
+func UpdateTimezone(e Executor, userID int64, timezone string) error {
 	if _, err := time.LoadLocation(timezone); err != nil {
 		log.Printf("error updating timezone: %v", err)
 		return usererror.Invalid(fmt.Sprintf("Timezone %q not found", timezone))
 	}
 
-	_, err := connection.Exec("UPDATE users SET timezone = ? WHERE id = ?", timezone, userID)
+	_, err := e.Exec("UPDATE users SET timezone = ? WHERE id = ?", timezone, userID)
 	return err
 }
 
 // RotateCLIToken creates a new CLI token for the user.
-func RotateCLIToken(userID int64, currentToken string) error {
+func RotateCLIToken(e Executor, userID int64, currentToken string) error {
 	newToken, err := token()
 	if err != nil {
 		return err
 	}
 
-	res, err := connection.Exec(`
+	res, err := e.Exec(`
 UPDATE users
 SET cli_token = ?
 WHERE id = ? AND cli_token = ?`, newToken, userID, currentToken)
@@ -333,8 +329,8 @@ WHERE id = ? AND cli_token = ?`, newToken, userID, currentToken)
 
 // CheckPassword checks username and password combination.
 // Tells the user when the password does not match.
-func CheckPassword(username, password string) error {
-	err := compareUserPassword(username, password)
+func CheckPassword(e Executor, username, password string) error {
+	err := compareUserPassword(e, username, password)
 	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 		return usererror.Invalid("Password does not match.")
 	} else if err != nil {
@@ -346,8 +342,8 @@ func CheckPassword(username, password string) error {
 
 // UpdatePassword updates a users password.
 // currentPass must match the current hash.
-func UpdatePassword(username string, currentPass, newPassword string) error {
-	if err := CheckPassword(username, currentPass); err != nil {
+func UpdatePassword(e Executor, username string, currentPass, newPassword string) error {
+	if err := CheckPassword(e, username, currentPass); err != nil {
 		return err
 	}
 
@@ -356,7 +352,7 @@ func UpdatePassword(username string, currentPass, newPassword string) error {
 		return err
 	}
 
-	_, err = connection.Exec(`
+	_, err = e.Exec(`
 UPDATE users
 SET password_hash = ?
 WHERE username = ?`, passwordHash, username)
@@ -364,8 +360,8 @@ WHERE username = ?`, passwordHash, username)
 }
 
 // UpdateTheme updates a users theme setting.
-func UpdateTheme(username string, theme UserTheme) error {
-	_, err := connection.Exec("UPDATE users SET theme = ? WHERE username = ?", theme, username)
+func UpdateTheme(e Executor, username string, theme UserTheme) error {
+	_, err := e.Exec("UPDATE users SET theme = ? WHERE username = ?", theme, username)
 	if err != nil {
 		return errors.Wrapf(err, "updating %q to theme %q", username, theme)
 	}
@@ -375,12 +371,22 @@ func UpdateTheme(username string, theme UserTheme) error {
 
 // UserLogin checks a username / password.
 // If the credentials are valid, returns a new session.
-func UserLogin(username, password, ip string) (*SessionRecord, error) {
-	if err := compareUserPassword(username, password); err != nil {
+func UserLogin(e Executor, username, password, ip string) (*SessionRecord, error) {
+	if err := compareUserPassword(e, username, password); err != nil {
 		return nil, err
 	}
 
-	return createSession(username, ip)
+	return createSession(e, username, ip)
+}
+
+// DeleteUser deletes an user and all their data.
+// TODO.
+func DeleteUser(tx *sql.Tx, username, password string) error {
+	if err := compareUserPassword(tx, username, password); err != nil {
+		return nil
+	}
+
+	return nil
 }
 
 func token() (string, error) {

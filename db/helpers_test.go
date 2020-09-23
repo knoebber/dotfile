@@ -40,7 +40,7 @@ func createTestDB(t *testing.T) {
 func createTestUser(t *testing.T, userID int64, username, email string) {
 	var count int
 
-	err := connection.
+	err := Connection.
 		QueryRow("SELECT COUNT(*) FROM users WHERE id = ?", userID).
 		Scan(&count)
 	if err != nil {
@@ -55,7 +55,7 @@ func createTestUser(t *testing.T, userID int64, username, email string) {
 		t.Fatalf("creating test password: %s", err)
 	}
 
-	_, err = connection.Exec(`
+	_, err = Connection.Exec(`
 INSERT INTO users(id, username, email, password_hash, cli_token) 
 VALUES(?, ?, ?, ?, ?)`,
 		userID,
@@ -78,7 +78,8 @@ func createTestTempFile(t *testing.T, content string) *TempFileRecord {
 		Path:    testPath,
 		Content: []byte(content),
 	}
-	id, err := insert(testTempFile, nil)
+
+	id, err := insert(Connection, testTempFile)
 	if err != nil {
 		t.Fatalf("creating test temp file: %s", err)
 	}
@@ -94,7 +95,7 @@ func failIf(t *testing.T, err error, context ...string) {
 }
 
 func removeTestFiles(t *testing.T) {
-	_, err := connection.Exec("DELETE FROM files")
+	_, err := Connection.Exec("DELETE FROM files")
 	if err != nil {
 		t.Fatalf("cleaning up files: %s", err)
 	}
@@ -107,13 +108,14 @@ func assertErrNoRows(t *testing.T, err error) {
 }
 
 func getTestFileTransaction(t *testing.T) *FileTransaction {
-	ft, err := NewFileTransaction(testUsername, testAlias)
+	tx := testTransaction(t)
+	ft, err := NewFileTransaction(tx, testUsername, testAlias)
 	failIf(t, err, "getting test storage")
 	return ft
 }
 
 func getTestTransaction(t *testing.T) *sql.Tx {
-	tx, err := connection.Begin()
+	tx, err := Connection.Begin()
 	failIf(t, err)
 	return tx
 }
@@ -122,12 +124,13 @@ func initTestFile(t *testing.T) *FileView {
 	createTestUser(t, testUserID, testUsername, testEmail)
 	createTestTempFile(t, testContent)
 
-	ft, err := StageFile(testUsername, testAlias)
+	tx := testTransaction(t)
+	ft, err := StageFile(tx, testUsername, testAlias)
 	failIf(t, err, "new storage in init test file")
 	failIf(t, dotfile.Init(ft, testPath, testAlias), "initialing test file")
-	failIf(t, ft.Close())
+	failIf(t, tx.Commit())
 
-	f, err := File(testUsername, testAlias)
+	f, err := File(Connection, testUsername, testAlias)
 	failIf(t, err, "getting file by username in init test file")
 	return f
 }
@@ -139,23 +142,24 @@ func initTestFileAndCommit(t *testing.T) (initialCommit CommitSummary, currentCo
 	// Latest commit will have this content.
 	createTestTempFile(t, testUpdatedContent)
 
-	ft, err := StageFile(testUsername, testAlias)
+	tx := testTransaction(t)
+	ft, err := StageFile(tx, testUsername, testAlias)
 	failIf(t, err, "staging test file")
 
 	// Ensure that the new commit has a different timestamp - unix time is by the second.
 	time.Sleep(time.Second)
 
 	failIf(t, dotfile.NewCommit(ft, "Commiting test updated content"))
-	failIf(t, ft.Close())
+	failIf(t, tx.Commit())
 
-	lst, err := CommitList(testUsername, testAlias)
+	lst, err := CommitList(Connection, testUsername, testAlias)
 	failIf(t, err, "getting test commit")
 
 	if len(lst) != 2 {
 		t.Fatalf("expected commit list to be length 2, got %d", len(lst))
 	}
 
-	f, err := File(testUsername, testAlias)
+	f, err := File(Connection, testUsername, testAlias)
 	failIf(t, err, "initTestFileAndCommit: GetFileByUsername")
 
 	currentCommit = lst[0]
@@ -165,11 +169,11 @@ func initTestFileAndCommit(t *testing.T) (initialCommit CommitSummary, currentCo
 	return
 }
 
-// Should run after any tests that use a transaction.
-func assertDBNotLocked(t *testing.T) {
-	_, err := connection.Exec("DELETE FROM sessions")
+func testTransaction(t *testing.T) *sql.Tx {
+	tx, err := Connection.Begin()
 	if err != nil {
-		t.Fatalf("asserting db is still open: %s", err)
+		t.Fatalf("test transaction: %w", err)
 	}
 
+	return tx
 }

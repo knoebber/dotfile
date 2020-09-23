@@ -8,7 +8,7 @@ import (
 )
 
 func handleEmail(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	if err := db.UpdateEmail(p.Session.UserID, r.Form.Get("email")); err != nil {
+	if err := db.UpdateEmail(db.Connection, p.Session.UserID, r.Form.Get("email")); err != nil {
 		return p.setError(w, err)
 	}
 	p.Data["email"] = r.Form.Get("email")
@@ -19,7 +19,7 @@ func handleEmail(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 
 func handleTokenForm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	if token := r.Form.Get("token"); token != "" {
-		if err := db.RotateCLIToken(p.Session.UserID, token); err != nil {
+		if err := db.RotateCLIToken(db.Connection, p.Session.UserID, token); err != nil {
 			return p.setError(w, err)
 		}
 
@@ -28,7 +28,7 @@ func handleTokenForm(w http.ResponseWriter, r *http.Request, p *Page) (done bool
 	}
 
 	password := r.Form.Get("password")
-	if err := db.CheckPassword(p.Session.Username, password); err != nil {
+	if err := db.CheckPassword(db.Connection, p.Session.Username, password); err != nil {
 		return p.setError(w, err)
 	}
 
@@ -46,7 +46,7 @@ func handlePassword(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 		return p.setError(w, usererror.Invalid("Confirm does not match."))
 	}
 
-	if err := db.UpdatePassword(p.Session.Username, currentPass, newPass); err != nil {
+	if err := db.UpdatePassword(db.Connection, p.Session.Username, currentPass, newPass); err != nil {
 		return p.setError(w, err)
 	}
 
@@ -57,7 +57,7 @@ func handlePassword(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 func handleTheme(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	newTheme := db.UserTheme(r.Form.Get("theme"))
 
-	if err := db.UpdateTheme(p.Session.Username, newTheme); err != nil {
+	if err := db.UpdateTheme(db.Connection, p.Session.Username, newTheme); err != nil {
 		return p.setError(w, err)
 	}
 	p.Session.Theme = newTheme
@@ -66,7 +66,7 @@ func handleTheme(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 }
 
 func handleTimezone(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	if err := db.UpdateTimezone(p.Session.UserID, r.Form.Get("timezone")); err != nil {
+	if err := db.UpdateTimezone(db.Connection, p.Session.UserID, r.Form.Get("timezone")); err != nil {
 		return p.setError(w, err)
 	}
 
@@ -76,7 +76,7 @@ func handleTimezone(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 
 func loadUserCLI(config Config) pageBuilder {
 	return func(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-		user, err := db.User(p.Session.Username)
+		user, err := db.User(db.Connection, p.Session.Username)
 		if err != nil {
 			return p.setError(w, err)
 		}
@@ -89,7 +89,7 @@ func loadUserCLI(config Config) pageBuilder {
 }
 
 func loadUserSettings(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	user, err := db.User(p.Session.Username)
+	user, err := db.User(db.Connection, p.Session.Username)
 	if err != nil {
 		return p.setError(w, err)
 	}

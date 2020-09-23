@@ -17,18 +17,18 @@ func TestFilesTable(t *testing.T) {
 
 	t.Run("has foreign key constraints", func(t *testing.T) {
 		t.Run("fails when user doesnt exist", func(t *testing.T) {
-			_, err := insert(f, nil)
+			_, err := insert(Connection, f)
 			assert.Error(t, err)
 		})
 
 		t.Run("ok when user exists", func(t *testing.T) {
 			createTestUser(t, testUserID, testUsername, testEmail)
-			_, err := insert(f, nil)
+			_, err := insert(Connection, f)
 			assert.NoError(t, err)
 		})
 
 		t.Run("foreign key restricts record delete", func(t *testing.T) {
-			_, err := connection.Exec("DELETE FROM users WHERE id = ?", testUserID)
+			_, err := Connection.Exec("DELETE FROM users WHERE id = ?", testUserID)
 			assert.Error(t, err)
 		})
 	})
@@ -40,14 +40,14 @@ func TestFilesTable(t *testing.T) {
 		initTestFile(t)
 
 		// Fails because alias already exists.
-		_, err := insert(f, nil)
+		_, err := insert(Connection, f)
 		assert.Error(t, err)
 
 		// Error, alias is uppercased but distinctness should be case insensitive.
 		f2 := *f
 		f2.Alias = strings.Title(testAlias)
 		f2.Path = "/different/path"
-		_, err = insert(&f2, nil)
+		_, err = insert(Connection, &f2)
 		assert.Error(t, err)
 	})
 }
@@ -64,29 +64,29 @@ func TestForkFile(t *testing.T) {
 
 	t.Run("fork works", func(t *testing.T) {
 		setup(t)
+		tx := testTransaction(t)
 		f := initTestFile(t)
-		err := ForkFile(testUsername, testAlias, f.Hash, otherUserID)
+		err := ForkFile(tx, testUsername, testAlias, f.Hash, otherUserID)
 
-		t.Run("no error", func(t *testing.T) {
-			assert.NoError(t, err)
-		})
+		assert.NoError(t, err)
+		assert.NoError(t, tx.Commit())
 
-		t.Run("error on attempt to fork again", func(t *testing.T) {
-			assert.Error(t, ForkFile(testUsername, testAlias, f.Hash, otherUserID))
-		})
-		assertDBNotLocked(t)
+		// Error on attempt to fork again.
+		tx = testTransaction(t)
+		assert.Error(t, ForkFile(tx, testUsername, testAlias, f.Hash, otherUserID))
+		assert.NoError(t, tx.Rollback())
 	})
 
 	t.Run("fork copies commit revision content", func(t *testing.T) {
 		setup(t)
+		tx := testTransaction(t)
 		initialCommit, _ := initTestFileAndCommit(t)
 
-		assert.NoError(t, ForkFile(testUsername, testAlias, initialCommit.Hash, otherUserID))
-		f, err := File(otherUsername, testAlias)
+		assert.NoError(t, ForkFile(tx, testUsername, testAlias, initialCommit.Hash, otherUserID))
+		assert.NoError(t, tx.Commit())
+		f, err := File(Connection, otherUsername, testAlias)
 		failIf(t, err)
 		assert.Equal(t, testContent, string(f.Content))
-
-		assertDBNotLocked(t)
 	})
 }
 
@@ -95,14 +95,14 @@ func TestSetFileToHash(t *testing.T) {
 	initial, _ := initTestFileAndCommit(t)
 
 	t.Run("error when hash does not exist", func(t *testing.T) {
-		err := SetFileToHash(testUsername, testAlias, "doesnt exist")
+		err := SetFileToHash(Connection, testUsername, testAlias, "doesnt exist")
 		assert.Error(t, err)
 	})
 
 	t.Run("ok", func(t *testing.T) {
-		err := SetFileToHash(testUsername, testAlias, initial.Hash)
+		err := SetFileToHash(Connection, testUsername, testAlias, initial.Hash)
 		assert.NoError(t, err)
-		f, err := File(testUsername, testAlias)
+		f, err := File(Connection, testUsername, testAlias)
 		assert.NoError(t, err)
 		assert.Equal(t, initial.Hash, f.Hash)
 	})

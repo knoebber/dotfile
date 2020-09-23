@@ -45,8 +45,7 @@ func (f *TempFileRecord) check() error {
 }
 
 // Inserts or updates a user's previous temp file.
-// Uses an UPSERT statement: https://sqlite.org/lang_UPSERT.html
-func (f *TempFileRecord) insertStmt(e executor) (sql.Result, error) {
+func (f *TempFileRecord) insertStmt(e Executor) (sql.Result, error) {
 	compressed, err := dotfile.Compress(f.Content)
 	if err != nil {
 		return nil, err
@@ -75,8 +74,8 @@ SET alias = ?, path = ?, content = ?`,
 }
 
 // Create creates a new temp file.
-func (f *TempFileRecord) Create() error {
-	id, err := insert(f, nil)
+func (f *TempFileRecord) Create(e Executor) error {
+	id, err := insert(e, f)
 	if err != nil {
 		return err
 	}
@@ -92,14 +91,14 @@ func (f *TempFileRecord) save(tx *sql.Tx) (newFileID int64, err error) {
 		Path:   f.Path,
 	}
 
-	newFileID, err = insert(newFile, tx)
+	newFileID, err = insert(tx, newFile)
 	if err != nil {
 		return 0, err
 	}
 
 	_, err = tx.Exec("DELETE FROM temp_files WHERE user_id = ?", f.UserID)
 	if err != nil {
-		return 0, rollback(tx, errors.Wrapf(err, "deleting temp file %#v for user %d", f.Alias, f.UserID))
+		return 0, errors.Wrapf(err, "deleting temp file %q for user %d", f.Alias, f.UserID)
 	}
 
 	return
@@ -108,10 +107,10 @@ func (f *TempFileRecord) save(tx *sql.Tx) (newFileID int64, err error) {
 // TempFile finds a user's temp file.
 // Users can only have one temp file at a time so alias can be empty.
 // When alias is present, ensures that temp file exists with alias.
-func TempFile(username string, alias string) (*TempFileRecord, error) {
+func TempFile(e Executor, username string, alias string) (*TempFileRecord, error) {
 	res := new(TempFileRecord)
 
-	if err := connection.
+	if err := e.
 		QueryRow(`
 SELECT temp_files.* 
 FROM temp_files 

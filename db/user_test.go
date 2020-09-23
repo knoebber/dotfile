@@ -18,16 +18,16 @@ func TestCreateUser(t *testing.T) {
 			PasswordHash: []byte(testPassword),
 		}
 
-		_, err := insert(u, nil)
+		_, err := insert(Connection, u)
 		assert.Error(t, err)
 
 	})
 
 	t.Run("ok", func(t *testing.T) {
-		_, err := CreateUser("user1", "testpassword")
+		_, err := CreateUser(Connection, "user1", "testpassword")
 		assert.NoError(t, err)
 
-		_, err = CreateUser("user2", "testpassword")
+		_, err = CreateUser(Connection, "user2", "testpassword")
 		assert.NoError(t, err)
 	})
 

@@ -20,19 +20,19 @@ func TestCommitsTable(t *testing.T) {
 	t.Run("has foreign key constraints", func(t *testing.T) {
 		// Fails because file doesn't exist.
 		t.Run("fails when file doesnt exist", func(t *testing.T) {
-			_, err := insert(c, nil)
+			_, err := insert(Connection, c)
 			assert.Error(t, err)
 		})
 
 		t.Run("ok when file exists", func(t *testing.T) {
 			fv := initTestFile(t)
 			c.FileID = fv.ID
-			_, err := insert(c, nil)
+			_, err := insert(Connection, c)
 			assert.NoError(t, err)
 		})
 
 		t.Run("fk restricts delete", func(t *testing.T) {
-			_, err := connection.Exec("DELETE FROM files")
+			_, err := Connection.Exec("DELETE FROM files")
 			assert.Error(t, err)
 		})
 	})
@@ -45,7 +45,7 @@ func TestCommitsTable(t *testing.T) {
 		c.FileID = fv.ID
 		c.ForkedFrom = &nonExistentcommitID
 
-		_, err := insert(c, nil)
+		_, err := insert(Connection, c)
 		assert.Error(t, err)
 	})
 }

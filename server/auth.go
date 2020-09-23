@@ -35,7 +35,7 @@ func handleAccountRecovery(config Config) pageBuilder {
 
 		// Don't let people see if emails exist or not by checking how long the page takes to load.
 		go func() {
-			token, err := db.SetPasswordResetToken(r.Form.Get("email"))
+			token, err := db.SetPasswordResetToken(db.Connection, r.Form.Get("email"))
 			if err != nil {
 				// Log the error but don't tell the user.
 				log.Print("reset password form: ", err)
@@ -78,7 +78,7 @@ func handlePasswordReset(w http.ResponseWriter, r *http.Request, p *Page) (done 
 		return p.setError(w, usererror.Invalid("Passwords do not match."))
 	}
 
-	username, err := db.ResetPassword(token, password)
+	username, err := db.ResetPassword(db.Connection, token, password)
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -89,7 +89,7 @@ func handlePasswordReset(w http.ResponseWriter, r *http.Request, p *Page) (done 
 }
 
 func login(w http.ResponseWriter, r *http.Request, p *Page, secure bool) (done bool) {
-	s, err := db.UserLogin(r.Form.Get("username"), r.Form.Get("password"), r.RemoteAddr)
+	s, err := db.UserLogin(db.Connection, r.Form.Get("username"), r.Form.Get("password"), r.RemoteAddr)
 	if err != nil {
 		// Print the real error and show the user a generic catch all.
 		log.Print(err)
@@ -118,7 +118,7 @@ func handleSignup(secure bool) pageBuilder {
 			return false
 		}
 
-		_, err := db.CreateUser(username, password)
+		_, err := db.CreateUser(db.Connection, username, password)
 		if err != nil {
 			return p.setError(w, err)
 		}
@@ -128,7 +128,7 @@ func handleSignup(secure bool) pageBuilder {
 }
 
 func handleLogout(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	if err := db.Logout(p.Session.ID); err != nil {
+	if err := db.Logout(db.Connection, p.Session.ID); err != nil {
 		log.Print(err)
 	}
 
