@@ -21,12 +21,24 @@ func loadDiff(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, err)
 	}
 
+	for i, c := range commits {
+		if c.Message == "" {
+			commits[i].Message = c.DateString
+		}
+		if on != "" {
+			continue
+		}
+
+		// Set 'on' to the commit before against.
+		if c.Hash == against && i != len(commits)-1 {
+			on = commits[i+1].Hash
+		}
+	}
+
 	p.Data["commits"] = commits
 	p.Data["alias"] = alias
-	p.Data["on"] = on
 	p.Data["against"] = against
-
-	p.Title = "diff"
+	p.Data["on"] = on
 
 	if on == "" || against == "" {
 		return
@@ -48,6 +60,7 @@ func loadDiff(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 func diffHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "diff.tmpl",
+		title:        "diff",
 		loadData:     loadDiff,
 	})
 }
