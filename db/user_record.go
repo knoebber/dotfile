@@ -379,11 +379,37 @@ func UserLogin(e Executor, username, password, ip string) (*SessionRecord, error
 	return createSession(e, username, ip)
 }
 
-// DeleteUser deletes an user and all their data.
-// TODO.
+// DeleteUser deletes a user and their data.
 func DeleteUser(tx *sql.Tx, username, password string) error {
 	if err := compareUserPassword(tx, username, password); err != nil {
-		return nil
+		return err
+	}
+
+	if err := DeleteTempFile(tx, username); err != nil {
+		return err
+	}
+
+	fileList, err := FilesByUsername(tx, username)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range fileList {
+		if err := DeleteFile(tx, username, f.Alias); err != nil {
+			return errors.Wrap(err, "deleting files by username")
+		}
+	}
+
+	_, err = tx.Exec(`
+DELETE FROM sessions 
+WHERE user_id = (SELECT id FROM users WHERE username = ?)`, username)
+	if err != nil {
+		return errors.Wrapf(err, "deleting sessions for user %q", username)
+	}
+
+	_, err = tx.Exec("DELETE FROM users WHERE username = ?", username)
+	if err != nil {
+		return errors.Wrapf(err, "deleting user %q", username)
 	}
 
 	return nil

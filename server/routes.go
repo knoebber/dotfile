@@ -52,6 +52,7 @@ func dotfileRoutes(r *mux.Router, config Config) {
 	r.HandleFunc("/settings/password", passwordHandler())
 	r.HandleFunc("/settings/theme", themeHandler())
 	r.HandleFunc("/settings/cli", cliHandler(config))
+	r.HandleFunc("/settings/delete", deleteUserHandler())
 	r.HandleFunc("/{username}", userHandler())
 	r.HandleFunc("/{username}/{alias}", fileHandler())
 	r.HandleFunc("/{username}/{alias}/raw", handleRawFile)
@@ -61,6 +62,9 @@ func dotfileRoutes(r *mux.Router, config Config) {
 	r.HandleFunc("/{username}/{alias}/init", confirmNewFileHandler())
 	r.HandleFunc("/{username}/{alias}/commit", confirmEditHandler())
 	r.HandleFunc("/{username}/{alias}/settings", fileSettingsHandler())
+	r.HandleFunc("/{username}/{alias}/settings/update", updateFileHandler())
+	r.HandleFunc("/{username}/{alias}/settings/delete", deleteFileHandler())
+	r.HandleFunc("/{username}/{alias}/settings/clear", clearFileHandler())
 	r.HandleFunc("/{username}/{alias}/{hash}", commitHandler())
 	r.HandleFunc("/{username}/{alias}/{hash}/raw", handleRawUncompressedCommit)
 }

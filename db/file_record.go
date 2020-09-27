@@ -22,21 +22,6 @@ type FileRecord struct {
 	CurrentCommitID *int64 // The commit that the file is at.
 }
 
-// FileView contains a file record and its uncompressed content.
-type FileView struct {
-	FileRecord
-	Content []byte
-	Hash    string
-}
-
-// FileSummary summarizes a file.
-type FileSummary struct {
-	Alias      string
-	Path       string
-	NumCommits int
-	UpdatedAt  string
-}
-
 // Unique indexes prevent a user from having duplicate alias / path.
 func (*FileRecord) createStmt() string {
 	return `
@@ -93,27 +78,6 @@ INSERT INTO files(user_id, alias, path, current_commit_id) VALUES(?, ?, ?, ?)`,
 	)
 }
 
-func (f *FileView) scan(row *sql.Row) error {
-	if err := row.Scan(
-		&f.ID,
-		&f.UserID,
-		&f.Alias,
-		&f.Path,
-		&f.CurrentCommitID,
-		&f.Content,
-		&f.Hash,
-	); err != nil {
-		return err
-	}
-	buff, err := dotfile.Uncompress(f.Content)
-	if err != nil {
-		return err
-	}
-
-	f.Content = buff.Bytes()
-	return nil
-}
-
 // Update updates the alias or path if they are different.
 func (f *FileRecord) Update(e Executor, newAlias, newPath string) error {
 	if f.Alias == newAlias && f.Path == newPath {
@@ -136,11 +100,16 @@ WHERE id = ?
 	return nil
 }
 
-// Delete deletes the file.
-func (f *FileRecord) Delete(tx *sql.Tx) error {
-	_, err := tx.Exec("UPDATE files SET current_commit_id = NULL WHERE id = ?", f.ID)
+// DeleteFile deletes a users file.
+func DeleteFile(tx *sql.Tx, username, alias string) error {
+	record, err := File(tx, username, alias)
 	if err != nil {
-		return errors.Wrapf(err, "setting current commit id to null for file %d %q", f.ID, f.Alias)
+		return err
+	}
+
+	_, err = tx.Exec("UPDATE files SET current_commit_id = NULL WHERE id = ?", record.ID)
+	if err != nil {
+		return errors.Wrapf(err, "setting current commit id to null for %q %q", username, alias)
 	}
 
 	_, err = tx.Exec(`
@@ -148,99 +117,134 @@ UPDATE commits SET forked_from = NULL
 WHERE id IN (SELECT forked.id
              FROM commits
              JOIN commits AS forked ON forked.forked_from = commits.ID
-             WHERE commits.file_id = ?)`, f.ID)
+             WHERE commits.file_id = ?)`, record.ID)
 	if err != nil {
-		return errors.Wrapf(err, "setting forked_from to null for file %d %q", f.ID, f.Alias)
+		return errors.Wrapf(err, "setting forked_from to null for %q %q", username, alias)
 	}
 
-	_, err = tx.Exec("DELETE FROM commits WHERE file_id = ?", f.ID)
+	_, err = tx.Exec("DELETE FROM commits WHERE file_id = ?", record.ID)
 	if err != nil {
-		return errors.Wrapf(err, "deleting commits for file %d %q", f.ID, f.Alias)
+		return errors.Wrapf(err, "deleting commits for %q %q", username, alias)
 	}
 
-	_, err = tx.Exec("DELETE FROM files WHERE id = ?", f.ID)
+	_, err = tx.Exec("DELETE FROM files WHERE id = ?", record.ID)
 	if err != nil {
-		return errors.Wrapf(err, "deleting file %d %q", f.ID, f.Alias)
+		return errors.Wrapf(err, "deleting file %q %q", username, alias)
 	}
 
 	return nil
 }
 
-// File retrieves a file.
-func File(e Executor, username string, alias string) (*FileView, error) {
-	fv := new(FileView)
+// File retrieves a file record.
+func File(e Executor, username string, alias string) (*FileRecord, error) {
+	record := new(FileRecord)
 
-	row := e.QueryRow(`
-SELECT files.id,
-       files.user_id,
-       files.alias,
-       files.path,
-       files.current_commit_id,
-       commits.revision,
-       commits.hash
-FROM files
-JOIN users ON user_id = users.id
-JOIN commits ON current_commit_id = commits.id
-WHERE username = ? AND alias = ?
-`, username, alias)
-
-	if err := fv.scan(row); err != nil {
-		return nil, errors.Wrapf(err, "querying for user %#v file %#v", username, alias)
+	err := e.QueryRow(`
+SELECT files.id, 
+       user_id, 
+       alias, 
+       path, 
+       current_commit_id
+FROM files 
+JOIN users ON user_id = users.id 
+WHERE username = ? AND alias = ?`, username, alias).
+		Scan(
+			&record.ID,
+			&record.UserID,
+			&record.Alias,
+			&record.Path,
+			&record.CurrentCommitID,
+		)
+	if err != nil {
+		return nil, errors.Wrapf(err, "querying file for %q %q", username, alias)
 	}
 
-	return fv, nil
+	return record, nil
 }
 
-// FilesByUsername returns all of a users files.
-func FilesByUsername(e Executor, username string) ([]FileSummary, error) {
+// FileData returns the files dotfile data structure.
+func FileData(e Executor, username, alias string) (*dotfile.TrackingData, error) {
 	var (
-		alias, path, timezone *string
-		updatedAt             time.Time
+		path, hash, message string
+		current             bool
+		timestamp           int64
 	)
 
-	f := FileSummary{}
+	result := new(dotfile.TrackingData)
 
-	result := []FileSummary{}
 	rows, err := e.Query(`
-SELECT 
-       alias,
-       path,
-       COUNT(commits.id) AS num_commits,
-       timezone,
-       updated_at
+SELECT path,
+       hash,
+       message,
+       timestamp,
+       current_commit_id = commits.id AS current
 FROM users
-JOIN files ON user_id = users.id
-JOIN commits ON file_id = files.id
-WHERE username = ?
-GROUP BY files.id`, username)
+JOIN files ON files.user_id = users.id
+JOIN commits ON commits.file_id = files.id
+WHERE username = ? AND alias = ?`, username, alias)
 	if err != nil {
-		return nil, errors.Wrapf(err, "querying user %#v files", username)
+		return nil, errors.Wrapf(err, "file data: querying for %q %q", username, alias)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		if err := rows.Scan(
-			&alias,
 			&path,
-			&f.NumCommits,
-			&timezone,
-			&updatedAt,
+			&hash,
+			&message,
+			&timestamp,
+			&current,
 		); err != nil {
-			return nil, errors.Wrapf(err, "scanning files for user %#v", username)
+			return nil, errors.Wrapf(err, "file data %q %q", username, alias)
+		}
+		result.Path = path
+		if current {
+			result.Revision = hash
 		}
 
-		f.UpdatedAt = formatTime(updatedAt, timezone)
-		f.Alias = *alias
-		f.Path = *path
-
-		result = append(result, f)
+		result.Commits = append(result.Commits, dotfile.Commit{
+			Hash:      hash,
+			Message:   message,
+			Timestamp: timestamp,
+		})
 	}
-	if len(result) == 0 {
-		// User doesn't exist.
+	if len(result.Commits) == 0 {
 		return nil, sql.ErrNoRows
 	}
 
 	return result, nil
+
+}
+
+// SetFileToHash sets file to the commit at hash.
+func SetFileToHash(e Executor, username, alias, hash string) error {
+	result, err := e.Exec(`
+WITH new_commit(id, file_id) AS (
+SELECT commits.id,
+       file_id
+FROM commits
+JOIN files ON files.id = commits.file_id
+JOIN users ON files.user_id = users.id
+WHERE username = ? AND alias = ? AND hash = ?
+)
+UPDATE files
+SET current_commit_id = (SELECT new_commit.id FROM new_commit), updated_at = CURRENT_TIMESTAMP
+WHERE id = (SELECT file_id FROM new_commit)
+`, username, alias, hash)
+	if err != nil {
+		return errors.Wrapf(err, "setting %q %q to hash %q", username, alias, hash)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err, "getting rows affected in set file to hash")
+	}
+	if affected == 0 {
+		return fmt.Errorf("commit %q %q %q not found", username, alias, hash)
+	}
+
+	return nil
+
 }
 
 // ForkFile creates a copy of username/alias/hash for the user newUserID.
@@ -284,51 +288,6 @@ func ForkFile(tx *sql.Tx, username, alias, hash string, newUserID int64) error {
 	return nil
 }
 
-func setFileToCommitID(e Executor, fileID int64, commitID int64) error {
-	_, err := e.Exec(`
-UPDATE files
-SET current_commit_id = ?, updated_at = CURRENT_TIMESTAMP
-WHERE id = ?
-`, commitID, fileID)
-
-	if err != nil {
-		return errors.Wrapf(err, "updating content in file %d", fileID)
-	}
-
-	return nil
-}
-
-// SetFileToHash sets file to the commit at hash.
-func SetFileToHash(e Executor, username, alias, hash string) error {
-	result, err := e.Exec(`
-WITH new_commit(id, file_id) AS (
-SELECT commits.id,
-       file_id
-FROM commits
-JOIN files ON files.id = commits.file_id
-JOIN users ON files.user_id = users.id
-WHERE username = ? AND alias = ? AND hash = ?
-)
-UPDATE files
-SET current_commit_id = (SELECT new_commit.id FROM new_commit), updated_at = CURRENT_TIMESTAMP
-WHERE id = (SELECT file_id FROM new_commit)
-`, username, alias, hash)
-	if err != nil {
-		return errors.Wrapf(err, "setting %q %q to hash %q", username, alias, hash)
-	}
-
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return errors.Wrap(err, "getting rows affected in set file to hash")
-	}
-	if affected == 0 {
-		return fmt.Errorf("commit %q %q %q not found", username, alias, hash)
-	}
-
-	return nil
-
-}
-
 func fileExists(e Executor, userID int64, alias, path string) (bool, error) {
 	var count int
 
@@ -342,4 +301,18 @@ AND (alias = ? OR path = ?)`, userID, alias, path).
 		return false, errors.Wrapf(err, "checking if file %q exists for user %d", alias, userID)
 	}
 	return count > 0, nil
+}
+
+func setFileToCommitID(e Executor, fileID int64, commitID int64) error {
+	_, err := e.Exec(`
+UPDATE files
+SET current_commit_id = ?, updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+`, commitID, fileID)
+
+	if err != nil {
+		return errors.Wrapf(err, "updating content in file %d", fileID)
+	}
+
+	return nil
 }

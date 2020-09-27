@@ -1,0 +1,11 @@
+{{- define "file_settings_header" }}
+<h1>
+  {{- $username := .Vars.username }}
+  {{- $alias := .Vars.alias }}
+  {{- $fileLink := printf "/%s/%s" $username $alias }}
+  <a href="/{{ $username }}">{{ $username }}</a> /
+  <a href="{{ $fileLink }}">{{ $alias }}</a> /
+  <a href="{{ $fileLink }}/settings">settings</a>
+  {{- if not (eq .Title "settings" )}} / <a href="">{{ .Title }}</a>{{ end }}
+</h1>
+{{- end }}

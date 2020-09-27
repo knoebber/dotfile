@@ -1,9 +1,9 @@
 <main>
   <h1>Dotfilehub</h1>
-  <form method="get">
+  <form method="get" class="inline">
     <label for="q">Find Files</label>
     <input value="{{ .Data.query }}" id="q" name="q" type="search" placeholder="~/.vimrc"/>
-    <button type="submit">Submit</button>
+    <button type="submit">Search</button>
   </form>
   {{- if .Data.files }}
   <hr>

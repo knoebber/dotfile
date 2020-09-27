@@ -21,7 +21,7 @@ func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, err)
 	}
 
-	// Expect not found error.
+	// Check if file exists before creating temp - expect not found error.
 	_, err = db.File(db.Connection, p.Session.Username, alias)
 	if err == nil {
 		return p.setError(w, usererror.Duplicate("File", alias))
@@ -42,47 +42,6 @@ func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/%s/%s/init", p.Session.Username, alias), http.StatusSeeOther)
-	return true
-}
-
-// Handles submitting the update file form.
-func updateFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	currentAlias := p.Vars["alias"]
-	alias := r.Form.Get("alias")
-	path := r.Form.Get("path")
-
-	// Delete the file when the user submits the alias into the form.
-	delete := r.Form.Get("delete")
-
-	file, err := db.File(db.Connection, p.Session.Username, currentAlias)
-	if err != nil {
-		return p.setError(w, err)
-	}
-
-	if currentAlias == delete {
-		tx, err := db.Connection.Begin()
-		if err != nil {
-			return p.setError(w, errors.Wrap(err, "starting transaction for delete file"))
-		}
-
-		if err := file.Delete(tx); err != nil {
-			return p.setError(w, err)
-		}
-		if err := tx.Commit(); err != nil {
-			return p.setError(w, errors.Wrap(err, "commiting transaction for delete file"))
-		}
-
-		http.Redirect(w, r, "/"+p.Session.Username, http.StatusSeeOther)
-		return true
-	} else if delete != "" {
-		return p.setError(w, usererror.Invalid("Alias does not match"))
-	}
-
-	if err := file.Update(db.Connection, alias, path); err != nil {
-		return p.setError(w, err)
-	}
-
-	http.Redirect(w, r, fmt.Sprintf("/%s/%s", p.Session.Username, alias), http.StatusSeeOther)
 	return true
 }
 
@@ -187,8 +146,8 @@ func searchFiles(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	return
 }
 
-// Loads the contents of a file by its alias.
-func loadFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+// Uncompresses file and sets content to page data.
+func uncompressFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	if !strings.Contains(r.Header.Get("Accept"), "text/html") {
 		handleRawFile(w, r)
 		return true
@@ -197,7 +156,7 @@ func loadFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	username := p.Vars["username"]
 	alias := p.Vars["alias"]
 
-	file, err := db.File(db.Connection, username, alias)
+	file, err := db.UncompressFile(db.Connection, username, alias)
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -251,7 +210,7 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 
 	if at == "" {
 		// Load the current content.
-		file, err := db.File(db.Connection, p.Vars["username"], pageAlias)
+		file, err := db.UncompressFile(db.Connection, p.Vars["username"], pageAlias)
 		if err != nil {
 			return p.setError(w, err)
 		}
@@ -259,7 +218,7 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 		p.Data["content"] = string(file.Content)
 		return
 	} else if !newFile && !editing && at != "" {
-		commit, err := db.UncompressedCommit(db.Connection, p.Vars["username"], pageAlias, at)
+		commit, err := db.UncompressCommit(db.Connection, p.Vars["username"], pageAlias, at)
 		if err != nil {
 			return p.setError(w, err)
 		}
@@ -275,7 +234,7 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	alias := p.Vars["alias"]
 
-	f, err := db.File(db.Connection, p.Session.Username, alias)
+	f, err := db.UncompressFile(db.Connection, p.Session.Username, alias)
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -328,16 +287,6 @@ func newFileHandler() http.HandlerFunc {
 	})
 }
 
-func fileSettingsHandler() http.HandlerFunc {
-	return createHandler(&pageDescription{
-		templateName: "file_settings.tmpl",
-		title:        "Settings",
-		handleForm:   updateFile,
-		loadData:     loadFile,
-		protected:    true,
-	})
-}
-
 func editFileHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "file_form.tmpl",
@@ -369,6 +318,6 @@ func fileHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "file.tmpl",
 		handleForm:   forkFile,
-		loadData:     loadFile,
+		loadData:     uncompressFile,
 	})
 }

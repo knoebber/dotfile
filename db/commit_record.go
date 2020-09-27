@@ -2,9 +2,7 @@ package db
 
 import (
 	"database/sql"
-	"time"
 
-	"github.com/knoebber/dotfile/dotfile"
 	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
@@ -18,23 +16,6 @@ type CommitRecord struct {
 	Message    string
 	Revision   []byte `validate:"required"` // Compressed version of file at hash.
 	Timestamp  int64  `validate:"required"` // Unix time to stay synced with local commits.
-}
-
-// CommitSummary summarizes a commit.
-type CommitSummary struct {
-	Hash               string
-	Message            string
-	Current            bool
-	Timestamp          int64
-	DateString         string
-	ForkedFromUsername *string // The owner of the file that this commit was forked from.
-}
-
-// CommitView is used for an individual commit view.
-type CommitView struct {
-	CommitSummary
-	Path    string
-	Content []byte
 }
 
 // Unique index prevents a file from having a duplicate hash.
@@ -145,63 +126,6 @@ WHERE commits.id = ?`, commitID).Scan(&username)
 	return username, nil
 }
 
-// CommitList gets a summary of all commits for a file.
-func CommitList(e Executor, username, alias string) ([]CommitSummary, error) {
-	var (
-		timezone   *string
-		forkedFrom *int64
-	)
-
-	result := []CommitSummary{}
-	rows, err := e.Query(`
-SELECT hash,
-       forked_from,
-       message, 
-       current_commit_id = commits.id AS current,
-       timezone,
-       timestamp
-FROM commits
-JOIN files ON commits.file_id = files.id
-JOIN users ON files.user_id = users.id
-WHERE username = ? AND alias = ?
-ORDER BY timestamp DESC
-`, username, alias)
-	if err != nil {
-		return nil, errors.Wrapf(err, "querying commits for user %q file %q", username, alias)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		c := CommitSummary{}
-
-		if err := rows.Scan(
-			&c.Hash,
-			&forkedFrom,
-			&c.Message,
-			&c.Current,
-			&timezone,
-			&c.Timestamp,
-		); err != nil {
-			return nil, errors.Wrapf(err, "scanning commits for user %q file %q", username, alias)
-		}
-		c.DateString = formatTime(time.Unix(c.Timestamp, 0), timezone)
-		if forkedFrom != nil {
-			username, err := usernameFromCommitID(e, *forkedFrom)
-			if err != nil {
-				return nil, err
-			}
-			c.ForkedFromUsername = &username
-		}
-		result = append(result, c)
-	}
-
-	if len(result) == 0 {
-		return nil, sql.ErrNoRows
-	}
-
-	return result, nil
-}
-
 // Commit returns the commit record.
 func Commit(e Executor, username, alias, hash string) (*CommitRecord, error) {
 	result := new(CommitRecord)
@@ -228,58 +152,33 @@ WHERE username = ? AND alias = ? AND hash = ?`, username, alias, hash).
 	return result, nil
 }
 
-// UncompressedCommit gets a commit and uncompresses its contents.
-func UncompressedCommit(e Executor, username, alias, hash string) (*CommitView, error) {
-	var (
-		timezone   *string
-		forkedFrom *int64
-	)
-
-	result := new(CommitView)
-	revision := []byte{}
-
-	err := e.QueryRow(`
-SELECT hash,
-       forked_from,
-       message,
-       path,
-       current_commit_id = commits.id AS current,
-       revision,
-       timezone,
-       timestamp
-FROM commits
-JOIN files ON commits.file_id = files.id
-JOIN users ON files.user_id = users.id
-WHERE username = ? AND alias = ? AND hash = ?
-`, username, alias, hash).
-		Scan(
-			&result.Hash,
-			&forkedFrom,
-			&result.Message,
-			&result.Path,
-			&result.Current,
-			&revision,
-			&timezone,
-			&result.Timestamp,
-		)
+// ClearCommits deletes all commits for a file except the current.
+func ClearCommits(tx *sql.Tx, username, alias string) error {
+	file, err := File(tx, username, alias)
 	if err != nil {
-		return nil, errors.Wrapf(err, "querying for uncompressed %q %q %q", username, alias, hash)
+		return err
 	}
 
-	result.DateString = formatTime(time.Unix(result.Timestamp, 0), timezone)
-	if forkedFrom != nil {
-		username, err := usernameFromCommitID(e, *forkedFrom)
-		if err != nil {
-			return nil, err
-		}
-		result.ForkedFromUsername = &username
-	}
-
-	uncompressed, err := dotfile.Uncompress(revision)
+	_, err = tx.Exec(`
+UPDATE commits SET forked_from = NULL
+WHERE id IN (SELECT forked.id
+             FROM commits
+             JOIN files ON files.id = commits.file_id
+             JOIN commits AS forked ON forked.forked_from = commits.ID
+             WHERE commits.file_id = ? AND commits.id != files.current_commit_id)`, file.ID)
 	if err != nil {
-		return nil, err
+		return errors.Wrapf(err, "setting forked_from to null for %q %q", username, alias)
 	}
-	result.Content = uncompressed.Bytes()
 
-	return result, nil
+	_, err = tx.Exec(`
+DELETE FROM commits WHERE id IN (
+SELECT commits.id FROM commits 
+JOIN files ON files.id = file_id
+JOIN users ON users.id = user_id
+WHERE username = ? AND alias = ? AND current_commit_id != commits.id)`, username, alias)
+	if err != nil {
+		return errors.Wrapf(err, "clearing commits for %q %q", username, alias)
+	}
+
+	return nil
 }

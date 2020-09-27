@@ -1,0 +1,10 @@
+<main>
+  {{- template "file_settings_header" . }}
+  <form method="post">
+    <label for="alias">Alias:</label>
+    <input value="{{ .Vars.alias }}" id="alias" name="alias" required="required"/>
+    <label for="path">Path:</label>
+    <input value="{{ .Data.path }}" id="path" name="path" required="required"/>
+    <button>Submit</button>
+  </form>
+</main>

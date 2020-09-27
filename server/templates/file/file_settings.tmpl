@@ -1,21 +1,7 @@
 <main>
-  {{- template "file_header" . }}
-  <fieldset>
-    <legend>Update</legend>
-    <form method="post">
-      <label for="alias">Alias:</label>
-      <input value="{{ .Vars.alias }}" id="alias" name="alias" required="required"/>
-      <label for="path">Path:</label>
-      <input value="{{ .Data.path }}" id="path" name="path" required="required"/>
-      <button>Submit</button>
-    </form>
-  </fieldset>
-  <fieldset>
-    <legend>Delete</legend>
-    <form method="post">
-      <label for="delete">Write the file's alias:</label>
-      <input id="delete" name="delete" required="required"/>
-      <button class="danger">Delete</button>
-    </form>
-  </fieldset>
+  {{- template "file_settings_header" . }}
+  {{- $settings := printf "/%s/%s/settings" .Vars.username .Vars.alias }}
+    <p><a href="{{ $settings }}/update">Update</a></p>
+    <p><a href="{{ $settings }}/clear">Clear</a></p>
+    <p><a href="{{ $settings }}/delete">Delete</a></p>
 </main>

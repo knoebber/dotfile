@@ -84,7 +84,7 @@ func TestForkFile(t *testing.T) {
 
 		assert.NoError(t, ForkFile(tx, testUsername, testAlias, initialCommit.Hash, otherUserID))
 		assert.NoError(t, tx.Commit())
-		f, err := File(Connection, otherUsername, testAlias)
+		f, err := UncompressFile(Connection, otherUsername, testAlias)
 		failIf(t, err)
 		assert.Equal(t, testContent, string(f.Content))
 	})
@@ -102,7 +102,7 @@ func TestSetFileToHash(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		err := SetFileToHash(Connection, testUsername, testAlias, initial.Hash)
 		assert.NoError(t, err)
-		f, err := File(Connection, testUsername, testAlias)
+		f, err := UncompressFile(Connection, testUsername, testAlias)
 		assert.NoError(t, err)
 		assert.Equal(t, initial.Hash, f.Hash)
 	})

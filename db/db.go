@@ -30,9 +30,10 @@ const (
 // Must call Start() to initialize.
 var Connection *sql.DB
 
+// Validates data before its inserted.
 var validate *validator.Validate
 
-// Executor is an inteterface for executing SQL.
+// Executor is an interface for executing SQL.
 type Executor interface {
 	Exec(string, ...interface{}) (sql.Result, error)
 	Query(string, ...interface{}) (*sql.Rows, error)
@@ -51,7 +52,7 @@ type checker interface {
 	check() error
 }
 
-// Creates the required tables if they doesn't exist
+// Create the required tables when they don't exist
 func createTables(e Executor) error {
 	for _, model := range []tableCreator{
 		new(UserRecord),

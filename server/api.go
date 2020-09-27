@@ -22,34 +22,13 @@ import (
 func handleFileJSON(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	username := vars["username"]
-	alias := vars["alias"]
-
-	fileRecord, err := db.File(db.Connection, username, alias)
+	fileData, err := db.FileData(db.Connection, vars["username"], vars["alias"])
 	if err != nil {
 		apiError(w, err)
 		return
 	}
 
-	commits, err := db.CommitList(db.Connection, username, alias)
-	if err != nil {
-		apiError(w, err)
-		return
-	}
-
-	result := &dotfile.TrackingData{
-		Path:     fileRecord.Path,
-		Revision: fileRecord.Hash,
-		Commits:  make([]dotfile.Commit, len(commits)),
-	}
-
-	for i, c := range commits {
-		result.Commits[i].Hash = c.Hash
-		result.Commits[i].Message = c.Message
-		result.Commits[i].Timestamp = c.Timestamp
-	}
-
-	setJSON(w, result)
+	setJSON(w, fileData)
 }
 
 // Sets a list of aliases that username owns to the response body.
@@ -214,7 +193,7 @@ func handlePush(w http.ResponseWriter, r *http.Request) {
 
 	ft, err := db.NewFileTransaction(tx, username, alias)
 	if err != nil {
-		apiError(w, err)
+		apiError(w, db.Rollback(tx, err))
 		return
 	}
 
@@ -225,9 +204,10 @@ func handlePush(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		if ft.Path != fileData.Path {
-			msg := fmt.Sprintf("local path %q does not match remote path %q", ft.Path, fileData.Path)
-			err := usererror.Invalid(msg)
-			apiError(w, db.Rollback(tx, err))
+			apiError(w, db.Rollback(tx, usererror.Invalid(fmt.Sprintf(
+				"local path %q does not match remote path %q",
+				ft.Path, fileData.Path))))
+			return
 		}
 	}
 

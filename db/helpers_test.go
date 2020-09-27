@@ -114,9 +114,9 @@ func getTestFileTransaction(t *testing.T) *FileTransaction {
 	return ft
 }
 
-func getTestTransaction(t *testing.T) *sql.Tx {
+func testTransaction(t *testing.T) *sql.Tx {
 	tx, err := Connection.Begin()
-	failIf(t, err)
+	failIf(t, err, "starting transaction for test")
 	return tx
 }
 
@@ -130,7 +130,7 @@ func initTestFile(t *testing.T) *FileView {
 	failIf(t, dotfile.Init(ft, testPath, testAlias), "initialing test file")
 	failIf(t, tx.Commit())
 
-	f, err := File(Connection, testUsername, testAlias)
+	f, err := UncompressFile(Connection, testUsername, testAlias)
 	failIf(t, err, "getting file by username in init test file")
 	return f
 }
@@ -159,7 +159,7 @@ func initTestFileAndCommit(t *testing.T) (initialCommit CommitSummary, currentCo
 		t.Fatalf("expected commit list to be length 2, got %d", len(lst))
 	}
 
-	f, err := File(Connection, testUsername, testAlias)
+	f, err := UncompressFile(Connection, testUsername, testAlias)
 	failIf(t, err, "initTestFileAndCommit: GetFileByUsername")
 
 	currentCommit = lst[0]
@@ -167,13 +167,4 @@ func initTestFileAndCommit(t *testing.T) (initialCommit CommitSummary, currentCo
 
 	assert.Equal(t, currentCommit.Hash, f.Hash)
 	return
-}
-
-func testTransaction(t *testing.T) *sql.Tx {
-	tx, err := Connection.Begin()
-	if err != nil {
-		t.Fatalf("test transaction: %w", err)
-	}
-
-	return tx
 }

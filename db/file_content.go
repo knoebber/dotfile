@@ -4,6 +4,7 @@ import "github.com/pkg/errors"
 
 // FileContent implements file.Getter.
 // It pulls content from temp_files and commits.
+// TODO: change name, or make more useful, use in file transaction.
 type FileContent struct {
 	Username   string
 	Alias      string

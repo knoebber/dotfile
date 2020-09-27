@@ -30,7 +30,7 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	hash := p.Vars["hash"]
 	username := p.Vars["username"]
 
-	commit, err := db.UncompressedCommit(db.Connection, username, alias, hash)
+	commit, err := db.UncompressCommit(db.Connection, username, alias, hash)
 	if err != nil {
 		return p.setError(w, err)
 	}

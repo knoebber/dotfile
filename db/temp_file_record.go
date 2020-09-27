@@ -84,24 +84,35 @@ func (f *TempFileRecord) Create(e Executor) error {
 	return nil
 }
 
-func (f *TempFileRecord) save(tx *sql.Tx) (newFileID int64, err error) {
+func (f *TempFileRecord) save(e Executor) (newFileID int64, err error) {
 	newFile := &FileRecord{
 		UserID: f.UserID,
 		Alias:  f.Alias,
 		Path:   f.Path,
 	}
 
-	newFileID, err = insert(tx, newFile)
+	newFileID, err = insert(e, newFile)
 	if err != nil {
 		return 0, err
 	}
 
-	_, err = tx.Exec("DELETE FROM temp_files WHERE user_id = ?", f.UserID)
+	_, err = e.Exec("DELETE FROM temp_files WHERE user_id = ?", f.UserID)
 	if err != nil {
 		return 0, errors.Wrapf(err, "deleting temp file %q for user %d", f.Alias, f.UserID)
 	}
 
 	return
+}
+
+// DeleteTempFile deletes a users temp file.
+func DeleteTempFile(e Executor, username string) error {
+	_, err := e.Exec(`
+DELETE FROM temp_files WHERE user_id = (SELECT id FROM users WHERE username = ?)`, username)
+	if err != nil {
+		return errors.Wrapf(err, "deleting %q temp file", username)
+	}
+	return nil
+
 }
 
 // TempFile finds a user's temp file.
