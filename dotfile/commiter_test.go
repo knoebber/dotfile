@@ -30,7 +30,7 @@ func TestInit(t *testing.T) {
 
 func TestNewCommit(t *testing.T) {
 	t.Run("get contents error", func(t *testing.T) {
-		s := &MockStorer{getContentsErr: true}
+		s := &MockStorer{dirtyContentErr: true}
 		err := NewCommit(s, testMessage)
 		assert.Error(t, err)
 	})

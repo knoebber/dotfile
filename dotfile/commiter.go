@@ -8,10 +8,6 @@ import (
 	"github.com/knoebber/dotfile/usererror"
 )
 
-// TODO change init to take an initial commit message.
-// If the file is created on server, make message like
-// "Initial commit on https://dotfilehub.com"
-// Currently there is ambiguity when pulling a file that has two initial commits.
 const initialCommitMessage = "Initial commit"
 
 // Commiter is the interace that wraps methods needed for saving commits.
@@ -35,7 +31,7 @@ func Init(c Commiter, path, alias string) error {
 
 // NewCommit saves a revision of the file at its current state.
 func NewCommit(c Commiter, message string) error {
-	contents, err := c.Content()
+	contents, err := c.DirtyContent()
 	if err != nil {
 		return err
 	}

@@ -100,8 +100,9 @@ WHERE file_id = ? AND hash = ?
 func hasCommit(e Executor, fileID int64, hash string) (bool, error) {
 	var count int
 
-	err := e.
-		QueryRow("SELECT COUNT(*) FROM commits WHERE file_id = ? AND hash = ?", fileID, hash).
+	err := e.QueryRow(`
+SELECT COUNT(*) FROM commits
+WHERE file_id = ? AND hash = ?`, fileID, hash).
 		Scan(&count)
 	if err != nil {
 		return false, errors.Wrapf(err, "checking if commit exists for file %d at %q", fileID, hash)

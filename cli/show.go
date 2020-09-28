@@ -46,7 +46,7 @@ func (sc *showCommand) run(ctx *kingpin.ParseContext) error {
 		}
 	} else {
 		if !sc.remote {
-			content, err = storage.Content()
+			content, err = storage.DirtyContent()
 		} else {
 			content, err = client.Content(sc.alias)
 		}

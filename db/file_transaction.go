@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// FileTransaction is used for dotfile operations.
+// FileTransaction implements dotfile interfaces.
 // This should be created with one of the exported functions not a literal.
 type FileTransaction struct {
 	tx              *sql.Tx
@@ -109,9 +109,9 @@ func (ft *FileTransaction) HasCommit(hash string) (exists bool, err error) {
 	return
 }
 
-// Content returns the bytes from the users temp file.
+// DirtyContent returns the bytes from the users temp file.
 // Returns an error if the temp file is not set.
-func (ft *FileTransaction) Content() ([]byte, error) {
+func (ft *FileTransaction) DirtyContent() ([]byte, error) {
 	if ft.Staged == nil || len(ft.Staged.Content) == 0 {
 		return nil, errors.New("temp file has no content")
 	}

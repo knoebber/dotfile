@@ -4,15 +4,14 @@ import "github.com/pkg/errors"
 
 // FileContent implements file.Getter.
 // It pulls content from temp_files and commits.
-// TODO: change name, or make more useful, use in file transaction.
 type FileContent struct {
 	Username   string
 	Alias      string
 	Connection Executor
 }
 
-// Content returns the content from the users temp_file.
-func (fc *FileContent) Content() ([]byte, error) {
+// DirtyContent returns content from the users temp file.
+func (fc *FileContent) DirtyContent() ([]byte, error) {
 	temp, err := TempFile(fc.Connection, fc.Username, fc.Alias)
 	if err != nil {
 		return nil, err

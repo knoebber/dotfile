@@ -8,8 +8,8 @@ import (
 )
 
 func TestUncompressRevision(t *testing.T) {
-	t.Run("get revision error", func(t *testing.T) {
-		s := &MockStorer{getRevisionErr: true}
+	t.Run("uncompress revision error", func(t *testing.T) {
+		s := &MockStorer{revisionErr: true}
 
 		_, err := UncompressRevision(s, testHash)
 		assert.Error(t, err)
@@ -36,7 +36,7 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("get content error", func(t *testing.T) {
-		s := &MockStorer{getContentsErr: true}
+		s := &MockStorer{dirtyContentErr: true}
 		_, err := Diff(s, testHash, "")
 		assert.Error(t, err)
 	})

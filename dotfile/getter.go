@@ -8,9 +8,9 @@ import (
 
 // Getter is an interface that wraps methods for reading tracked files.
 type Getter interface {
-	Content() (contents []byte, err error)
-	Revision(hash string) (revision []byte, err error)
-	HasCommit(hash string) (exists bool, err error)
+	DirtyContent() (contents []byte, err error)        // Uncommitted changes.
+	Revision(hash string) (revision []byte, err error) // Revision at hash.
+	HasCommit(hash string) (exists bool, err error)    // Checks if commit exists.
 }
 
 // UncompressRevision reads a revision and uncompresses it.
@@ -29,9 +29,9 @@ func UncompressRevision(g Getter, hash string) (*bytes.Buffer, error) {
 	return uncompressed, nil
 }
 
-// IsClean returns whether the contents of g matches hash.
+// IsClean returns whether the dirty content matches the hash.
 func IsClean(g Getter, hash string) (bool, error) {
-	contents, err := g.Content()
+	contents, err := g.DirtyContent()
 	if err != nil {
 		return false, err
 	}
@@ -40,7 +40,7 @@ func IsClean(g Getter, hash string) (bool, error) {
 }
 
 // Diff runs a diff on the revision at hash1 against the revision at hash2.
-// If hash2 is empty, compares the current contents of the file.
+// If hash2 is empty, compares the dirty content of the file.
 // Returns an usererror when there is no difference.
 func Diff(g Getter, hash1, hash2 string) ([]diffmatchpatch.Diff, error) {
 	var text1, text2 string
@@ -53,7 +53,7 @@ func Diff(g Getter, hash1, hash2 string) ([]diffmatchpatch.Diff, error) {
 	text1 = revision1.String()
 
 	if hash2 == "" {
-		contents, err := g.Content()
+		contents, err := g.DirtyContent()
 		if err != nil {
 			return nil, err
 		}

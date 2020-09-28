@@ -131,25 +131,25 @@ func (s *Storage) Revision(hash string) ([]byte, error) {
 
 	bytes, err := ioutil.ReadFile(revisionPath)
 	if err != nil {
-		return nil, errors.Wrapf(err, "reading revision %#v", hash)
+		return nil, errors.Wrapf(err, "reading revision %q", hash)
 	}
 
 	return bytes, nil
 }
 
-// Content reads the contents of the file that is being tracked.
-func (s *Storage) Content() ([]byte, error) {
+// DirtyContent reads the content of the tracked file.
+func (s *Storage) DirtyContent() ([]byte, error) {
 	path, err := s.Path()
 	if err != nil {
 		return nil, err
 	}
 
-	contents, err := ioutil.ReadFile(path)
+	result, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, errors.Wrap(err, "reading file contents")
+		return nil, errors.Wrapf(err, "reading %q", s.Alias)
 	}
 
-	return contents, nil
+	return result, nil
 }
 
 // SaveCommit saves a commit to the file system.
@@ -169,7 +169,7 @@ func (s *Storage) SaveCommit(buff *bytes.Buffer, c *dotfile.Commit) error {
 	return s.save()
 }
 
-// Revert overwrites a file at path with contents.
+// Revert writes files with buff and sets it current revision to hash.
 func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
 	path, err := s.Path()
 	if err != nil {
@@ -182,7 +182,7 @@ func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
 
 	err = ioutil.WriteFile(path, buff.Bytes(), 0644)
 	if err != nil {
-		return errors.Wrapf(err, "reverting file %q", path)
+		return errors.Wrapf(err, "reverting file %q", s.Alias)
 	}
 
 	s.FileData.Revision = hash
@@ -192,11 +192,6 @@ func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
 // Path gets the full path to the file.
 // Utilizes $HOME to convert paths with ~ to absolute.
 func (s *Storage) Path() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-
 	if s.FileData == nil {
 		return "", ErrNoData
 	}
@@ -207,6 +202,11 @@ func (s *Storage) Path() (string, error) {
 	// If the saved path is absolute return it.
 	if filepath.IsAbs(s.FileData.Path) {
 		return s.FileData.Path, nil
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
 	}
 
 	return strings.Replace(s.FileData.Path, "~", home, 1), nil

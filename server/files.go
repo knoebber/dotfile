@@ -239,9 +239,11 @@ func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bo
 		return p.setError(w, err)
 	}
 
-	content := &db.FileContent{Connection: db.Connection, Username: p.Session.Username, Alias: alias}
-
-	diffs, err := dotfile.Diff(content, f.Hash, "")
+	diffs, err := dotfile.Diff(&db.FileContent{
+		Connection: db.Connection,
+		Username:   p.Session.Username,
+		Alias:      alias,
+	}, f.Hash, "")
 	if err != nil {
 		return p.setError(w, err)
 	}
