@@ -5,15 +5,14 @@ Any file is globally viewable at the path =/{username}/{alias}=. There are no pr
 If you want to use dotfilehub to manage secrets then you could self host it on a private network.
 
 Files will only render in HTML if the client sends an accept header that contains =hmtl=. This allows
-users to download files easily if they are in a environment without the dotfile CLI.
+users to download files easily if they are in a environment without the Dotfile CLI.
 
 For example:
 #+BEGIN_SRC bash
 curl https://dotfilehub.com/knoebber/bashrc > ~/.bashrc
 #+END_SRC
 * Create a new file
-If you have the CLI installed its easier to use the =push= command to
-upload files.
+If you have the CLI installed use the =push= command to upload files.
 ** Alias
 The alias must contain only letters, numbers, and underscores.
 When alias is omitted it will be generated from the path.
@@ -31,8 +30,8 @@ The form expects a string like the /TZ database name/ column found here:
 Depending on the server's host the available zones may be different.
 Consult [[https://golang.org/pkg/time/#LoadLocation]] for more information.
 * API
-See https://github.com/knoebber/dotfile/tree/web-server/dotfileclient for an example of building
-a client for the dotfile API.
+See https://github.com/knoebber/dotfile/tree/master/dotfileclient for an example of building
+a client for the Dotfile API.
 ** List Files
 #+BEGIN_SRC
 GET /api/{username}

@@ -11,8 +11,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const defaultRemote = "https://dotfilehub.com"
-
 // Config contains local user settings for dotfile.
 type Config struct {
 	Remote   string `json:"remote"`
@@ -29,7 +27,7 @@ func (c *Config) String() string {
 }
 
 func createDefaultConfig(path string) ([]byte, error) {
-	newCfg := Config{Remote: defaultRemote}
+	var newCfg Config
 
 	bytes, err := json.MarshalIndent(newCfg, "", jsonIndent)
 	if err != nil {

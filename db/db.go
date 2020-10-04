@@ -27,7 +27,7 @@ const (
 )
 
 // Connection is a global database connection.
-// Must call Start() to initialize.
+// Call Start() to initialize.
 var Connection *sql.DB
 
 // Validates data before its inserted.

@@ -14,7 +14,7 @@ import (
 // UserTheme is a users theme preference.
 type UserTheme string
 
-// Valid values for UserTheme.
+// Valid Values for UserTheme.
 const (
 	UserThemeLight UserTheme = "Light"
 	UserThemeDark  UserTheme = "Dark"

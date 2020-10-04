@@ -1,20 +1,9 @@
 #+TITLE: CLI Documentation
-* Introduction
-The dotfile command line interface, =dotfile=, is a version control system for single files.
-When a file is checked in to dotfile an *alias* is created. The alias is mapped to its tracking
-data. For example an alias for =~/.bashrc= might be =bashrc=.
-Most dotfile commands use the alias as their first argument.
-This allows the user to manage their dotfiles easily regardless of their working directory.
-
-In general =dotfile= commands are structured as followed: =dotfile <command> <alias>=.
-For example: =dotfile edit bashrc=.
-Commands may have additional flags that can be used. Use =dotfile <command> --help= to learn more.
-
 * Install
 :PROPERTIES:
 :custom_id: install
 :END:
-Dotfile should work on most unix systems. [[https://golang.org][Golang]] is required to build dotfile.
+Dotfile should work on most unix systems. [[https://golang.org][Golang]] is required to build Dotfile.
 
 *Install with go get*
 #+BEGIN_SRC bash
@@ -28,13 +17,20 @@ cd dotfile
 make dotfile
 # copy bin/dotfile to somewhere in $PATH.
 #+END_SRC
-* Tracking Data
-By default dotfile stores tracking information in =~/.local/share/dotfile=.
-If its parent directory does not exist it will fallback to =~/.dotfile=.
-This can be overriden by using the =--storage-dir= flag.
-For every file that is tracked there is a matching =.json= file and a directory for its commits.
+* Overview
+The Dotfile CLI is a version control system for single files.
+When a file is checked in an *alias* is created. The alias is mapped to the files path its tracking
+data. For example an alias for =~/.bashrc= might be =bashrc=. 
 
-*Example: ~/.local/share/dotfile/bash_profile.json*
+Most dotfile commands are structured as followed: =dotfile <command> <alias>= E.G., =dotfile edit bashrc=.
+This makes for easy file managment regardless of the working directory.
+* Data Storage
+Dotfile stores tracking data in =~/.local/share/dotfile=.
+If its parent directory does not exist it will fallback to =~/.dotfile=.
+The storage directory can be changed with the =--storage-dir= flag.
+For every tracked file there is a =.json= file and a directory for its commits.
+
+*~/.local/share/dotfile/bash_profile.json*
 #+BEGIN_SRC javascript
 {
   "path": "~/.bash_profile",
@@ -53,13 +49,27 @@ For every file that is tracked there is a matching =.json= file and a directory 
   ]
 }
 #+END_SRC
-* Config
+The revision field is the hash of the current revision of the file.
+Each hash in the commit list represents a complete snapshot of the file at timestamp. Hashes are the sha1 sum of the file content. 
+
+File revisions are compressed with zlib and named as the hash. In this
+example there would be the following files containing compressed
+snapshots of =~/.bash_profile=:
+
+*~/.local/share/dotfile/bash_profile/d47481afa38dcab0d8c8d163aa75e0cf5af6e355*,
+*~/.local/share/dotfile/bash_profile/599a1af0398b7c518bc46aaa4a9e8ae72c2d28cb*
+
+Dotfile doesn't have merge conflicts or issue with rewriting
+history. It's possible to restore revisions manually by decompressing
+the revision files with other zlib tools/libraries.
+
+* User Config
 Dotfile will create a config directory in a location returned by https://golang.org/pkg/os/#UserConfigDir
 
 You can edit =config.json= manually or with the =dotfile config= command.
 The config file has the following keys:
 
-+ *remote*  - The remote server to use. Defaults to https://dotfilehub.com
++ *remote*  - The remote server to use.
 + *username* - A dotfilehub username. Pull, push, and commands with the =--remote= flag will use this for lookups.
 + *token* - A secret for allowing write access to a remote server. Find this under "Settings" / "Setup CLI" in the web interface.
 
@@ -76,7 +86,7 @@ Initialize a file.
 #+BEGIN_SRC bash
 dotfile init <path> <alias>
 #+END_SRC
-When alias is omitted init will generate the alias from the path.
+When alias is omitted =init= will generate the alias from the path.
 
 Initialize as "bashrc"
 #+BEGIN_SRC bash
@@ -158,7 +168,7 @@ dotfile push <alias>
 The remote file will either be created or updated to the current revision of the local file. All
 new local revisions will be saved to the remote server as well.
 * Pull
-Pull a file and its revisions from a remote server. Creates a new file at
+Retrieves a file and its new revisions from a remote server. Creates a new file at
 path when it does not yet exist.
 #+BEGIN_SRC bash
 dotfile pull <alias>
@@ -171,8 +181,9 @@ Alternatively pull a file without using the dotfile CLI:
 #+BEGIN_SRC bash
 # Get a list of user's files:
 curl https://dotfilehub.com/api/knoebber
-# Output: [bashrc, inputrc, vimrc, emacs]
+# Output: [bashrc, inputrc, vim, emacs]
 
+# Install the file:
 curl https://dotfilehub.com/knoebber/inputrc > ~/.inputrc
 #+END_SRC
 * Move
@@ -186,8 +197,10 @@ Change a files alias.
 dotfile rename <alias> <new-alias>
 #+END_SRC
 * Forget
-Untrack a file - removes all tracking data. Leaves the file in its current state on
+Untracks a file - removes all Dotfile data for the file. Leaves the file in its current state on
 the filesystem.
+
++ =-c, --commits= Remove all commits except for the current. File is still tracked but history is removed.
 #+BEGIN_SRC bash
 dotfile forget <alias>
 #+END_SRC
