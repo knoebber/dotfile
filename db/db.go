@@ -24,6 +24,7 @@ const (
 	maxCommitsPerFile      = 100
 	maxBlobSizeBytes       = 15000
 	minPasswordLength      = 8
+	maxStringSize          = 50
 )
 
 // Connection is a global database connection.
@@ -49,7 +50,17 @@ type inserter interface {
 }
 
 type checker interface {
-	check() error
+	check(e Executor) error
+}
+
+func validateStringSizes(strings ...string) error {
+	for _, s := range strings {
+		if len(s) > maxStringSize {
+			return usererror.Invalid(fmt.Sprintf(
+				"The maximum string length is %d characters", maxStringSize))
+		}
+	}
+	return nil
 }
 
 // Create the required tables when they don't exist
@@ -77,7 +88,7 @@ func insert(e Executor, i inserter) (id int64, err error) {
 	}
 
 	if c, ok := i.(checker); ok {
-		if err := c.check(); err != nil {
+		if err := c.check(e); err != nil {
 			return 0, err
 		}
 	}
@@ -144,6 +155,10 @@ func checkSize(content []byte, name string) error {
 }
 
 func checkFile(alias, path string) error {
+	if err := validateStringSizes(alias, path); err != nil {
+		return err
+	}
+
 	if err := dotfile.CheckAlias(alias); err != nil {
 		return err
 	}

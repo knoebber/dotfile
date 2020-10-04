@@ -87,7 +87,7 @@ SELECT alias,
        updated_at
 FROM users
 JOIN files ON user_id = users.id
-JOIN commits ON file_id = files.id
+LEFT JOIN commits ON file_id = files.id
 WHERE username = ?
 GROUP BY files.id
 ORDER BY alias`, username)
@@ -112,10 +112,6 @@ ORDER BY alias`, username)
 		f.Path = *path
 
 		result = append(result, f)
-	}
-	if len(result) == 0 {
-		// User doesn't exist.
-		return nil, sql.ErrNoRows
 	}
 
 	return result, nil

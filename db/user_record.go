@@ -68,6 +68,9 @@ func (u *UserRecord) insertStmt(e Executor) (sql.Result, error) {
 
 func (u *UserRecord) check(e Executor) error {
 	var count int
+	if err := validateStringSizes(u.Username); err != nil {
+		return err
+	}
 
 	if err := checkUsernameAllowed(e, u.Username); err != nil {
 		return err
@@ -278,6 +281,10 @@ func CreateUser(e Executor, username, password string) (*UserRecord, error) {
 
 // UpdateEmail updates a users email and sets email_confirmed to false.
 func UpdateEmail(e Executor, userID int64, email string) error {
+	if err := validateStringSizes(email); err != nil {
+		return err
+	}
+
 	if err := validate.Var(email, "email"); err != nil {
 		return err
 	}

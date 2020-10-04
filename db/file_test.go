@@ -33,10 +33,8 @@ func TestFilesTable(t *testing.T) {
 		})
 	})
 
-	// Reset DB.
-	createTestDB(t)
-
 	t.Run("alias must be unique between users", func(t *testing.T) {
+		resetTestDB(t)
 		initTestFile(t)
 
 		// Fails because alias already exists.
@@ -50,6 +48,15 @@ func TestFilesTable(t *testing.T) {
 		_, err = insert(Connection, &f2)
 		assert.Error(t, err)
 	})
+
+	t.Run("alias cant be too long", func(t *testing.T) {
+		resetTestDB(t)
+		createTestUser(t, testUserID, testUsername, testEmail)
+		f.Alias = strings.Repeat("a", maxStringSize+1)
+		_, err := insert(Connection, f)
+		assertUsererror(t, err)
+	})
+
 }
 
 func TestForkFile(t *testing.T) {
@@ -73,7 +80,9 @@ func TestForkFile(t *testing.T) {
 
 		// Error on attempt to fork again.
 		tx = testTransaction(t)
-		assert.Error(t, ForkFile(tx, testUsername, testAlias, f.Hash, otherUserID))
+
+		err = ForkFile(tx, testUsername, testAlias, f.Hash, otherUserID)
+		assertUsererror(t, err)
 		assert.NoError(t, tx.Rollback())
 	})
 

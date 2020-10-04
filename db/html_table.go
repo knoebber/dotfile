@@ -30,10 +30,12 @@ type HTMLTable struct {
 	Controls *PageControls
 }
 
+// Query returns the current query, 'q'.
 func (h *HTMLTable) Query() string {
 	return h.Controls.query
 }
 
+// TotalRows returns the total amount of rows available.
 func (h *HTMLTable) TotalRows() int {
 	return h.Controls.totalRows
 }
@@ -64,7 +66,7 @@ func (h *HTMLTable) Pages() template.HTML {
 
 	curr := h.Controls.page
 	total := h.Controls.totalPages()
-	if total == 0 {
+	if total <= 1 {
 		return ""
 	}
 
@@ -72,27 +74,39 @@ func (h *HTMLTable) Pages() template.HTML {
 	b.WriteString(htmlSpace)
 
 	if curr > 1 {
+		// Write the first page and the previous page.
 		b.WriteString(aTag(h.Controls.previousPage(), htmlLeftArrow+" previous"))
 		b.WriteString(htmlCommaSpace)
+		b.WriteString(aTag(h.Controls.firstPage(), "1"))
+		b.WriteString(htmlCommaSpace)
 	}
 
-	b.WriteString(aTag(h.Controls.firstPage(), "1"))
-	b.WriteString(htmlCommaSpace)
-
-	for p := curr - 1; p > 1 && p > curr-pagesAround; p-- {
+	for p := curr - pagesAround; p < curr; p++ {
+		if p <= 1 {
+			continue
+		}
+		// Write the pages before the current.
 		b.WriteString(aTag(h.Controls.toPage(p), strconv.Itoa(p)))
 		b.WriteString(htmlCommaSpace)
 	}
-	if curr > 1 && curr < total {
-		b.WriteString(aTag(h.Controls.toPage(curr), strconv.Itoa(curr)))
-		b.WriteString(htmlCommaSpace)
-	}
+
+	// Write the current page.
+	b.WriteString("<strong>")
+	b.WriteString(strconv.Itoa(curr))
+	b.WriteString("</strong>")
+
 	for p := curr + 1; p < total && p < curr+pagesAround; p++ {
-		b.WriteString(aTag(h.Controls.toPage(p), strconv.Itoa(p)))
+		// Write the pages after current.
 		b.WriteString(htmlCommaSpace)
+		b.WriteString(aTag(h.Controls.toPage(p), strconv.Itoa(p)))
 	}
-	b.WriteString(aTag(h.Controls.lastPage(), strconv.Itoa(total)))
-	b.WriteString(htmlSpace)
-	b.WriteString(aTag(h.Controls.nextPage(), "next "+htmlRightArrow))
+
+	if curr < total {
+		// Write the last page and the next page.
+		b.WriteString(htmlCommaSpace)
+		b.WriteString(aTag(h.Controls.lastPage(), strconv.Itoa(total)))
+		b.WriteString(htmlSpace)
+		b.WriteString(aTag(h.Controls.nextPage(), "next "+htmlRightArrow))
+	}
 	return template.HTML(b.String())
 }

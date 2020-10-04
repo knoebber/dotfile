@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/knoebber/dotfile/dotfile"
+	"github.com/knoebber/dotfile/usererror"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -28,6 +29,13 @@ const (
 	testCliToken       = "12345678"
 )
 
+func assertUsererror(t *testing.T, err error) {
+	var usererr *usererror.Error
+	if !errors.As(err, &usererr) {
+		t.Errorf("expected error to be usererror, received %s", err)
+	}
+}
+
 func createTestDB(t *testing.T) {
 	os.RemoveAll(testDir)
 	os.Mkdir(testDir, 0755)
@@ -37,16 +45,46 @@ func createTestDB(t *testing.T) {
 	}
 }
 
-func createTestUser(t *testing.T, userID int64, username, email string) {
-	var count int
+func testUserList(t *testing.T) (usernames []string) {
+	var username string
+	rows, err := Connection.
+		Query("SELECT username FROM users")
+	failIf(t, err, "listing test user")
+	defer rows.Close()
 
-	err := Connection.
-		QueryRow("SELECT COUNT(*) FROM users WHERE id = ?", userID).
-		Scan(&count)
-	if err != nil {
-		t.Fatalf("counting test users: %s", err)
+	for rows.Next() {
+		err = rows.Scan(&username)
+		failIf(t, err, "scanning test username")
+		usernames = append(usernames, username)
 	}
-	if count > 0 {
+	return
+
+}
+
+func countTestUser(t *testing.T, username string) (count int) {
+	err := Connection.
+		QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", username).
+		Scan(&count)
+	failIf(t, err, "counting test user")
+	return
+}
+
+func resetTestDB(t *testing.T) {
+	usernames := testUserList(t)
+
+	tx, err := Connection.Begin()
+	failIf(t, err, "delete test user tx")
+	for _, u := range usernames {
+		if err := DeleteUser(tx, u, testPassword); err != nil {
+			failIf(t, tx.Rollback(), "delete user rollback", err.Error())
+			t.Fatalf("unable to delete test users: %s", err)
+		}
+	}
+	failIf(t, tx.Commit(), "commit delete test user tx")
+}
+
+func createTestUser(t *testing.T, userID int64, username, email string) {
+	if countTestUser(t, username) > 0 {
 		return
 	}
 

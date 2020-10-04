@@ -9,7 +9,12 @@ import (
 	"strings"
 )
 
-const defaultLimit = 5
+const (
+	// DefaultLimit is the default limit for paginated queries.
+	DefaultLimit = 25
+	// MaxLimit is the max limit for paginated queries.
+	MaxLimit = 500
+)
 
 // PageControls maps url queries to query parameters.
 type PageControls struct {
@@ -51,11 +56,11 @@ func (p *PageControls) Set() error {
 
 	limit := p.Values.Get("l")
 	if limit == "" {
-		p.limit = defaultLimit
+		p.limit = DefaultLimit
 	} else {
 		p.limit, _ = strconv.Atoi(limit)
-		if p.limit < 1 {
-			return usererror.Invalid(`Invalid query: "l" (limit) must be positive integer.`)
+		if p.limit < 1 || p.limit > MaxLimit {
+			return usererror.Invalid(fmt.Sprintf(`Invalid query: "l" (limit) must be positive integer less than %d.`, MaxLimit))
 		}
 	}
 
@@ -83,6 +88,7 @@ func (p *PageControls) totalPages() int {
 }
 
 func (p *PageControls) orderCol(n int) (encoded string, curr string) {
+	// Reset value map after mutating.
 	defer p.Values.Set("o", p.Values.Get("o"))
 	defer p.Values.Set("ob", p.Values.Get("ob"))
 
@@ -96,6 +102,7 @@ func (p *PageControls) orderCol(n int) (encoded string, curr string) {
 		curr = "desc"
 	} else if p.order == "asc" {
 		p.Values.Set("o", "")
+		p.Values.Set("ob", "")
 		curr = "asc"
 	}
 

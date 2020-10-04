@@ -38,6 +38,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS commits_file_hash_index ON commits(file_id, ha
 func (c *CommitRecord) check(e Executor) error {
 	var count int
 
+	if err := validateStringSizes(c.Message); err != nil {
+		return err
+	}
+
 	exists, err := hasCommit(e, c.FileID, c.Hash)
 	if err != nil {
 		return err
