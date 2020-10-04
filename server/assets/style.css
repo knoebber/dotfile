@@ -154,6 +154,10 @@ del {
     overflow: auto;
 }
 
+.table-controls {
+    text-align: right;
+}
+
 .file-controls {
     /* Applied to div placed above a <pre> element */
     border-top: solid 1px var(--paragraph);
@@ -223,10 +227,6 @@ del {
 
     nav > a:nth-child(3) {
         margin-left: unset;
-    }
-
-    pre {
-        max-height: unset;
     }
 
     .file-controls {

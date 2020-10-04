@@ -42,6 +42,7 @@ type Page struct {
 	Vars           map[string]string
 	Data           map[string]interface{}
 
+	Table        *db.HTMLTable
 	Session      *db.SessionRecord
 	templateName string
 	htmlFile     string

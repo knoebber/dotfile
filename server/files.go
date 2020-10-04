@@ -124,29 +124,10 @@ func forkFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	if err := tx.Commit(); err != nil {
 		return p.setError(w, errors.Wrap(err, "comming fork file transaction"))
 	}
-
 	return
 }
 
-// Loads the contents of a file by its alias.
-func searchFiles(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	query := r.URL.Query().Get("q")
-	if query == "" {
-		return
-	}
-
-	result, err := db.Search(db.Connection, query)
-	if err != nil {
-		return p.setError(w, err)
-	}
-
-	p.Data["files"] = result
-	p.Data["query"] = query
-
-	return
-}
-
-// Uncompresses file and sets content to page data.
+// Uncompress file and sets content to page data.
 func uncompressFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	if !strings.Contains(r.Header.Get("Accept"), "text/html") {
 		handleRawFile(w, r)
@@ -271,13 +252,6 @@ func loadNewFileConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done b
 	return
 }
 
-func indexHandler() http.HandlerFunc {
-	return createHandler(&pageDescription{
-		templateName: "index.tmpl",
-		title:        "Dotfilehub",
-		loadData:     searchFiles,
-	})
-}
 
 func newFileHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{

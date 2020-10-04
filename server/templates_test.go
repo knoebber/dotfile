@@ -12,6 +12,15 @@ import (
 
 // Tests the contents of all the page templates.
 func TestTemplatesHTML(t *testing.T) {
+	var (
+		mockRow struct { // Add columns that templates expect from table.Rows
+			Username  string
+			Path      string
+			Alias     string
+			UpdatedAt string
+		}
+	)
+
 	if err := loadTemplates(); err != nil {
 		t.Fatalf("loading templates: %v", err)
 	}
@@ -21,6 +30,20 @@ func TestTemplatesHTML(t *testing.T) {
 	vars["username"] = "testusername"
 	vars["alias"] = "testalias"
 	testSession := &db.SessionRecord{}
+	controls := new(db.PageControls)
+	_ = controls.Set()
+
+	p := Page{
+		Title:   "Test Page",
+		Data:    testData,
+		Vars:    vars,
+		Session: testSession,
+		Table: &db.HTMLTable{
+			Columns:  []string{"Test", "Test2", "Test3"},
+			Rows:     []interface{}{mockRow},
+			Controls: controls,
+		},
+	}
 
 	for _, template := range pageTemplates.Templates() {
 		curr := template.Name()
@@ -30,13 +53,8 @@ func TestTemplatesHTML(t *testing.T) {
 		}
 
 		buff := new(bytes.Buffer)
-		p := Page{
-			Title:        "Test Page",
-			Data:         testData,
-			Vars:         vars,
-			Session:      testSession,
-			templateName: curr,
-		}
+
+		p.templateName = curr
 		if err := p.writeFromTemplate(buff); err != nil {
 			t.Fatalf("failed to write from template: %v", err)
 		}
@@ -45,7 +63,7 @@ func TestTemplatesHTML(t *testing.T) {
 	}
 }
 
-// Asserts that the html body is valid XML and does not have any empty lines.
+// Asserts that the html body is valid HTML and does not have any empty lines.
 func assertHTMLResponse(t *testing.T, body, name string) {
 	lines := strings.Split(body, "\n")
 	for i, line := range lines {
@@ -57,6 +75,7 @@ func assertHTMLResponse(t *testing.T, body, name string) {
 
 	htmlReader := strings.NewReader(body)
 	d := xml.NewDecoder(htmlReader)
+	d.Strict = false
 	d.AutoClose = xml.HTMLAutoClose
 	d.Entity = xml.HTMLEntity
 
