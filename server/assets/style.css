@@ -28,7 +28,7 @@ button, a, h1, h2, h3, h4, label, strong, th, legend {
     color: var(--headline);
 }
 
-em, p, li, pre, code, td, textarea, input {
+i, em, p, li, pre, code, td, textarea, input {
     color: var(--paragraph);
 }
 
@@ -116,9 +116,17 @@ th, td {
     letter-spacing: 1px;
 }
 
+
 th {
     text-align: left;
     padding-bottom: 1rem;
+}
+
+td {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 ins {
@@ -187,9 +195,9 @@ del {
 @media (min-width: 1051px) {
     /* Break point for desktop views */
     html {
-        /* Create a margin the size of the scroll bar.
-         * Prevents layout from jumping between pages with and without vertical scroll bar */
-        margin-left: calc(100vw - 100%);
+	/* Create a margin the size of the scroll bar.
+	 * Prevents layout from jumping between pages with and without vertical scroll bar */
+	margin-left: calc(100vw - 100%);
     }
 }
 
@@ -197,39 +205,39 @@ del {
 @media (max-width: 1050px) {
     /* Break point of when nav bar takes most of the screen up */
     body {
-        margin: 0 2rem 1rem 2rem;
+	margin: 0 2rem 1rem 2rem;
     }
 
     main {
-        margin: unset;
+	margin: unset;
     }
 }
 
 @media (max-width: 600px) {
     /* Break point for mobile views */
     body {
-        margin: .5rem;
+	margin: .5rem;
     }
 
     form > input, form > textarea, form > select {
-        grid-column: 1;
+	grid-column: 1;
     }
 
     nav {
-        flex-direction: column;
-        align-items: center;
-        letter-spacing: 2px;
+	flex-direction: column;
+	align-items: center;
+	letter-spacing: 2px;
     }
 
     nav > a {
-        padding: 0;
+	padding: 0;
     }
 
     nav > a:nth-child(3) {
-        margin-left: unset;
+	margin-left: unset;
     }
 
     .file-controls {
-        flex-direction: column;
+	flex-direction: column;
     }
 }

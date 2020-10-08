@@ -70,7 +70,7 @@ func (h *HTMLTable) Pages() template.HTML {
 		return ""
 	}
 
-	b.WriteString(fmt.Sprintf("%d of %d results", len(h.Rows), h.Controls.totalRows))
+	b.WriteString(fmt.Sprintf("<i>%d of %d results</i>", len(h.Rows), h.Controls.totalRows))
 	b.WriteString(htmlSpace)
 
 	if curr > 1 {

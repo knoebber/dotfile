@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	timestampDisplayFormat = "January 02, 2006 3:04PM"
+	timestampDisplayFormat = "01/02/2006 3:04PM"
 	maxFilesPerUser        = 100
 	maxCommitsPerFile      = 100
 	maxBlobSizeBytes       = 15000
