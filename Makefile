@@ -36,4 +36,4 @@ dotfilehub: clean bin/templates bin/assets htmldocs
 clean:
 	rm -rf bin/*
 
-.PHONY: cli dotfilehub
+.PHONY: dotfile dotfilehub
