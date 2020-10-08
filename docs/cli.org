@@ -22,7 +22,7 @@ The Dotfile CLI is a version control system for single files.
 When a file is checked in an *alias* is created. The alias is mapped to the files path its tracking
 data. For example an alias for =~/.bashrc= might be =bashrc=. 
 
-Most dotfile commands are structured as followed: =dotfile <command> <alias>= E.G., =dotfile edit bashrc=.
+Most dotfile commands are structured as followed: =dotfile <command> <alias>= E.G. =dotfile edit bashrc=.
 This makes for easy file managment regardless of the working directory.
 * Data Storage
 Dotfile stores tracking data in =~/.local/share/dotfile=.
@@ -56,12 +56,12 @@ File revisions are compressed with zlib and named as the hash. In this
 example there would be the following files containing compressed
 snapshots of =~/.bash_profile=:
 
-*~/.local/share/dotfile/bash_profile/d47481afa38dcab0d8c8d163aa75e0cf5af6e355*,
-*~/.local/share/dotfile/bash_profile/599a1af0398b7c518bc46aaa4a9e8ae72c2d28cb*
++ ~/.local/share/dotfile/bash_profile/d47481afa38dcab0d8c8d163aa75e0cf5af6e355*,
++ ~/.local/share/dotfile/bash_profile/599a1af0398b7c518bc46aaa4a9e8ae72c2d28cb*
 
 Dotfile doesn't have merge conflicts or issue with rewriting
 history. It's possible to restore revisions manually by decompressing
-the revision files with other zlib tools/libraries.
+the revision files with zlib.
 
 * User Config
 Dotfile will create a config directory in a location returned by https://golang.org/pkg/os/#UserConfigDir
@@ -127,7 +127,7 @@ Open a file in =$EDITOR=
 dotfile edit <alias>
 #+END_SRC
 * Diff
-Print the changes of a file and a past commit.
+Print the changes of a file against a past commit.
 Commit hash is optional - defaults to the current commit.
 #+BEGIN_SRC bash
 dotfile diff <alias> <commit-hash>
@@ -153,7 +153,7 @@ changes on the file since the last commit or checkout command.
 
 To checkout to a specific revision use the =dotfile log= command to find the hash.
 * Config
-Read and set dotfile config.
+Read and set user configuration.
 #+BEGIN_SRC bash
 dotfile config <keyname> <value>
 #+END_SRC Set a config value
@@ -166,7 +166,7 @@ Push a file and its revisions to a remote server.
 dotfile push <alias>
 #+END_SRC
 The remote file will either be created or updated to the current revision of the local file. All
-new local revisions will be saved to the remote server as well.
+new local revisions will be saved to the remote server.
 * Pull
 Retrieves a file and its new revisions from a remote server. Creates a new file at
 path when it does not yet exist.
@@ -187,7 +187,7 @@ curl https://dotfilehub.com/api/knoebber
 curl https://dotfilehub.com/knoebber/inputrc > ~/.inputrc
 #+END_SRC
 * Move
-Change the files stored path and move the file.
+Change a file's path.
 #+BEGIN_SRC bash
 dotfile mv <alias> <path>
 #+END_SRC
@@ -197,8 +197,7 @@ Change a files alias.
 dotfile rename <alias> <new-alias>
 #+END_SRC
 * Forget
-Untracks a file - removes all Dotfile data for the file. Leaves the file in its current state on
-the filesystem.
+Untracks a file - removes all Dotfile data for the file. Leaves the file in its current state on the filesystem.
 
 + =-c, --commits= Remove all commits except for the current. File is still tracked but history is removed.
 #+BEGIN_SRC bash

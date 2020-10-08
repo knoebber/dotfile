@@ -1,27 +1,56 @@
 #+TITLE: Web Documentation
-[[https://dotfilehub.com][Dotfilehub]] is a web front end for dotfile.
-* View File
-Any file is globally viewable at the path =/{username}/{alias}=. There are no private files.
-If you want to use dotfilehub to manage secrets then you could self host it on a private network.
+* Dotfilehub
+[[https://dotfilehub.com][Dotfilehub]] is a web front end for Dotfile. It is designed to be usable
+with basic browsers that do not support JavaScript. This could be
+useful for finding files from the CLI only - maybe X11 isn't starting
+and you want to find =~/.xinitrc= examples. 
 
-Files will only render in HTML if the client sends an accept header that contains =hmtl=. This allows
-users to download files easily if they are in a environment without the Dotfile CLI.
+The index page is a form that does a site wide file search. It matches
+aliases or paths that match any part of the query. Results can be
+ordered by clicking the links on the table header.
+* Files
+** View
+All files are globally viewable at the path =/{username}/{alias}=.
+There are no private files.
 
+Files only render in HTML if the client sends an accept header
+that contains =html=. This allows users to download files easily if
+they are in a environment without the Dotfile CLI.
 For example:
 #+BEGIN_SRC bash
 curl https://dotfilehub.com/knoebber/bashrc > ~/.bashrc
 #+END_SRC
-* Create a new file
-If you have the CLI installed use the =push= command to upload files.
-** Alias
+** Create
+Creating a file online is the same as pushing a file with the CLI.
+
+To create a file, login and navigate to your
+username. Click the "Add a new file" link at the top.
+Enter an alias, a path, and the files content.
+
 The alias must contain only letters, numbers, and underscores.
 When alias is omitted it will be generated from the path.
-** Path
-The path is the location that =dotfile pull= will install the file to.
-This must be either an absolute path or start with =~/=.
-* Set your timezone
+
+The path is the location that the CLI will install the file to.
+Paths must start in either =/= or =~/=, E.G. =~/.bashrc=,
+=/etc/aliases=. It cannot have a trailing slash.
+** Edit
+Editing a file is the same as committing changes with the CLI. 
+This will show the diff before confirming the new change. Commits can
+be rolled back by selecting an earlier commit and hitting "revert".
+** Settings
+File settings provide options to update a file, delete
+its history, or delete the file. Note the updating a file's alias or
+path can break CLI operations like =pull=.
+* User Settings
+** Setup CLI
+Select "Setup CLI" and enter your password. Then enter the resulting
+commands into a shell. The username and remote fields can
+always be configured, but the token must be found here. The token can
+be rotated at anytime which will end all CLI write access until it's
+reconfigured with the new token.
+** Set timezone
 :PROPERTIES:
-:custom_id: set-your-timezone
+:custom_id: set-timezone
 :END:
 This will convert timestamps from the database to a timezone. The default is UTC.
 The form expects a string like the /TZ database name/ column found here:
@@ -29,6 +58,11 @@ The form expects a string like the /TZ database name/ column found here:
 
 Depending on the server's host the available zones may be different.
 Consult [[https://golang.org/pkg/time/#LoadLocation]] for more information.
+** Account Recovery
+To enable account recovery save an email to your account. Emails are not used for
+anything else and are not visible by other users.
+** Delete Account
+This will delete all user data including files, commits, and session data.
 * API
 See https://github.com/knoebber/dotfile/tree/master/dotfileclient for an example of building
 a client for the Dotfile API.
