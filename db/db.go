@@ -24,7 +24,7 @@ const (
 	maxCommitsPerFile      = 100
 	maxBlobSizeBytes       = 15000
 	minPasswordLength      = 8
-	maxStringSize          = 50
+	maxStringSize          = 100
 )
 
 // Connection is a global database connection.
