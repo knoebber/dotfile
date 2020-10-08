@@ -37,11 +37,11 @@ func checkUsernameAllowed(e Executor, username string) error {
 		QueryRow("SELECT COUNT(*) FROM reserved_usernames WHERE username = ?", username).
 		Scan(&count)
 	if err != nil {
-		return errors.Wrapf(err, "checking if %#v is reserved", username)
+		return errors.Wrapf(err, "checking if %q is reserved", username)
 	}
 
 	if count > 0 {
-		return usererror.Invalid(fmt.Sprintf("Username %#v is reserved.", username))
+		return usererror.Invalid(fmt.Sprintf("Username %q is reserved.", username))
 	}
 
 	return nil

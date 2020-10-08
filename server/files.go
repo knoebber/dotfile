@@ -114,7 +114,7 @@ func forkFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 
 	tx, err := db.Connection.Begin()
 	if err != nil {
-		p.setError(w, errors.Wrap(err, "starting fork file transaction"))
+		return p.setError(w, errors.Wrap(err, "starting fork file transaction"))
 	}
 
 	if err := db.ForkFile(tx, username, alias, hash, p.Session.UserID); err != nil {
@@ -251,7 +251,6 @@ func loadNewFileConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done b
 	p.Title = "confirm new file"
 	return
 }
-
 
 func newFileHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{

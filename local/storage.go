@@ -98,7 +98,7 @@ func (s *Storage) save() error {
 // It will setup the storage directory if its the first use.
 func (s *Storage) InitFile(path string) (err error) {
 	if s.hasSavedData() {
-		return fmt.Errorf("%#v is already tracked", s.Alias)
+		return fmt.Errorf("%q is already tracked", s.Alias)
 	}
 
 	s.FileData = new(dotfile.TrackingData)

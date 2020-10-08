@@ -28,7 +28,7 @@ func initTestFile(t *testing.T) {
 	writeTestFile(t, []byte(initialTestFileContents))
 	fullPath, err := filepath.Abs(trackedFile)
 	if err != nil {
-		t.Fatalf("getting full path for %#v: %v", trackedFile, err)
+		t.Fatalf("getting full path for %q: %v", trackedFile, err)
 	}
 
 	initCommand := &initCommand{path: fullPath}

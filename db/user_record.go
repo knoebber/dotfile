@@ -68,7 +68,7 @@ func (u *UserRecord) insertStmt(e Executor) (sql.Result, error) {
 
 func (u *UserRecord) check(e Executor) error {
 	var count int
-	if err := validateStringSizes(u.Username); err != nil {
+	if err := validateStringSizes(u.Username, u.Email); err != nil {
 		return err
 	}
 
@@ -79,7 +79,7 @@ func (u *UserRecord) check(e Executor) error {
 	err := e.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", u.Username).
 		Scan(&count)
 	if err != nil {
-		return errors.Wrapf(err, "checking if username %#v is unique", u.Username)
+		return errors.Wrapf(err, "checking if username %q is unique", u.Username)
 	}
 
 	if count > 0 {
@@ -271,7 +271,7 @@ func CreateUser(e Executor, username, password string) (*UserRecord, error) {
 
 	id, err := insert(e, u)
 	if err != nil {
-		return nil, errors.Wrapf(err, "creating record for new user %#v", username)
+		return nil, errors.Wrapf(err, "creating record for new user %q", username)
 	}
 
 	u.ID = id

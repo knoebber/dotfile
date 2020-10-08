@@ -24,7 +24,7 @@ func (ic *initCommand) run(ctx *kingpin.ParseContext) error {
 		return err
 	}
 
-	fmt.Printf("Initialized as %#v\n", alias)
+	fmt.Printf("Initialized as %q\n", alias)
 	return nil
 }
 

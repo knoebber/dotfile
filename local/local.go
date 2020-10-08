@@ -45,7 +45,7 @@ func convertPath(path string) (string, error) {
 	}
 
 	if !exists(path) {
-		return "", fmt.Errorf("%#v not found", path)
+		return "", fmt.Errorf("%q not found", path)
 	}
 
 	//  the full path.

@@ -25,7 +25,7 @@ func (e *Error) Error() string {
 // Duplicate creates a new duplicate error.
 func Duplicate(field, value string) *Error {
 	return &Error{
-		Message: fmt.Sprintf("%s %#v already exists", field, value),
+		Message: fmt.Sprintf("%s %q already exists", field, value),
 		Reason:  ReasonDuplicate,
 	}
 }

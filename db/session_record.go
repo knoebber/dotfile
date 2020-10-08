@@ -46,7 +46,7 @@ func createSession(e Executor, username, ip string) (*SessionRecord, error) {
 
 	err := e.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "querying for userID from %#v", username)
+		return nil, errors.Wrapf(err, "querying for userID from %q", username)
 	}
 
 	session, err := session()
@@ -103,7 +103,7 @@ WHERE deleted_at IS NULL AND session = ?`, session).
 		)
 
 	if err != nil {
-		return nil, errors.Wrapf(err, "querying for session %#v", session)
+		return nil, errors.Wrapf(err, "querying for session %q", session)
 	}
 
 	return s, nil

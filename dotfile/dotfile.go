@@ -71,7 +71,7 @@ func MergeTrackingData(old, new *TrackingData) (merged *TrackingData, newHashes 
 	if old == nil {
 		old = &TrackingData{}
 	} else if old.Path != new.Path {
-		return nil, nil, fmt.Errorf("merging tracking data: old path %#v does not match new %#v", old.Path, new.Path)
+		return nil, nil, fmt.Errorf("merging tracking data: old path %q does not match new %q", old.Path, new.Path)
 	}
 
 	merged = &TrackingData{

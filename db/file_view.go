@@ -104,7 +104,7 @@ ORDER BY alias`, username)
 			&timezone,
 			&updatedAt,
 		); err != nil {
-			return nil, errors.Wrapf(err, "scanning files for user %#v", username)
+			return nil, errors.Wrapf(err, "scanning files for user %q", username)
 		}
 
 		f.UpdatedAt = formatTime(updatedAt, timezone)

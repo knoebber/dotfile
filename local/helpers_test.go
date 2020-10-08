@@ -54,7 +54,7 @@ func setupTestFile(t *testing.T) *Storage {
 
 	fullPath, err := filepath.Abs(testTrackedFile)
 	if err != nil {
-		t.Fatalf("getting full path for %#v: %v", testTrackedFile, err)
+		t.Fatalf("getting full path for %q: %v", testTrackedFile, err)
 	}
 
 	s := testStorage()

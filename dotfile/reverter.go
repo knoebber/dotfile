@@ -20,7 +20,7 @@ func Checkout(r Reverter, hash string) error {
 		return err
 	}
 	if !exists {
-		return usererror.Invalid(fmt.Sprintf("Revision %#v not found", hash))
+		return usererror.Invalid(fmt.Sprintf("Revision %q not found", hash))
 	}
 
 	uncompressed, err := UncompressRevision(r, hash)
