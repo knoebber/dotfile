@@ -21,6 +21,7 @@ func setupRoutes(r *mux.Router, config Config) error {
 func staticRoutes(r *mux.Router) {
 	r.HandleFunc("/", indexHandler())
 	r.HandleFunc("/README.org", createStaticHandler(aboutTitle, "README.html"))
+	r.HandleFunc("/terms", createStaticHandler("Terms of Use", "terms.html"))
 	r.HandleFunc("/docs/cli.org", createStaticHandler("CLI Documentation", "cli.html"))
 	r.HandleFunc("/docs/web.org", createStaticHandler("Web Documentation", "web.html"))
 	r.HandleFunc("/docs/acknowledgments.org", createStaticHandler("Acknowledgments", "acknowledgments.html"))
