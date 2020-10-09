@@ -72,7 +72,7 @@ func handleDeleteUser(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 		return p.setError(w, db.Rollback(tx, err))
 	}
 	if err := tx.Commit(); err != nil {
-		return p.setError(w, errors.Wrap(err, "commiting transaction for delete user"))
+		return p.setError(w, errors.Wrap(err, "committing transaction for delete user"))
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)

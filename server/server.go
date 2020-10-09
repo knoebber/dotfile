@@ -47,7 +47,7 @@ func Start(config Config) error {
 	var err error
 
 	if err = db.Start(config.DBPath); err != nil {
-		errors.Wrapf(err, "starting database connection")
+		return errors.Wrapf(err, "starting database")
 	}
 	defer db.Close()
 

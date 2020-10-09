@@ -10,7 +10,7 @@ import (
 
 const initialCommitMessage = "Initial commit"
 
-// Commiter is the interace that wraps methods needed for saving commits.
+// Commiter is the interface that wraps methods needed for saving commits.
 type Commiter interface {
 	Getter
 	SaveCommit(buff *bytes.Buffer, c *Commit) error

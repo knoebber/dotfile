@@ -7,7 +7,7 @@ type renameCommand struct {
 	newAlias string
 }
 
-func (rc *renameCommand) run(ctx *kingpin.ParseContext) error {
+func (rc *renameCommand) run(*kingpin.ParseContext) error {
 	s, err := loadFile(rc.alias)
 	if err != nil {
 		return err

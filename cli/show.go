@@ -14,7 +14,7 @@ type showCommand struct {
 	username string
 }
 
-func (sc *showCommand) run(ctx *kingpin.ParseContext) error {
+func (sc *showCommand) run(*kingpin.ParseContext) error {
 	var (
 		content []byte
 		err     error

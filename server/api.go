@@ -236,7 +236,7 @@ func handlePush(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tx.Commit(); err != nil {
-		apiError(w, errors.Wrap(err, "commiting handle push transaction"))
+		apiError(w, errors.Wrap(err, "committing handle push transaction"))
 		return
 	}
 }

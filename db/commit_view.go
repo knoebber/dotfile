@@ -30,9 +30,9 @@ func CommitList(e Executor, username, alias string) ([]CommitSummary, error) {
 	var (
 		timezone   *string
 		forkedFrom *int64
+		result     []CommitSummary
 	)
 
-	result := []CommitSummary{}
 	rows, err := e.Query(`
 SELECT hash,
        forked_from,
@@ -87,10 +87,10 @@ func UncompressCommit(e Executor, username, alias, hash string) (*CommitView, er
 	var (
 		timezone   *string
 		forkedFrom *int64
+		revision   []byte
 	)
 
 	result := new(CommitView)
-	revision := []byte{}
 
 	err := e.QueryRow(`
 SELECT hash,

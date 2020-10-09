@@ -6,7 +6,7 @@ type removeCommand struct {
 	alias string
 }
 
-func (rc *removeCommand) run(ctx *kingpin.ParseContext) error {
+func (rc *removeCommand) run(*kingpin.ParseContext) error {
 	s, err := loadFile(rc.alias)
 	if err != nil {
 		return err

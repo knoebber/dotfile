@@ -17,7 +17,7 @@ type logCommand struct {
 	alias string
 }
 
-func (l *logCommand) run(ctx *kingpin.ParseContext) error {
+func (l *logCommand) run(*kingpin.ParseContext) error {
 	s, err := loadFile(l.alias)
 	if err != nil {
 		return err

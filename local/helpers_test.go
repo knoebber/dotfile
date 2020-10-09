@@ -10,13 +10,10 @@ import (
 )
 
 const (
-	testHome           = "/home/testing"
 	testAlias          = "testalias"
 	testMessage        = "test message"
 	testHash           = "9abdbcf4ea4e2c1c077c21b8c2f2470ff36c31ce"
 	testUpdatedHash    = "5d12fbbc6038e0b6a3e798dd790512ba03de7b6a"
-	nonExistantFile    = "file_does_not_exist"
-	notTrackedFile     = "/dev/null"
 	testDir            = "testdata/"
 	testTrackedFile    = testDir + "testfile.txt"
 	testContent        = "Some stuff.\n"

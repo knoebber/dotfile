@@ -65,12 +65,12 @@ func SeedReservedUsernames(e Executor, usernames []interface{}) error {
 		return errors.New("reserved username exists in the user table")
 	}
 
-	sql := fmt.Sprintf(`
+	stmt := fmt.Sprintf(`
 INSERT INTO reserved_usernames (username) 
 VALUES %s 
 ON CONFLICT DO NOTHING`, placeholders)
 
-	if _, err = e.Exec(sql, usernames...); err != nil {
+	if _, err = e.Exec(stmt, usernames...); err != nil {
 		return errors.Wrap(err, "seeding reserved usernames")
 	}
 

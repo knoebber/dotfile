@@ -12,8 +12,8 @@ const (
 )
 
 func setupTest(t *testing.T) {
-	os.RemoveAll(testDir)
-	os.Mkdir(testDir, 0755)
+	_ = os.RemoveAll(testDir)
+	_ = os.Mkdir(testDir, 0755)
 
 	if err := db.Start(testDir + "dotfilehub.db"); err != nil {
 		t.Fatalf("creating test db: %s", err)

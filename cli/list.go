@@ -13,7 +13,7 @@ type listCommand struct {
 	username string
 }
 
-func (lc *listCommand) run(ctx *kingpin.ParseContext) (err error) {
+func (lc *listCommand) run(*kingpin.ParseContext) (err error) {
 	var result []string
 
 	client, err := newDotfileClient()

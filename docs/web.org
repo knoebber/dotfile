@@ -5,8 +5,8 @@ with basic browsers that do not support JavaScript. This could be
 useful for finding files from the CLI only - maybe X11 isn't starting
 and you want to find =~/.xinitrc= examples. 
 
-The index page is a form that does a site wide file search. It matches
-aliases or paths that match any part of the query. Results can be
+The index page is a form that does a site wide file search. It finds
+files that have aliases or paths that match any part of the query. Results can be
 ordered by clicking the links on the table header.
 * Files
 ** View
@@ -36,11 +36,11 @@ Paths must start in either =/= or =~/=, E.G. =~/.bashrc=,
 ** Edit
 Editing a file is the same as committing changes with the CLI. 
 This will show the diff before confirming the new change. Commits can
-be rolled back by selecting an earlier commit and hitting "revert".
+be rolled back by selecting a different commit and hitting "revert".
 ** Settings
-File settings provide options to update a file, delete
-its history, or delete the file. Note that updating a file's alias or
-path can break CLI operations like =pull=.
+File settings provide options to update a file, clear
+a file's history, or delete the file. Note that updating a file's alias or
+path can cause CLI operations that interact with a remote to throw errors.
 * User Settings
 ** Setup CLI
 Select "Setup CLI" and enter your password. Then enter the resulting
@@ -64,8 +64,9 @@ anything else and are not visible by other users.
 ** Delete Account
 This will delete all user data including files, commits, and session data.
 * API
-See https://github.com/knoebber/dotfile/tree/master/dotfileclient for an example of building
-a client for the Dotfile API.
+See
+[[https://github.com/knoebber/dotfile/tree/master/dotfileclient/dotfileclient.go]]
+for an example of building a client for the Dotfile API.
 ** List Files
 #+BEGIN_SRC
 GET /api/v1/user/{username}
@@ -93,10 +94,12 @@ POST /api/v1/user/{username}/{alias}
 Post a file to the server. This can either be a new or existing file.
 The request body is a multipart file upload.
 The first part is a JSON encoding of the file data.
-Every hash that is part of the file's data should have a corresponding file part in the request. 
-The file parts are zlib compressed revisions that are named as its hash.
+Every hash that is part of the file's data should have a corresponding
+file part in the request.  The file parts are zlib compressed
+revisions that are named as the uncompressed contents hash.
 
-Request must have basic auth headers with the dotfilehub username and CLI token.
+The request must have basic auth headers with the dotfilehub username
+and CLI token as the password.
 * Self host
 :PROPERTIES:
 :custom_id: self-host

@@ -16,7 +16,7 @@ type pullCommand struct {
 	createDirs bool
 }
 
-func (pc *pullCommand) run(ctx *kingpin.ParseContext) error {
+func (pc *pullCommand) run(*kingpin.ParseContext) error {
 	var err error
 
 	storage := &local.Storage{Dir: flags.storageDir, Alias: pc.alias}

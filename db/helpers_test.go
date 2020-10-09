@@ -20,7 +20,6 @@ const (
 	testUserID         = 1
 	testContent        = "Testing content. Stored as a blob."
 	testUpdatedContent = testContent + "\n New content!\n"
-	testRevision       = "Commit revision contents"
 	testHash           = "9abdbcf4ea4e2c1c077c21b8c2f2470ff36c31ce"
 	testMessage        = "commit message"
 	testUsername       = "genericusername"
@@ -37,8 +36,8 @@ func assertUsererror(t *testing.T, err error) {
 }
 
 func createTestDB(t *testing.T) {
-	os.RemoveAll(testDir)
-	os.Mkdir(testDir, 0755)
+	_ = os.RemoveAll(testDir)
+	_ = os.Mkdir(testDir, 0755)
 
 	if err := Start(testDir + "dotfilehub.db"); err != nil {
 		t.Fatalf("creating test db: %s", err)

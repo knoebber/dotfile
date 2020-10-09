@@ -37,7 +37,7 @@ func clearFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, db.Rollback(tx, err))
 	}
 	if err := tx.Commit(); err != nil {
-		return p.setError(w, errors.Wrap(err, "commiting transaction for clear file"))
+		return p.setError(w, errors.Wrap(err, "committing transaction for clear file"))
 	}
 
 	http.Redirect(w, r, "/"+p.Session.Username+"/"+alias+"/commits", http.StatusSeeOther)
@@ -45,10 +45,10 @@ func clearFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 }
 
 func deleteFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	delete := r.Form.Get("delete")
+	deleteConfirm := r.Form.Get("delete")
 	username := p.Vars["username"]
 	alias := p.Vars["alias"]
-	if alias != delete {
+	if alias != deleteConfirm {
 		return p.setError(w, usererror.Invalid("Alias does not match"))
 	}
 
@@ -61,7 +61,7 @@ func deleteFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, db.Rollback(tx, err))
 	}
 	if err := tx.Commit(); err != nil {
-		return p.setError(w, errors.Wrap(err, "commiting transaction for delete file"))
+		return p.setError(w, errors.Wrap(err, "committing transaction for delete file"))
 	}
 
 	http.Redirect(w, r, "/"+p.Session.Username, http.StatusSeeOther)

@@ -6,7 +6,7 @@ type pushCommand struct {
 	alias string
 }
 
-func (pc *pushCommand) run(ctx *kingpin.ParseContext) error {
+func (pc *pushCommand) run(*kingpin.ParseContext) error {
 	s, err := loadFile(pc.alias)
 	if err != nil {
 		return err

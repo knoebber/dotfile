@@ -13,7 +13,7 @@ type initCommand struct {
 	alias string
 }
 
-func (ic *initCommand) run(ctx *kingpin.ParseContext) error {
+func (ic *initCommand) run(*kingpin.ParseContext) error {
 	alias, err := dotfile.Alias(ic.alias, ic.path)
 	if err != nil {
 		return err

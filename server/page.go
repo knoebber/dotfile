@@ -155,7 +155,7 @@ func (p *Page) writeFromTemplate(w io.Writer) error {
 			buf := new(bytes.Buffer)
 			err := pageTemplates.ExecuteTemplate(buf, p.templateName, p)
 			if err != nil {
-				return template.HTML(""), err
+				return "", err
 			}
 
 			return template.HTML(buf.String()), nil
@@ -181,7 +181,7 @@ func (p *Page) writeFromHTML(w io.Writer) error {
 				return "", err
 			}
 
-			return template.HTML(string(html)), err
+			return template.HTML(html), err
 		},
 	})
 

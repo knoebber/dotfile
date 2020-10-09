@@ -23,7 +23,7 @@ When a file is checked in an *alias* is created. The alias is mapped to the file
 data. For example an alias for =~/.bashrc= might be =bashrc=. 
 
 Most dotfile commands are structured as followed: =dotfile <command> <alias>= E.G. =dotfile edit bashrc=.
-This makes for easy file managment regardless of the working directory.
+This makes for easy file management regardless of the working directory.
 * Data Storage
 Dotfile stores tracking data in =~/.local/share/dotfile=.
 If its parent directory does not exist it will fallback to =~/.dotfile=.

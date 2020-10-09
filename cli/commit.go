@@ -10,7 +10,7 @@ type commitCommand struct {
 	commitMessage string
 }
 
-func (c *commitCommand) run(ctx *kingpin.ParseContext) error {
+func (c *commitCommand) run(*kingpin.ParseContext) error {
 	s, err := loadFile(c.alias)
 	if err != nil {
 		return err

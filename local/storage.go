@@ -75,7 +75,7 @@ func (s *Storage) SetTrackingData() error {
 }
 
 func (s *Storage) save() error {
-	bytes, err := json.MarshalIndent(s.FileData, "", jsonIndent)
+	content, err := json.MarshalIndent(s.FileData, "", jsonIndent)
 	if err != nil {
 		return errors.Wrap(err, "marshalling tracking data to json")
 	}
@@ -87,7 +87,7 @@ func (s *Storage) save() error {
 	}
 
 	// Example: ~/.local/share/dotfile/bash_profile.json
-	if err := ioutil.WriteFile(s.jsonPath(), bytes, 0644); err != nil {
+	if err := ioutil.WriteFile(s.jsonPath(), content, 0644); err != nil {
 		return errors.Wrapf(err, "saving tracking data to %q", s.jsonPath())
 	}
 
@@ -129,12 +129,12 @@ func (s *Storage) HasCommit(hash string) (exists bool, err error) {
 func (s *Storage) Revision(hash string) ([]byte, error) {
 	revisionPath := filepath.Join(s.Dir, s.Alias, hash)
 
-	bytes, err := ioutil.ReadFile(revisionPath)
+	content, err := ioutil.ReadFile(revisionPath)
 	if err != nil {
 		return nil, errors.Wrapf(err, "reading revision %q", hash)
 	}
 
-	return bytes, nil
+	return content, nil
 }
 
 // DirtyContent reads the content of the tracked file.
@@ -277,7 +277,7 @@ func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 		}
 
 		if !clean {
-			return usererror.Invalid("file has uncommited changes")
+			return usererror.Invalid("file has uncommitted changes")
 		}
 	}
 

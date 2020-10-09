@@ -19,7 +19,7 @@ func TestNewFileTransaction(t *testing.T) {
 	assert.NotNil(t, ft)
 	assert.NoError(t, err)
 
-	ft.SaveFile(testUserID, testAlias, testPath)
+	_ = ft.SaveFile(testUserID, testAlias, testPath)
 
 	buff := bytes.NewBuffer([]byte(testContent))
 

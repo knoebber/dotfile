@@ -10,7 +10,7 @@ type checkoutCommand struct {
 	commitHash string
 }
 
-func (c *checkoutCommand) run(ctx *kingpin.ParseContext) error {
+func (c *checkoutCommand) run(*kingpin.ParseContext) error {
 	s, err := loadFile(c.alias)
 	if err != nil {
 		return err

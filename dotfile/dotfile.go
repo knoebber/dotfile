@@ -1,4 +1,4 @@
-// Package dotfile provides functions and intefaces for dotfile operations.
+// Package dotfile provides functions and interfaces for dotfile operations.
 package dotfile
 
 import (

@@ -6,8 +6,6 @@ import (
 )
 
 const (
-	testPath         = "/testpath"
-	invalidPath      = "&"
 	testMessage      = "Test commit message"
 	testHash         = "9abdbcf4ea4e2c1c077c21b8c2f2470ff36c31ce"
 	testDirtyContent = "test content!\nanother line!\n"

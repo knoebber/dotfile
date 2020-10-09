@@ -122,7 +122,7 @@ func forkFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	}
 
 	if err := tx.Commit(); err != nil {
-		return p.setError(w, errors.Wrap(err, "comming fork file transaction"))
+		return p.setError(w, errors.Wrap(err, "committing fork file transaction"))
 	}
 	return
 }

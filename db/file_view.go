@@ -74,11 +74,11 @@ func FilesByUsername(e Executor, username string) ([]FileSummary, error) {
 	var (
 		alias, path, timezone *string
 		updatedAt             time.Time
+		result                []FileSummary
 	)
 
 	f := FileSummary{}
 
-	result := []FileSummary{}
 	rows, err := e.Query(`
 SELECT alias,
        path,

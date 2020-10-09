@@ -24,7 +24,7 @@ func init() {
 }
 
 func initTestFile(t *testing.T) {
-	os.Mkdir(testDir, 0755)
+	_ = os.Mkdir(testDir, 0755)
 	writeTestFile(t, []byte(initialTestFileContents))
 	fullPath, err := filepath.Abs(trackedFile)
 	if err != nil {
@@ -41,7 +41,7 @@ func updateTestFile(t *testing.T) {
 }
 
 func clearTestStorage() {
-	os.RemoveAll(testDir)
+	_ = os.RemoveAll(testDir)
 }
 
 func writeTestFile(t *testing.T, contents []byte) {

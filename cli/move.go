@@ -8,7 +8,7 @@ type moveCommand struct {
 	createDirs bool
 }
 
-func (mc *moveCommand) run(ctx *kingpin.ParseContext) error {
+func (mc *moveCommand) run(*kingpin.ParseContext) error {
 	s, err := loadFile(mc.alias)
 	if err != nil {
 		return err

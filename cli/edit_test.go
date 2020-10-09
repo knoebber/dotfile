@@ -34,7 +34,7 @@ func TestEditCommandLaunchesEditor(t *testing.T) {
 	defer func() { execCommand = exec.Command }()
 
 	defer os.Setenv("EDITOR", os.Getenv("EDITOR"))
-	os.Setenv("EDITOR", arbitraryEditor)
+	_ = os.Setenv("EDITOR", arbitraryEditor)
 
 	editCommand := &editCommand{
 		alias: trackedFileAlias,
@@ -56,7 +56,7 @@ func TestEditCommandLaunchesEditor(t *testing.T) {
 
 func TestErrorIfEditorNotSet(t *testing.T) {
 	defer os.Setenv("EDITOR", os.Getenv("EDITOR"))
-	os.Unsetenv("EDITOR")
+	_ = os.Unsetenv("EDITOR")
 
 	command := editCommand{
 		alias: trackedFileAlias,

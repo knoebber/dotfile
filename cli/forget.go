@@ -7,7 +7,7 @@ type forgetCommand struct {
 	commits bool
 }
 
-func (fc *forgetCommand) run(ctx *kingpin.ParseContext) error {
+func (fc *forgetCommand) run(*kingpin.ParseContext) error {
 	s, err := loadFile(fc.alias)
 	if err != nil {
 		return err

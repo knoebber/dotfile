@@ -12,7 +12,7 @@ type configCommand struct {
 	value string
 }
 
-func (cc *configCommand) run(ctx *kingpin.ParseContext) error {
+func (cc *configCommand) run(*kingpin.ParseContext) error {
 	if cc.key != "" {
 		return local.SetConfig(cc.key, cc.value)
 	}

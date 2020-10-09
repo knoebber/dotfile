@@ -16,7 +16,7 @@ type diffCommand struct {
 	commitHash string
 }
 
-func (d *diffCommand) run(ctx *kingpin.ParseContext) error {
+func (d *diffCommand) run(*kingpin.ParseContext) error {
 	var buff bytes.Buffer
 
 	s, err := loadFile(d.alias)
