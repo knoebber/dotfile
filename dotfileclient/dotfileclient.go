@@ -8,7 +8,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
-	"path"
 	"time"
 
 	"github.com/knoebber/dotfile/dotfile"
@@ -26,7 +25,7 @@ type Revision struct {
 	Bytes []byte
 }
 
-// Client contains a http client and the information needed for interacting with a dotfile server api.
+// Client contains a http client and the information needed for interacting with the dotfilehub api.
 type Client struct {
 	Client   *http.Client
 	Remote   string
@@ -34,7 +33,7 @@ type Client struct {
 	Token    string
 }
 
-// New returns a client that is ready to communicate with a remote dotfile server.
+// New returns a client that is ready to communicate with a dotfilehub server.
 func New(remote, username, token string) *Client {
 	return &Client{
 		Client: &http.Client{
@@ -46,19 +45,27 @@ func New(remote, username, token string) *Client {
 	}
 }
 
+func (c *Client) userURL() string {
+	return c.Remote + "/api/v1/user/" + c.Username
+}
+
 func (c *Client) fileURL(alias string) string {
-	return c.Remote + path.Join("/api", c.Username, alias)
+	return c.userURL() + "/" + alias
 }
 
 func (c *Client) rawFileURL(alias string) string {
-	return c.Remote + path.Join("/"+c.Username, alias, "raw")
+	return c.fileURL(alias) + "/raw"
+}
+
+func (c *Client) revisionURL(alias, hash string) string {
+	return c.fileURL(alias) + "/" + hash
 }
 
 // List lists the files that the remote user has saved.
 func (c *Client) List(path bool) ([]string, error) {
 	var result []string
 
-	url := c.Remote + "/api/" + c.Username
+	url := c.userURL()
 	if path {
 		url += "?path=true"
 	}
@@ -72,7 +79,7 @@ func (c *Client) List(path bool) ([]string, error) {
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, errors.Wrap(err, "decoding  file list")
+		return nil, errors.Wrap(err, "decoding file list")
 	}
 
 	return result, nil
@@ -114,13 +121,14 @@ func (c *Client) TrackingData(alias string) (*dotfile.TrackingData, error) {
 	return result, nil
 }
 
-func (c *Client) getRevision(revisionURL string) ([]byte, error) {
-	resp, err := c.Client.Get(revisionURL)
+func (c *Client) revision(alias, hash string) ([]byte, error) {
+	url := c.revisionURL(alias, hash)
+	resp, err := c.Client.Get(url)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("GET", revisionURL)
+	fmt.Println("GET", url)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -144,21 +152,20 @@ func (c *Client) Content(alias string) ([]byte, error) {
 // Revisions fetches all of the revisions for alias in the hashes argument.
 // Returns an error if any fetches fail or are non 200.
 func (c *Client) Revisions(alias string, hashes []string) ([]*Revision, error) {
-	fileURL := c.fileURL(alias)
 	g := new(errgroup.Group)
 	results := make([]*Revision, len(hashes))
 
 	for i, hash := range hashes {
 		i, hash := i, hash // https://golang.org/doc/faq#closures_and_goroutines
 		g.Go(func() error {
-			revision, err := c.getRevision(fileURL + "/" + hash)
+			r, err := c.revision(alias, hash)
 			if err != nil {
 				return err
 			}
 
 			results[i] = &Revision{
 				Hash:  hash,
-				Bytes: revision,
+				Bytes: r,
 			}
 			return nil
 		})

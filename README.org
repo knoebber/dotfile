@@ -36,7 +36,7 @@ edited with external tools.
 3. [[https://dotfilehub.com/settings/cli][Setup the CLI]] to use remote functions.
 
 Optionally [[docs/web.org#self-host][self host]] a dotfilehub instance.
-* Reference
+* Documentation
 + [[docs/cli.org][CLI Documentation]]
 + [[docs/web.org][Web Documentation]]
 + [[docs/acknowledgments.org][Acknowledgments]]

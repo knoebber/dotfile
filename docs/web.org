@@ -39,7 +39,7 @@ This will show the diff before confirming the new change. Commits can
 be rolled back by selecting an earlier commit and hitting "revert".
 ** Settings
 File settings provide options to update a file, delete
-its history, or delete the file. Note the updating a file's alias or
+its history, or delete the file. Note that updating a file's alias or
 path can break CLI operations like =pull=.
 * User Settings
 ** Setup CLI
@@ -68,23 +68,27 @@ See https://github.com/knoebber/dotfile/tree/master/dotfileclient for an example
 a client for the Dotfile API.
 ** List Files
 #+BEGIN_SRC
-GET /api/{username}
-GET /api/{username}?path=true
+GET /api/v1/user/{username}
+GET /api/v1/user/{username}?path=true
 #+END_SRC
 Returns a list of aliases for username. Include paths with the =?path= parameter.
 ** Get File Data
    #+BEGIN_SRC bash
-GET /api/{username}/{alias}
+GET /api/v1/user/{username}/{alias}
 #+END_SRC
 Returns a file's data in JSON format.
+** Get Raw Content
+   #+BEGIN_SRC bash
+GET /api/v1/user/{username}/{alias}/raw
+#+END_SRC
 ** Get Revision
    #+BEGIN_SRC bash
-GET /api/{username}/{alias}/{hash}
+GET /api/v1/user/{username}/{alias}/{hash}
 #+END_SRC
 Returns a files compressed revision at hash.
 ** Push File
    #+BEGIN_SRC bash
-POST /api/{username}/{alias}
+POST /api/v1/user/{username}/{alias}
 #+END_SRC
 Post a file to the server. This can either be a new or existing file.
 The request body is a multipart file upload.

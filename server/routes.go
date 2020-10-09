@@ -24,6 +24,7 @@ func staticRoutes(r *mux.Router) {
 	r.HandleFunc("/docs/cli.org", createStaticHandler("CLI Documentation", "cli.html"))
 	r.HandleFunc("/docs/web.org", createStaticHandler("Web Documentation", "web.html"))
 	r.HandleFunc("/docs/acknowledgments.org", createStaticHandler("Acknowledgments", "acknowledgments.html"))
+	r.NotFoundHandler = createStaticHandler("Not Found", "404.html")
 }
 
 func assetRoutes(r *mux.Router) {
@@ -33,10 +34,11 @@ func assetRoutes(r *mux.Router) {
 }
 
 func apiRoutes(r *mux.Router) {
-	r.HandleFunc("/api/{username}", handleFileListJSON)
-	r.HandleFunc("/api/{username}/{alias}", handleFileJSON).Methods("GET")
-	r.HandleFunc("/api/{username}/{alias}", handlePush).Methods("POST")
-	r.HandleFunc("/api/{username}/{alias}/{hash}", handleRawCompressedCommit)
+	r.HandleFunc("/api/v1/user/{username}", handleFileListJSON)
+	r.HandleFunc("/api/v1/user/{username}/{alias}", handleFileJSON).Methods("GET")
+	r.HandleFunc("/api/v1/user/{username}/{alias}", handlePush).Methods("POST")
+	r.HandleFunc("/api/v1/user/{username}/{alias}/raw", handleRawFile)
+	r.HandleFunc("/api/v1/user/{username}/{alias}/{hash}", handleRawCompressedCommit)
 }
 
 func dotfileRoutes(r *mux.Router, config Config) {
