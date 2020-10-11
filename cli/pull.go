@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"fmt"
-
 	"github.com/knoebber/dotfile/dotfileclient"
 	"github.com/knoebber/dotfile/local"
 	"github.com/pkg/errors"
@@ -47,9 +45,7 @@ func pullAll(storage *local.Storage, client *dotfileclient.Client, createDirs bo
 	for _, alias := range files {
 		storage.Alias = alias
 		if err := storage.Pull(client, createDirs); err != nil {
-			fmt.Printf("failed to pull %q: %v\n", alias, err)
-		} else {
-			fmt.Println("pulled", alias)
+			return err
 		}
 	}
 	return nil
