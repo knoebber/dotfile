@@ -61,7 +61,7 @@ func configPath() (string, error) {
 	}
 	dotfileDir := filepath.Join(configDir, "dotfile")
 	if !exists(dotfileDir) {
-		if err := os.Mkdir(dotfileDir, 0755); err != nil {
+		if err := os.MkdirAll(dotfileDir, 0755); err != nil {
 			return "", err
 		}
 	}

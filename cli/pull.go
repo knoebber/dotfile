@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"fmt"
-
 	"github.com/knoebber/dotfile/dotfileclient"
 	"github.com/knoebber/dotfile/local"
 	"github.com/pkg/errors"
@@ -19,8 +17,6 @@ type pullCommand struct {
 func (pc *pullCommand) run(*kingpin.ParseContext) error {
 	var err error
 
-	storage := &local.Storage{Dir: flags.storageDir, Alias: pc.alias}
-
 	client, err := newDotfileClient()
 	if err != nil {
 		return err
@@ -30,26 +26,25 @@ func (pc *pullCommand) run(*kingpin.ParseContext) error {
 		client.Username = pc.username
 	}
 	if pc.pullAll {
-		return pullAll(storage, client, pc.createDirs)
+		return pullAll(client, pc.createDirs)
 	} else if pc.alias != "" {
+		storage := &local.Storage{Dir: flags.storageDir, Alias: pc.alias}
 		return storage.Pull(client, pc.createDirs)
 	} else {
 		return errors.New("neither alias nor --all provided to pull")
 	}
 }
 
-func pullAll(storage *local.Storage, client *dotfileclient.Client, createDirs bool) error {
+func pullAll(client *dotfileclient.Client, createDirs bool) error {
 	files, err := client.List(false)
 	if err != nil {
 		return err
 	}
 
 	for _, alias := range files {
-		storage.Alias = alias
+		storage := &local.Storage{Dir: flags.storageDir, Alias: alias}
 		if err := storage.Pull(client, createDirs); err != nil {
-			fmt.Printf("failed to pull %q: %v\n", alias, err)
-		} else {
-			fmt.Println("pulled", alias)
+			return err
 		}
 	}
 	return nil
