@@ -35,7 +35,7 @@ edited with external tools.
 2. [[https://dotfilehub.com/signup][Create a Dotfilehub]] account to share files between machines. 
 3. [[https://dotfilehub.com/settings/cli][Setup the CLI]] to use remote functions.
 
-Optionally [[docs/web.org#self-host][self host]] a dotfilehub instance.
+Optionally [[docs/web.org#self-host][self host]] a Dotfilehub instance.
 * Documentation
 + [[docs/cli.org][CLI Documentation]]
 + [[docs/web.org][Web Documentation]]
