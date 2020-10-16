@@ -6,14 +6,12 @@ import (
 	"compress/zlib"
 	"crypto/sha1"
 	"fmt"
+	"github.com/knoebber/dotfile/usererror"
+	"github.com/pkg/errors"
 	"io"
 	"path/filepath"
 	"regexp"
 	"sort"
-	"strings"
-
-	"github.com/knoebber/dotfile/usererror"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -187,20 +185,6 @@ func Uncompress(compressed []byte) (*bytes.Buffer, error) {
 	}
 
 	return uncompressed, nil
-}
-
-// ShortenEqualText splits text into newlines and discards everything in the middle.
-// Used for removing equal text in a diff that is not near any changes.
-//
-// When there are less than 4 lines returns text unchanged.
-// Otherwise takes the first/last two lines and discards the rest.
-func ShortenEqualText(text string) string {
-	lines := strings.Split(text, "\n")
-	if len(lines) <= 3 {
-		return text
-	}
-
-	return strings.Join(lines[:2], "\n") + "\n" + strings.Join(lines[len(lines)-2:], "\n")
 }
 
 // ShortenHash shortens a hash to a more friendly size.

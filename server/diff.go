@@ -45,15 +45,12 @@ func loadDiff(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	}
 
 	content := &db.FileContent{Connection: db.Connection, Username: username, Alias: alias}
-
-	diffs, err := dotfile.Diff(content, on, against)
+	diff, err := dotfile.DiffPrettyHTML(content, on, against)
 	if err != nil {
 		return p.setError(w, err)
 	}
 
-	// p.Data["path"] = storage.Staged.Path
-	p.Data["diffs"] = diffs
-
+	p.Data["diff"] = diff
 	return
 }
 

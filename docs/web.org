@@ -33,6 +33,8 @@ When alias is omitted it will be generated from the path.
 The path is the location that the CLI will install the file to.
 Paths must start in either =/= or =~/=, E.G. =~/.bashrc=,
 =/etc/aliases=. It cannot have a trailing slash.
+
+Carriage return characters, "\r", are stripped before being saved.
 ** Edit
 Editing a file is the same as committing changes with the CLI. 
 This will show the diff before confirming the new change. Commits can
@@ -74,21 +76,21 @@ GET /api/v1/user/{username}?path=true
 #+END_SRC
 Returns a list of aliases for username. Include paths with the =?path= parameter.
 ** Get File Data
-   #+BEGIN_SRC bash
+#+BEGIN_SRC bash
 GET /api/v1/user/{username}/{alias}
 #+END_SRC
 Returns a file's data in JSON format.
 ** Get Raw Content
-   #+BEGIN_SRC bash
+#+BEGIN_SRC bash
 GET /api/v1/user/{username}/{alias}/raw
 #+END_SRC
 ** Get Revision
-   #+BEGIN_SRC bash
+#+BEGIN_SRC bash
 GET /api/v1/user/{username}/{alias}/{hash}
 #+END_SRC
 Returns a files compressed revision at hash.
 ** Push File
-   #+BEGIN_SRC bash
+#+BEGIN_SRC bash
 POST /api/v1/user/{username}/{alias}
 #+END_SRC
 Post a file to the server. This can either be a new or existing file.

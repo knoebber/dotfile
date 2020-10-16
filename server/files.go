@@ -220,16 +220,17 @@ func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bo
 		return p.setError(w, err)
 	}
 
-	diffs, err := dotfile.Diff(&db.FileContent{
+	diff, err := dotfile.DiffPrettyHTML(&db.FileContent{
 		Connection: db.Connection,
 		Username:   p.Session.Username,
 		Alias:      alias,
 	}, f.Hash, "")
+
 	if err != nil {
 		return p.setError(w, err)
 	}
 
-	p.Data["diffs"] = diffs
+	p.Data["diff"] = diff
 	p.Data["alias"] = f.Alias
 	p.Data["path"] = f.Path
 	p.Data["editAction"] = fmt.Sprintf("/%s/%s/edit", p.Session.Username, alias)

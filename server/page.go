@@ -237,8 +237,7 @@ func loadTemplates() (err error) {
 
 	pageFunctions := template.FuncMap{
 		// Global functions that page templates can call.
-		"shortenHash":      dotfile.ShortenHash,
-		"shortenEqualText": dotfile.ShortenEqualText,
+		"shortenHash": dotfile.ShortenHash,
 	}
 
 	pageTemplates, err = template.

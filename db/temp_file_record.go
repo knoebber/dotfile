@@ -1,6 +1,7 @@
 package db
 
 import (
+	"bytes"
 	"database/sql"
 	"time"
 
@@ -46,7 +47,8 @@ func (f *TempFileRecord) check(Executor) error {
 
 // Inserts or updates a user's previous temp file.
 func (f *TempFileRecord) insertStmt(e Executor) (sql.Result, error) {
-	compressed, err := dotfile.Compress(f.Content)
+	// Strips carriage returns from content.
+	compressed, err := dotfile.Compress(bytes.Replace(f.Content, []byte("\r"), nil, -1))
 	if err != nil {
 		return nil, err
 	}
