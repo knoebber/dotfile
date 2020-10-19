@@ -10,14 +10,14 @@ import (
 
 const initialCommitMessage = "Initial commit"
 
-// Commiter is the interface that wraps methods needed for saving commits.
-type Commiter interface {
+// Committer is an interface for saving saving commits.
+type Committer interface {
 	Getter
 	SaveCommit(buff *bytes.Buffer, c *Commit) error
 }
 
 // Init creates a new commit with the initial commit message.
-func Init(c Commiter, path, alias string) error {
+func Init(c Committer, path, alias string) error {
 	if err := CheckPath(path); err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func Init(c Commiter, path, alias string) error {
 }
 
 // NewCommit saves a revision of the file at its current state.
-func NewCommit(c Commiter, message string) error {
+func NewCommit(c Committer, message string) error {
 	contents, err := c.DirtyContent()
 	if err != nil {
 		return err
