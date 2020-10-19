@@ -10,10 +10,10 @@ import (
 )
 
 // TempFileRecord models the temp_files table.
-// It represents a changed/new file that has not yet been commited.
+// It represents a changed/new file that has not yet been committed.
 // Similar to an untracked or dirty file on the filesystem.
-// This allows the user to "stage" a file and view results before saving.
-// User to TempFile is a one to one relationship.
+// This allows users to stage a file and view the result before saving.
+// A User can have a single TempFile.
 type TempFileRecord struct {
 	ID        int64
 	UserID    int64  `validate:"required"`
@@ -45,10 +45,8 @@ func (f *TempFileRecord) check(Executor) error {
 	return nil
 }
 
-// Inserts or updates a user's previous temp file.
 func (f *TempFileRecord) insertStmt(e Executor) (sql.Result, error) {
-	// Strips carriage returns from content.
-	compressed, err := dotfile.Compress(bytes.Replace(f.Content, []byte("\r"), nil, -1))
+	compressed, err := dotfile.Compress(bytes.ReplaceAll(f.Content, []byte("\r"), nil))
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +73,8 @@ SET alias = ?, path = ?, content = ?`,
 	)
 }
 
-// Create creates a new temp file.
+// Create inserts or replaces a user's previous temp file.
+// Strips carriage returns from content.
 func (f *TempFileRecord) Create(e Executor) error {
 	id, err := insert(e, f)
 	if err != nil {
@@ -111,7 +110,7 @@ func DeleteTempFile(e Executor, username string) error {
 	_, err := e.Exec(`
 DELETE FROM temp_files WHERE user_id = (SELECT id FROM users WHERE username = ?)`, username)
 	if err != nil {
-		return errors.Wrapf(err, "deleting %q temp file", username)
+		return errors.Wrapf(err, "deleting temp file for %q", username)
 	}
 	return nil
 

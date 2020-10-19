@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/knoebber/dotfile/dotfile"
-	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
@@ -73,6 +72,7 @@ func (c *Client) List(path bool) ([]string, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "sending request for file list")
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("getting remote file list: %v", resp.Status)
@@ -127,9 +127,9 @@ func (c *Client) revision(alias, hash string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	fmt.Println("GET", url)
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("fetching file content: %s", resp.Status)
@@ -145,6 +145,10 @@ func (c *Client) Content(alias string) ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("fetching file content: %s", resp.Status)
+	}
 
 	return ioutil.ReadAll(resp.Body)
 }
@@ -182,6 +186,12 @@ func (c *Client) Revisions(alias string, hashes []string) ([]*Revision, error) {
 // The first part is the fileData JSON the rest are form files with the revision bytes.
 func (c *Client) UploadRevisions(alias string, data *dotfile.TrackingData, revisions []*Revision) error {
 	var body bytes.Buffer
+
+	if len(revisions) == 0 {
+		fmt.Println("Upto date.")
+		return nil
+	}
+
 	url := c.fileURL(alias)
 
 	writer := multipart.NewWriter(&body)
@@ -229,14 +239,13 @@ func (c *Client) UploadRevisions(alias string, data *dotfile.TrackingData, revis
 	if err != nil {
 		return errors.Wrap(err, "creating upload request for push")
 	}
-
-	if resp.StatusCode == http.StatusBadRequest {
-		return usererror.Invalid(resp.Status)
+	if err := resp.Body.Close(); err != nil {
+		return fmt.Errorf("closing response body after push: %w", err)
 	}
+
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("uploading file revisions: %s", resp.Status)
 	}
 
-	return resp.Body.Close()
-
+	return nil
 }
