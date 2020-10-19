@@ -29,7 +29,6 @@ var (
 type TrackingData struct {
 	Path     string   `json:"path"`
 	Revision string   `json:"revision"`
-	Exclude  bool     `json:"bool"`
 	Commits  []Commit `json:"commits"`
 }
 
