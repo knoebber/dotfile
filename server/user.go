@@ -5,7 +5,6 @@ import (
 
 	"github.com/knoebber/dotfile/db"
 	"github.com/knoebber/dotfile/usererror"
-	"github.com/pkg/errors"
 )
 
 func handleEmail(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
@@ -63,16 +62,8 @@ func handleDeleteUser(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 		return p.setError(w, usererror.Invalid("Username does not match"))
 	}
 
-	tx, err := db.Connection.Begin()
-	if err != nil {
-		return p.setError(w, errors.Wrap(err, "starting transaction for delete user"))
-	}
-
-	if err := db.DeleteUser(tx, username, password); err != nil {
-		return p.setError(w, db.Rollback(tx, err))
-	}
-	if err := tx.Commit(); err != nil {
-		return p.setError(w, errors.Wrap(err, "committing transaction for delete user"))
+	if err := db.DeleteUser(username, password); err != nil {
+		return p.setError(w, err)
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)

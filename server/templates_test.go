@@ -48,7 +48,7 @@ func TestTemplatesHTML(t *testing.T) {
 	for _, template := range pageTemplates.Templates() {
 		curr := template.Name()
 		if curr[0] == '_' || curr == "pages" {
-			// Skip partials and the original.
+			// Skip partials and the name of the root template.
 			continue
 		}
 

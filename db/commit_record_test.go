@@ -38,12 +38,12 @@ func TestCommitsTable(t *testing.T) {
 	})
 
 	t.Run("forked from commit must exist", func(t *testing.T) {
-		createTestDB(t)
+		resetTestDB(t)
 
 		fv := initTestFile(t)
-		nonExistentcommitID := int64(69)
+		nonExistentCommitID := int64(69)
 		c.FileID = fv.ID
-		c.ForkedFrom = &nonExistentcommitID
+		c.ForkedFrom = &nonExistentCommitID
 
 		_, err := insert(Connection, c)
 		assert.Error(t, err)

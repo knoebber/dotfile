@@ -7,8 +7,6 @@ import (
 
 	"github.com/knoebber/dotfile/db"
 	"github.com/knoebber/dotfile/dotfile"
-	"github.com/knoebber/dotfile/usererror"
-	"github.com/pkg/errors"
 )
 
 // Handles submitting the new file form.
@@ -20,13 +18,7 @@ func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	if err != nil {
 		return p.setError(w, err)
 	}
-
-	// Check if file exists before creating temp - expect not found error.
-	_, err = db.File(db.Connection, p.Session.Username, alias)
-	if err == nil {
-		return p.setError(w, usererror.Duplicate("File", alias))
-	}
-	if !db.NotFound(err) {
+	if err := db.ValidateFileNotExists(db.Connection, p.Session.UserID, alias, path); err != nil {
 		return p.setError(w, err)
 	}
 
@@ -75,33 +67,11 @@ func editFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 // Handles submitting the confirm file form.
 // Either initializes a new file or makes a commit to an existing.
 func confirmTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	var err error
-	alias := p.Vars["alias"]
-
-	tx, err := db.Connection.Begin()
-	if err != nil {
-		return p.setError(w, errors.Wrap(err, "starting transaction for confirm temp file"))
+	if err := db.InitOrCommit(p.Session.Username, p.Vars["alias"], r.Form.Get("message")); err != nil {
+		return p.setError(w, err)
 	}
 
-	ft, err := db.StageFile(tx, p.Session.Username, alias)
-	if err != nil {
-		return p.setError(w, db.Rollback(tx, err))
-	}
-
-	if !ft.FileExists {
-		err = dotfile.Init(ft, ft.Staged.Path, alias)
-	} else {
-		err = dotfile.NewCommit(ft, r.Form.Get("message"))
-	}
-	if err != nil {
-		return p.setError(w, db.Rollback(tx, err))
-	}
-	if err := tx.Commit(); err != nil {
-		return p.setError(w, errors.Wrap(err, "closing transaction for confirm temp file"))
-	}
-
-	path := fmt.Sprintf("/%s/%s", p.Session.Username, alias)
-
+	path := fmt.Sprintf("/%s/%s", p.Session.Username, p.Vars["alias"])
 	http.Redirect(w, r, path, http.StatusSeeOther)
 	return true
 }
@@ -112,18 +82,10 @@ func forkFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	alias := r.Form.Get("alias")
 	hash := r.Form.Get("hash")
 
-	tx, err := db.Connection.Begin()
-	if err != nil {
-		return p.setError(w, errors.Wrap(err, "starting fork file transaction"))
+	if err := db.ForkFile(username, alias, hash, p.Session.UserID); err != nil {
+		return p.setError(w, err)
 	}
 
-	if err := db.ForkFile(tx, username, alias, hash, p.Session.UserID); err != nil {
-		return p.setError(w, db.Rollback(tx, err))
-	}
-
-	if err := tx.Commit(); err != nil {
-		return p.setError(w, errors.Wrap(err, "committing fork file transaction"))
-	}
 	return
 }
 

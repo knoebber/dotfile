@@ -47,13 +47,8 @@ func (f *FileRecord) check(e Executor) error {
 	if err := checkFile(f.Alias, f.Path); err != nil {
 		return err
 	}
-
-	exists, err := fileExists(e, f.UserID, f.Alias, f.Path)
-	if err != nil {
+	if err := ValidateFileNotExists(e, f.UserID, f.Alias, f.Path); err != nil {
 		return err
-	}
-	if exists {
-		return usererror.Duplicate("File", f.Alias)
 	}
 
 	if err := e.QueryRow("SELECT COUNT(*) FROM files WHERE user_id = ?", f.UserID).
@@ -248,8 +243,22 @@ WHERE id = (SELECT file_id FROM new_commit)
 }
 
 // ForkFile creates a copy of username/alias/hash for the user newUserID.
-func ForkFile(tx *sql.Tx, username, alias, hash string, newUserID int64) error {
-	fileForkee, err := File(tx, username, alias)
+func ForkFile(username, alias, hash string, newUserID int64) error {
+	tx, err := Connection.Begin()
+	if err != nil {
+		return errors.Wrap(err, "starting fork file transaction")
+	}
+	if err := forkFile(tx, username, alias, hash, newUserID); err != nil {
+		return Rollback(tx, err)
+	}
+	if err := tx.Commit(); err != nil {
+		return errors.Wrap(err, "committing fork file transaction")
+	}
+	return nil
+}
+
+func forkFile(tx *sql.Tx, username, alias, hash string, newUserID int64) error {
+	original, err := File(tx, username, alias)
 	if err != nil {
 		return err
 	}
@@ -257,7 +266,7 @@ func ForkFile(tx *sql.Tx, username, alias, hash string, newUserID int64) error {
 	newFile := &FileRecord{
 		UserID: newUserID,
 		Alias:  alias,
-		Path:   fileForkee.Path,
+		Path:   original.Path,
 	}
 
 	newFileID, err := insert(tx, newFile)
@@ -265,14 +274,14 @@ func ForkFile(tx *sql.Tx, username, alias, hash string, newUserID int64) error {
 		return err
 	}
 
-	commitForkee, err := Commit(tx, username, alias, hash)
+	currentCommit, err := Commit(tx, username, alias, hash)
 	if err != nil {
 		return err
 	}
 
-	newCommit := commitForkee
+	newCommit := currentCommit
 	newCommit.FileID = newFileID
-	newCommit.ForkedFrom = &commitForkee.ID
+	newCommit.ForkedFrom = &currentCommit.ID
 	newCommit.Message = fmt.Sprintf("Forked from %s", username)
 	newCommit.Timestamp = time.Now().Unix()
 
@@ -288,7 +297,7 @@ func ForkFile(tx *sql.Tx, username, alias, hash string, newUserID int64) error {
 	return nil
 }
 
-func fileExists(e Executor, userID int64, alias, path string) (bool, error) {
+func ValidateFileNotExists(e Executor, userID int64, alias, path string) error {
 	var count int
 
 	err := e.QueryRow(`
@@ -298,9 +307,13 @@ AND (alias = ? OR path = ?)`, userID, alias, path).
 		Scan(&count)
 
 	if err != nil {
-		return false, errors.Wrapf(err, "checking if file %q exists for user %d", alias, userID)
+		return errors.Wrapf(err, "checking if file %q exists for user %d", alias, userID)
 	}
-	return count > 0, nil
+	if count > 0 {
+		return usererror.Duplicate("File", alias)
+	}
+
+	return nil
 }
 
 func setFileToCommitID(e Executor, fileID int64, commitID int64) error {

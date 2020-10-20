@@ -165,3 +165,30 @@ func (ft *FileTransaction) SetRevision(hash string) error {
 
 	return setFileToCommitID(ft.tx, ft.FileID, newCommitID)
 }
+
+// InitOrCommit uses the content in a temp file to initialize a file or create a new commit.
+func InitOrCommit(username, alias, message string) error {
+	tx, err := Connection.Begin()
+	if err != nil {
+		return errors.Wrap(err, "starting transaction for confirm temp file")
+	}
+
+	ft, err := StageFile(tx, username, alias)
+	if err != nil {
+		return Rollback(tx, err)
+	}
+
+	if !ft.FileExists {
+		err = dotfile.Init(ft, ft.Staged.Path, alias)
+	} else {
+		err = dotfile.NewCommit(ft, message)
+	}
+	if err != nil {
+		return Rollback(tx, err)
+	}
+	if err := tx.Commit(); err != nil {
+		return errors.Wrap(err, "closing transaction for confirm temp file")
+	}
+
+	return nil
+}

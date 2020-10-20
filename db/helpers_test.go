@@ -36,10 +36,22 @@ func assertUsererror(t *testing.T, err error) {
 }
 
 func createTestDB(t *testing.T) {
-	_ = os.RemoveAll(testDir)
-	_ = os.Mkdir(testDir, 0755)
+	if Connection != nil {
+		resetTestDB(t)
+	}
 
-	if err := Start(testDir + "dotfilehub.db"); err != nil {
+	var err error
+
+	// Set this to true to save a test database to testdir for debugging.
+	const persistDB = false
+	if persistDB {
+		_ = os.RemoveAll(testDir)
+		_ = os.Mkdir(testDir, 0755)
+		err = Start(testDir + "dotfilehub.db")
+	} else {
+		err = Start("")
+	}
+	if err != nil {
 		t.Fatalf("creating test db: %s", err)
 	}
 }
@@ -64,22 +76,18 @@ func countTestUser(t *testing.T, username string) (count int) {
 	err := Connection.
 		QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", username).
 		Scan(&count)
-	failIf(t, err, "counting test user")
+	failIf(t, err, "counting test user", username)
 	return
 }
 
 func resetTestDB(t *testing.T) {
 	usernames := testUserList(t)
 
-	tx, err := Connection.Begin()
-	failIf(t, err, "delete test user tx")
 	for _, u := range usernames {
-		if err := DeleteUser(tx, u, testPassword); err != nil {
-			failIf(t, tx.Rollback(), "delete user rollback", err.Error())
+		if err := DeleteUser(u, testPassword); err != nil {
 			t.Fatalf("unable to delete test users: %s", err)
 		}
 	}
-	failIf(t, tx.Commit(), "commit delete test user tx")
 }
 
 func createTestUser(t *testing.T, userID int64, username, email string) {
@@ -102,7 +110,7 @@ VALUES(?, ?, ?, ?, ?)`,
 		testCliToken,
 	)
 	if err != nil {
-		t.Fatalf("creating test user: %s", err)
+		t.Fatalf("creating test user %q: %s", username, err)
 	}
 }
 
@@ -129,26 +137,6 @@ func failIf(t *testing.T, err error, context ...string) {
 		t.Log("failed test setup")
 		t.Fatal(context, err)
 	}
-}
-
-func removeTestFiles(t *testing.T) {
-	_, err := Connection.Exec("DELETE FROM files")
-	if err != nil {
-		t.Fatalf("cleaning up files: %s", err)
-	}
-}
-
-func assertErrNoRows(t *testing.T, err error) {
-	if !errors.Is(err, sql.ErrNoRows) {
-		t.Errorf("expected sql.ErrNoRows, got error %s", err)
-	}
-}
-
-func getTestFileTransaction(t *testing.T) *FileTransaction {
-	tx := testTransaction(t)
-	ft, err := NewFileTransaction(tx, testUsername, testAlias)
-	failIf(t, err, "getting test storage")
-	return ft
 }
 
 func testTransaction(t *testing.T) *sql.Tx {

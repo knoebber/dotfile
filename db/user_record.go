@@ -387,7 +387,22 @@ func UserLogin(e Executor, username, password, ip string) (*SessionRecord, error
 }
 
 // DeleteUser deletes a user and their data.
-func DeleteUser(tx *sql.Tx, username, password string) error {
+func DeleteUser(username, password string) error {
+	tx, err := Connection.Begin()
+	if err != nil {
+		return errors.Wrap(err, "starting transaction for delete user")
+	}
+	if err := deleteUser(tx, username, password); err != nil {
+		return Rollback(tx, err)
+	}
+	if err := tx.Commit(); err != nil {
+		return errors.Wrap(err, "committing transaction for delete user")
+	}
+
+	return nil
+}
+
+func deleteUser(tx *sql.Tx, username, password string) error {
 	if err := compareUserPassword(tx, username, password); err != nil {
 		return err
 	}

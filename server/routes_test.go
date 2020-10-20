@@ -8,6 +8,6 @@ import (
 )
 
 func TestSetupRoutes(t *testing.T) {
-	setupTest(t)
+	setupTest(t, fileHandler())
 	assert.NoError(t, setupRoutes(mux.NewRouter(), Config{}))
 }

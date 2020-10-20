@@ -190,7 +190,12 @@ func NotFound(err error) bool {
 
 // Start opens a connection a sqlite3 database.
 // Creates a new sqlite database with all required tables when not found.
+// Create an in memory database when dbPath is empty.
 func Start(dbPath string) (err error) {
+	if dbPath == "" {
+		dbPath = ":memory:"
+	}
+
 	dsn := "?_foreign_keys=true"
 	Connection, err = sql.Open("sqlite3", dbPath+dsn)
 	if err != nil {

@@ -1,13 +1,14 @@
 <main>
-  <h1>{{ .Title }}</h1>
-  <p>By signing up you agree to the <a href="/terms"> terms</a>.
-  <form method="post">
-    <label for="username">Username</label>
-    <input id="username" name="username" type="text" required="required"/>
-    <label for="password">Password</label>
-    <input id="password" name="password" type="password" required="required"/>
-    <label for="confirm">Confirm</label>
-    <input id="confirm" name="confirm" type="password" required="required"/>
-    <button>Submit</button>
-  </form>
+    <h1>{{ .Title }}</h1>
+    <p>Usernames must be alphanumeric and passwords must be at least 8 characters.</p>
+    <p>By signing up you agree to the <a href="/terms"> terms</a>.
+    <form method="post">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" required="required"/>
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required="required"/>
+        <label for="confirm">Confirm</label>
+        <input id="confirm" name="confirm" type="password" required="required"/>
+        <button>Submit</button>
+    </form>
 </main>

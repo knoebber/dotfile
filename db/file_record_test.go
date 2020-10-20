@@ -63,36 +63,27 @@ func TestForkFile(t *testing.T) {
 	otherUserID := int64(testUserID + 1)
 	otherUsername := "user2"
 	otherEmail := "user2@example.com"
-
-	setup := func(t *testing.T) {
-		createTestDB(t)
-		createTestUser(t, otherUserID, otherUsername, otherEmail)
-	}
+	createTestDB(t)
+	createTestUser(t, otherUserID, otherUsername, otherEmail)
 
 	t.Run("fork works", func(t *testing.T) {
-		setup(t)
-		tx := testTransaction(t)
 		f := initTestFile(t)
-		err := ForkFile(tx, testUsername, testAlias, f.Hash, otherUserID)
+		err := ForkFile(testUsername, testAlias, f.Hash, otherUserID)
 
 		assert.NoError(t, err)
-		assert.NoError(t, tx.Commit())
 
 		// Error on attempt to fork again.
-		tx = testTransaction(t)
-
-		err = ForkFile(tx, testUsername, testAlias, f.Hash, otherUserID)
+		err = ForkFile(testUsername, testAlias, f.Hash, otherUserID)
 		assertUsererror(t, err)
-		assert.NoError(t, tx.Rollback())
 	})
 
 	t.Run("fork copies commit revision content", func(t *testing.T) {
-		setup(t)
-		tx := testTransaction(t)
+		resetTestDB(t)
+		createTestUser(t, otherUserID, otherUsername, otherEmail)
+
 		initialCommit, _ := initTestFileAndCommit(t)
 
-		assert.NoError(t, ForkFile(tx, testUsername, testAlias, initialCommit.Hash, otherUserID))
-		assert.NoError(t, tx.Commit())
+		assert.NoError(t, ForkFile(testUsername, testAlias, initialCommit.Hash, otherUserID))
 		f, err := UncompressFile(Connection, otherUsername, testAlias)
 		failIf(t, err)
 		assert.Equal(t, testContent, string(f.Content))
