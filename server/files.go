@@ -182,6 +182,10 @@ func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bo
 		return p.setError(w, err)
 	}
 
+	p.Data["editAction"] = fmt.Sprintf("/%s/%s/edit", p.Session.Username, alias)
+	p.Data["alias"] = f.Alias
+	p.Data["path"] = f.Path
+
 	diff, err := dotfile.DiffPrettyHTML(&db.FileContent{
 		Connection: db.Connection,
 		Username:   p.Session.Username,
@@ -193,10 +197,6 @@ func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bo
 	}
 
 	p.Data["diff"] = diff
-	p.Data["alias"] = f.Alias
-	p.Data["path"] = f.Path
-	p.Data["editAction"] = fmt.Sprintf("/%s/%s/edit", p.Session.Username, alias)
-	p.Title = "commit"
 	return
 }
 
@@ -218,7 +218,7 @@ func loadNewFileConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done b
 func newFileHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "file_form.tmpl",
-		title:        "New File",
+		title:        "new file",
 		handleForm:   newTempFile,
 		loadData:     loadTempFileForm,
 		protected:    true,
@@ -246,6 +246,7 @@ func confirmNewFileHandler() http.HandlerFunc {
 func confirmEditHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "confirm_edit.tmpl",
+		title:        "commit",
 		handleForm:   confirmTempFile,
 		loadData:     loadCommitConfirm,
 		protected:    true,
