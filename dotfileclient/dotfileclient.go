@@ -70,12 +70,12 @@ func (c *Client) List(path bool) ([]string, error) {
 	}
 	resp, err := c.Client.Get(url)
 	if err != nil {
-		return nil, errors.Wrap(err, "sending request for file list")
+		return nil, errors.Wrapf(err, "getting file list from %q for %q", c.Remote, c.Username)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("getting remote file list: %v", resp.Status)
+		return nil, fmt.Errorf("getting file list: %v", resp.Status)
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
@@ -89,7 +89,7 @@ func (c *Client) List(path bool) ([]string, error) {
 func (c *Client) TrackingDataBytes(alias string) ([]byte, error) {
 	resp, err := c.Client.Get(c.fileURL(alias))
 	if err != nil {
-		return nil, errors.Wrap(err, "sending request for remote tracked file")
+		return nil, errors.Wrapf(err, "getting remote tracked file from %q for %q %q", c.Remote, c.Username, alias)
 	}
 	defer resp.Body.Close()
 
@@ -142,7 +142,7 @@ func (c *Client) revision(alias, hash string) ([]byte, error) {
 func (c *Client) Content(alias string) ([]byte, error) {
 	resp, err := c.Client.Get(c.rawFileURL(alias))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "getting raw content from %q for %q %q", c.Remote, c.Username, alias)
 	}
 	defer resp.Body.Close()
 
@@ -237,7 +237,7 @@ func (c *Client) UploadRevisions(alias string, data *dotfile.TrackingData, revis
 
 	resp, err := c.Client.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "creating upload request for push")
+		return errors.Wrapf(err, "uploading revisions to %q for %q %q", c.Remote, c.Username, alias)
 	}
 	if err := resp.Body.Close(); err != nil {
 		return fmt.Errorf("closing response body after push: %w", err)

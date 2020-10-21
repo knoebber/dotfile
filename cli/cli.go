@@ -15,10 +15,19 @@ type globalFlags struct {
 
 var flags globalFlags
 
-func newDotfileClient() (*dotfileclient.Client, error) {
+func newDotfileClient(tokenRequired bool) (*dotfileclient.Client, error) {
 	config, err := local.ReadConfig()
 	if err != nil {
 		return nil, err
+	}
+	if config.Remote == "" {
+		return nil, errors.New("config value for \"remote\" must be set")
+	}
+	if config.Username == "" {
+		return nil, errors.New("config value for \"username\" must be set")
+	}
+	if tokenRequired && config.Token == "" {
+		return nil, errors.New("config value for \"token\" must be set")
 	}
 
 	return dotfileclient.New(config.Remote, config.Username, config.Token), nil

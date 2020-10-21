@@ -17,7 +17,7 @@ type pullCommand struct {
 func (pc *pullCommand) run(*kingpin.ParseContext) error {
 	var err error
 
-	client, err := newDotfileClient()
+	client, err := newDotfileClient(false)
 	if err != nil {
 		return err
 	}

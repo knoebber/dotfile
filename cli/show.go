@@ -27,7 +27,7 @@ func (sc *showCommand) run(*kingpin.ParseContext) error {
 		}
 	}
 
-	client, err := newDotfileClient()
+	client, err := newDotfileClient(false)
 	if err != nil {
 		return err
 	}

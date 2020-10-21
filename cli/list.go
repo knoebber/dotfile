@@ -16,7 +16,7 @@ type listCommand struct {
 func (lc *listCommand) run(*kingpin.ParseContext) (err error) {
 	var result []string
 
-	client, err := newDotfileClient()
+	client, err := newDotfileClient(false)
 	if err != nil {
 		return err
 	}
