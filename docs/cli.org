@@ -5,12 +5,6 @@
 :END:
 Dotfile should work on most unix systems. [[https://golang.org][Golang]] is required to build Dotfile.
 
-*Install with go get*
-#+BEGIN_SRC bash
-go get github.com/knoebber/dotfile/cmd/dotfile
-#+END_SRC
-
-*Install with make*
 #+BEGIN_SRC bash
 git clone https://github.com/knoebber/dotfile
 cd dotfile
@@ -18,12 +12,14 @@ make dotfile
 # copy bin/dotfile to somewhere in $PATH.
 #+END_SRC
 * Overview
-The Dotfile CLI is a version control system for single files.
-When a file is checked in an *alias* is created. The alias is mapped to the files path its tracking
-data. For example an alias for =~/.bashrc= might be =bashrc=. 
-
-Most dotfile commands are structured as followed: =dotfile <command> <alias>= E.G. =dotfile edit bashrc=.
-This makes for easy file management regardless of the working directory.
+The Dotfile CLI is a version control system for single files. When a
+file is checked in an *alias* is created. The alias is mapped to the
+path. This allows for quick access regardless of the working
+directory. For example, the following command prints the content in
+=~/.bashrc=:
+#+BEGIN_SRC:
+dot show bashrc
+#+END_SRC
 * Data Storage
 Dotfile stores tracking data in =~/.local/share/dotfile=.
 If its parent directory does not exist it will fallback to =~/.dotfile=.
@@ -50,7 +46,8 @@ For every tracked file there is a =.json= file and a directory for its commits.
 }
 #+END_SRC
 The revision field is the hash of the current revision of the file.
-Each hash in the commit list represents a complete snapshot of the file at timestamp. Hashes are the sha1 sum of the file content. 
+Each hash in the commit list represents a complete snapshot of the
+file at timestamp. Hashes are the sha1 sum of the file content.
 
 File revisions are compressed with zlib and named as the hash. In this
 example there would be the following files containing compressed
@@ -64,10 +61,11 @@ history. It's possible to restore revisions manually by decompressing
 the revision files with zlib.
 
 * User Config
-Dotfile will create a config directory in a location returned by https://golang.org/pkg/os/#UserConfigDir
+Dotfile will create a config directory in a location returned by
+https://golang.org/pkg/os/#UserConfigDir
 
-You can edit =config.json= manually or with the =dotfile config= command.
-The config file has the following keys:
+You can edit =config.json= manually or with the =dotfile config=
+command.  The config file has the following keys:
 
 + *remote*  - The remote server to use.
 + *username* - A dotfilehub username. Pull, push, and commands with the =--remote= flag will use this for lookups.
@@ -96,25 +94,20 @@ Initialize as "i3"
 #+BEGIN_SRC bash
 dotfile init ~/.config/i3/config i3
 #+END_SRC
-When the file is in the home directory =$HOME= will be replaced with "~" in the file's saved path.
-This allows the file to be installed to the same relative location regardless of user.
-
-If the file's path is outside of the home directory then it will be
-saved as an absolute path. In this example
-#+BEGIN_SRC bash
-dotfile init /etc/X11/xorg.conf
-#+END_SRC
-=xorg= will always install to its absolute path.
+When the file is inside the home directory =$HOME= will be replaced with
+"~" in the saved path.  This allows the file to be installed to
+the same relative location regardless of user.
 * Show
 Show a file.
 #+BEGIN_SRC bash
 dotfile show <alias>
 #+END_SRC
-+ =-d, --data= Show the file's data.
++ =-d, --data= Show the JSON data.
 + =-r, --remote= Show a file on a remote server.
 + =-u, --username= Override the configured username.
 * List
-List tracked files. Asterisks are added to files that have uncommited changes.
+List tracked files. Asterisks are added to files that have uncommited
+changes.
 #+BEGIN_SRC bash
 dotfile ls
 #+END_SRC
@@ -127,8 +120,8 @@ Open a file in =$EDITOR=
 dotfile edit <alias>
 #+END_SRC
 * Diff
-Print the changes of a file against a past commit.
-Commit hash is optional - defaults to the current commit.
+Print the changes of a file against a past commit.  Commit hash is
+optional - defaults to the current commit.
 #+BEGIN_SRC bash
 dotfile diff <alias> <commit-hash>
 #+END_SRC
@@ -148,8 +141,9 @@ Revert a file to a past revision.
 #+BEGIN_SRC bash
 dotfile checkout <alias> <hash>
 #+END_SRC
-Hash is optional. When empty it will default to the current revision. This will remove any
-changes on the file since the last commit or checkout command.
+Hash is optional. When empty it will default to the current
+revision. This will remove any changes on the file since the last
+commit or checkout command.
 
 To checkout to a specific revision use the =dotfile log= command to find the hash.
 * Config
@@ -165,11 +159,12 @@ Push a file and its revisions to a remote server.
 #+BEGIN_SRC bash
 dotfile push <alias>
 #+END_SRC
-The remote file will either be created or updated to the current revision of the local file. All
-new local revisions will be saved to the remote server.
+The remote file will either be created or updated to the current
+revision of the local file. All new local revisions will be saved to
+the remote server.
 * Pull
-Retrieves a file and its new revisions from a remote server. Creates a new file at
-path when it does not yet exist.
+Retrieves a file and its new revisions from a remote server. Creates a
+new file at path when it does not yet exist.
 #+BEGIN_SRC bash
 dotfile pull <alias>
 #+END_SRC
@@ -197,7 +192,8 @@ Change a files alias.
 dotfile rename <alias> <new-alias>
 #+END_SRC
 * Forget
-Untracks a file - removes all Dotfile data for the file. Leaves the file in its current state on the filesystem.
+Untracks a file - removes all Dotfile data for the file. Leaves the
+file in its current state on the filesystem.
 
 + =-c, --commits= Remove all commits except for the current. File is still tracked but history is removed.
 #+BEGIN_SRC bash
