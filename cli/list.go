@@ -16,23 +16,13 @@ type listCommand struct {
 func (lc *listCommand) run(*kingpin.ParseContext) (err error) {
 	var result []string
 
-	client, err := newDotfileClient(false)
-	if err != nil {
-		return err
-	}
-
-	if lc.username != "" {
-		lc.remote = true
-		client.Username = lc.username
-	}
-
-	if lc.remote {
-		result, err = client.List(lc.path)
+	if lc.remote || lc.username != "" {
+		result, err = lc.listRemote()
 	} else {
 		result, err = local.List(flags.storageDir, lc.path)
 	}
 	if err != nil {
-		return
+		return err
 	}
 
 	for _, f := range result {
@@ -40,6 +30,18 @@ func (lc *listCommand) run(*kingpin.ParseContext) (err error) {
 	}
 
 	return nil
+}
+
+func (lc *listCommand) listRemote() ([]string, error) {
+	client, err := newDotfileClient(false)
+	if err != nil {
+		return nil, err
+	}
+	if lc.username != "" {
+		client.Username = lc.username
+	}
+
+	return client.List(lc.path)
 }
 
 func addListSubCommandToApplication(app *kingpin.Application) {

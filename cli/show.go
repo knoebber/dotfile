@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 
 	"github.com/knoebber/dotfile/local"
@@ -20,36 +22,10 @@ func (sc *showCommand) run(*kingpin.ParseContext) error {
 		err     error
 	)
 
-	storage := &local.Storage{Dir: flags.storageDir, Alias: sc.alias}
-	if !sc.remote {
-		if err := storage.SetTrackingData(); err != nil {
-			return err
-		}
-	}
-
-	client, err := newDotfileClient(false)
-	if err != nil {
-		return err
-	}
-
-	if sc.username != "" {
-		sc.remote = true
-		client.Username = sc.username
-	}
-
-	if sc.data {
-		if !sc.remote {
-			content, err = storage.JSON()
-		} else {
-			content, err = client.TrackingDataBytes(sc.alias)
-			// TODO this isn't a super helpful option - the json isn't formatted.
-		}
+	if sc.remote || sc.username != "" {
+		content, err = sc.showRemote()
 	} else {
-		if !sc.remote {
-			content, err = storage.DirtyContent()
-		} else {
-			content, err = client.Content(sc.alias)
-		}
+		content, err = sc.showLocal()
 	}
 
 	if err != nil {
@@ -58,6 +34,46 @@ func (sc *showCommand) run(*kingpin.ParseContext) error {
 
 	fmt.Print(string(content))
 	return nil
+}
+
+func (sc *showCommand) showLocal() ([]byte, error) {
+	storage := &local.Storage{Dir: flags.storageDir, Alias: sc.alias}
+	if err := storage.SetTrackingData(); err != nil {
+		return nil, err
+	}
+
+	if !sc.data {
+		return storage.DirtyContent()
+	}
+
+	return storage.JSON()
+}
+
+func (sc *showCommand) showRemote() ([]byte, error) {
+	var buff bytes.Buffer
+
+	client, err := newDotfileClient(false)
+	if err != nil {
+		return nil, err
+	}
+	if sc.username != "" {
+		client.Username = sc.username
+	}
+
+	if !sc.data {
+		return client.Content(sc.alias)
+	}
+
+	content, err := client.TrackingDataBytes(sc.alias)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Indent(&buff, content, "", "  "); err != nil {
+		return nil, err
+	}
+
+	return buff.Bytes(), nil
 }
 
 func addShowSubCommandToApplication(app *kingpin.Application) {

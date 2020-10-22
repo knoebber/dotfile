@@ -11,12 +11,13 @@ import (
 // Flags that multiple cli commands share.
 type globalFlags struct {
 	storageDir string
+	configPath string
 }
 
 var flags globalFlags
 
 func newDotfileClient(tokenRequired bool) (*dotfileclient.Client, error) {
-	config, err := local.ReadConfig()
+	config, err := local.ReadConfig(flags.configPath)
 	if err != nil {
 		return nil, err
 	}
@@ -52,11 +53,19 @@ func setConfig(app *kingpin.Application) error {
 		return err
 	}
 
+	defaultConfigPath, err := local.DefaultConfigPath()
+	if err != nil {
+		return err
+	}
+
 	app.Version("0.9.0")
 
 	app.Flag("storage-dir", "The directory where dotfile data is stored").
 		Default(defaultStorageDir).
 		ExistingDirVar(&flags.storageDir)
+	app.Flag("config-file", "The json file to use for configuration").
+		Default(defaultConfigPath).
+		StringVar(&flags.configPath)
 
 	return nil
 }

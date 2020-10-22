@@ -26,10 +26,10 @@ If its parent directory does not exist it will fallback to =~/.dotfile=.
 The storage directory can be changed with the =--storage-dir= flag.
 For every tracked file there is a =.json= file and a directory for its commits.
 
-*~/.local/share/dotfile/bash_profile.json*
+*Example: ~/.local/share/dotfile/bashrc.json*
 #+BEGIN_SRC javascript
 {
-  "path": "~/.bash_profile",
+  "path": "~/.bashrc",
   "revision": "599a1af0398b7c518bc46aaa4a9e8ae72c2d28cb",
   "commits": [
     {
@@ -45,31 +45,31 @@ For every tracked file there is a =.json= file and a directory for its commits.
   ]
 }
 #+END_SRC
-The revision field is the hash of the current revision of the file.
-Each hash in the commit list represents a complete snapshot of the
-file at timestamp. Hashes are the sha1 sum of the file content.
+The revision field is the hash of the current version. Each hash in
+the commit list represents a complete snapshot of the file at
+timestamp. Hashes are the sha1 sum of the file content.
 
 File revisions are compressed with zlib and named as the hash. In this
 example there would be the following files containing compressed
-snapshots of =~/.bash_profile=:
+snapshots of =~/.bashrc=:
 
-+ ~/.local/share/dotfile/bash_profile/d47481afa38dcab0d8c8d163aa75e0cf5af6e355*,
-+ ~/.local/share/dotfile/bash_profile/599a1af0398b7c518bc46aaa4a9e8ae72c2d28cb*
++ *~/.local/share/dotfile/bashrc/d47481afa38dcab0d8c8d163aa75e0cf5af6e355*
++ *~/.local/share/dotfile/bashrc/599a1af0398b7c518bc46aaa4a9e8ae72c2d28cb*
 
 Dotfile doesn't have merge conflicts or issue with rewriting
 history. It's possible to restore revisions manually by decompressing
 the revision files with zlib.
-
 * User Config
-Dotfile will create a config directory in a location returned by
-https://golang.org/pkg/os/#UserConfigDir
+Remote commands require a user configuration. By default Dotfile
+creates a config file named =config.json= in a location returned by
+https://golang.org/pkg/os/#UserConfigDir. This can be changed with the
+=--config-file= flag.
 
-You can edit =config.json= manually or with the =dotfile config=
-command.  The config file has the following keys:
-
+The config file can be edited manually or with the =dotfile config=
+command. The config file has the following keys:
 + *remote*  - The remote server to use.
-+ *username* - A dotfilehub username. Pull, push, and commands with the =--remote= flag will use this for lookups.
-+ *token* - A secret for allowing write access to a remote server. Find this under "Settings" / "Setup CLI" in the web interface.
++ *username* - A Dotfilehub username. Pull, push, and commands with the =--remote= flag use this for account lookups.
++ *token* - A secret required for write access on a remote server. Find this under "Settings" / "Setup CLI" in the web interface.
 
 *Example: ~/.config/dotfile/config.json*
 #+BEGIN_SRC javascript
@@ -84,19 +84,20 @@ Initialize a file.
 #+BEGIN_SRC bash
 dotfile init <path> <alias>
 #+END_SRC
-When alias is omitted =init= will generate the alias from the path.
+When alias is omitted =init= generates the alias from the path.
 
-Initialize as "bashrc"
+Initialize as "bashrc":
 #+BEGIN_SRC bash
 dotfile init ~/.bashrc
 #+END_SRC
-Initialize as "i3"
+Initialize as "i3":
 #+BEGIN_SRC bash
 dotfile init ~/.config/i3/config i3
 #+END_SRC
-When the file is inside the home directory =$HOME= will be replaced with
-"~" in the saved path.  This allows the file to be installed to
-the same relative location regardless of user.
+When the file is inside the home directory =$HOME= is replaced with "~" in the saved path.
+This allows the file to be installed to the same relative location regardless of user.
+
+The absolute path is saved when the file is outside of the home directory.
 * Show
 Show a file.
 #+BEGIN_SRC bash

@@ -54,7 +54,8 @@ func configBytes(path string) ([]byte, error) {
 	return bytes, nil
 }
 
-func configPath() (string, error) {
+// DefaultConfigPath returns the default config file.
+func DefaultConfigPath() (string, error) {
 	configDir, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
@@ -71,12 +72,7 @@ func configPath() (string, error) {
 
 // ReadConfig reads the user's config.
 // Creates a default file when it doesn't yet exist.
-func ReadConfig() (*Config, error) {
-	path, err := configPath()
-	if err != nil {
-		return nil, err
-	}
-
+func ReadConfig(path string) (*Config, error) {
 	cfg := new(Config)
 
 	bytes, err := configBytes(path)
@@ -92,13 +88,8 @@ func ReadConfig() (*Config, error) {
 }
 
 // SetConfig sets a value in the dotfile config json file.
-func SetConfig(key string, value string) error {
+func SetConfig(path, key, value string) error {
 	cfg := make(map[string]*string)
-
-	path, err := configPath()
-	if err != nil {
-		return err
-	}
 
 	bytes, err := configBytes(path)
 	if err != nil {

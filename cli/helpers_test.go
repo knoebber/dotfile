@@ -20,7 +20,10 @@ const (
 )
 
 func init() {
-	flags = globalFlags{storageDir: testDir}
+	flags = globalFlags{
+		configPath: filepath.Join(testDir, "config.json"),
+		storageDir: testDir,
+	}
 }
 
 func initTestFile(t *testing.T) {
