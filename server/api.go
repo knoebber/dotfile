@@ -153,61 +153,36 @@ func savePushedRevision(ft *db.FileTransaction, p *multipart.Part, commitMap map
 	return nil
 }
 
-// Request body is expected to be multipart.
-// The first part is a JSON encoding of dotfile.TrackingData
-// Subsequent parts are new revisions that need to be saved.
-// Each revision part should have be named as its hash.
-func handlePush(w http.ResponseWriter, r *http.Request) {
-	var mr *multipart.Reader
-
-	vars := mux.Vars(r)
-	username := vars["username"]
-	alias := vars["alias"]
-
-	user := validateAPIUser(w, r)
-	if user == nil {
-		return
-	}
-
-	if mr = multipartReader(w, r); mr == nil {
-		return
-	}
-
+func push(mr *multipart.Reader, user *db.UserRecord, alias string) error {
 	jsonPart, err := mr.NextPart()
 	if err != nil {
-		apiError(w, errors.Wrap(err, "reading json part"))
-		return
+		return errors.Wrap(err, "reading json part")
 	}
 
 	fileData, err := readPushedFileData(jsonPart)
 	if err != nil {
-		apiError(w, err)
-		return
+		return err
 	}
 
 	tx, err := db.Connection.Begin()
 	if err != nil {
-		apiError(w, errors.Wrap(err, "starting transaction for handle push"))
-		return
+		return errors.Wrap(err, "starting transaction for handle push")
 	}
 
-	ft, err := db.NewFileTransaction(tx, username, alias)
+	ft, err := db.NewFileTransaction(tx, user.Username, alias)
 	if err != nil {
-		apiError(w, db.Rollback(tx, err))
-		return
+		return db.Rollback(tx, err)
 	}
 
 	if !ft.FileExists {
 		if err := ft.SaveFile(user.ID, alias, fileData.Path); err != nil {
-			apiError(w, db.Rollback(tx, err))
-			return
+			return db.Rollback(tx, err)
 		}
 	} else {
 		if ft.Path != fileData.Path {
-			apiError(w, db.Rollback(tx, usererror.Invalid(fmt.Sprintf(
+			return db.Rollback(tx, usererror.Invalid(fmt.Sprintf(
 				"local path %q does not match remote path %q",
-				ft.Path, fileData.Path))))
-			return
+				ft.Path, fileData.Path)))
 		}
 	}
 
@@ -220,25 +195,46 @@ func handlePush(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err != nil {
-			apiError(w, db.Rollback(tx, errors.Wrap(err, "reading revision part")))
-			return
+			return db.Rollback(tx, errors.Wrap(err, "reading revision part"))
 		}
 
 		if err = savePushedRevision(ft, revisionPart, commitMap); err != nil {
-			apiError(w, db.Rollback(tx, err))
-			return
+			return db.Rollback(tx, err)
 		}
 	}
 
 	if err = ft.SetRevision(fileData.Revision); err != nil {
-		apiError(w, db.Rollback(tx, err))
-		return
+		return db.Rollback(tx, err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		apiError(w, errors.Wrap(err, "committing handle push transaction"))
+		return errors.Wrap(err, "committing handle push transaction")
+	}
+
+	return nil
+}
+
+// Request body is expected to be multipart.
+// The first part is a JSON encoding of dotfile.TrackingData
+// Subsequent parts are new revisions that need to be saved.
+// Each revision part should have be named as its hash.
+func handlePush(w http.ResponseWriter, r *http.Request) {
+	var mr *multipart.Reader
+
+	user := validateAPIUser(w, r)
+	if user == nil {
 		return
 	}
+
+	if mr = multipartReader(w, r); mr == nil {
+		return
+	}
+
+	if err := push(mr, user, mux.Vars(r)["alias"]); err != nil {
+		apiError(w, err)
+		return
+	}
+
 }
 
 func setJSON(w http.ResponseWriter, body interface{}) {
@@ -257,11 +253,13 @@ func authError(w http.ResponseWriter, err error) {
 func apiError(w http.ResponseWriter, err error) {
 	var usererr *usererror.Error
 
-	log.Print(err)
 	if db.NotFound(err) {
+		// Clients expect this when a file doesn't exist.
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
+
+	log.Printf("api error: %v", err)
 
 	if errors.As(err, &usererr) {
 		http.Error(w, usererr.Message, http.StatusBadRequest)
