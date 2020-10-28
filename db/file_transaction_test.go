@@ -14,7 +14,7 @@ func TestNewFileTransaction(t *testing.T) {
 
 	tx, err := Connection.Begin()
 	assert.NoError(t, err)
-	ft, err := NewFileTransaction(tx, testUsername, testAlias)
+	ft, err := NewFileTransaction(tx, testUserID, testAlias)
 
 	assert.NotNil(t, ft)
 	assert.NoError(t, err)

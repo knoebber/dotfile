@@ -10,6 +10,7 @@ import (
 // Reverter is the interface that wraps methods needed for reverting a tracked file.
 type Reverter interface {
 	Getter
+	HasCommit(hash string) (exists bool, err error)
 	Revert(buff *bytes.Buffer, hash string) (err error)
 }
 

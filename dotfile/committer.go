@@ -13,6 +13,7 @@ const initialCommitMessage = "Initial commit"
 // Committer is an interface for saving saving commits.
 type Committer interface {
 	Getter
+	HasCommit(hash string) (exists bool, err error)
 	SaveCommit(buff *bytes.Buffer, c *Commit) error
 }
 

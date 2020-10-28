@@ -1,10 +1,10 @@
 <main>
   {{- template "settings_header" . }}
-  {{- $email := .Data.user.Email }}
-  {{- $timezone := .Data.user.Timezone }}
+  {{- $email := .Email }}
+  {{- $timezone := .Timezone }}
   <section>
     <h2>User Data</h2>
-    <p>Joined: <strong>{{ .Data.user.CreatedAt }}</strong></p>
+    <p>Joined: <strong>{{ .UserCreatedAt }}</strong></p>
     {{- if $email }}
     <p>Email:
       <strong>{{ $email }}</strong>
@@ -18,7 +18,7 @@
     </p>
     {{- end }}
     <p>Theme:
-      <strong>{{ .Data.user.Theme }}</strong>
+      <strong>{{ .Theme }}</strong>
       <a href="/settings/theme">(edit)</a>
     </p>
   </section>

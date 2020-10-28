@@ -297,6 +297,7 @@ func forkFile(tx *sql.Tx, username, alias, hash string, newUserID int64) error {
 	return nil
 }
 
+// ValidateFileNotExists validates that no other file for user exists with alias or path.
 func ValidateFileNotExists(e Executor, userID int64, alias, path string) error {
 	var count int
 

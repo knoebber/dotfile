@@ -29,7 +29,7 @@ func TestTemplatesHTML(t *testing.T) {
 	vars := make(map[string]string)
 	vars["username"] = "testusername"
 	vars["alias"] = "testalias"
-	testSession := &db.SessionRecord{}
+	testSession := new(db.UserSession)
 	controls := new(db.PageControls)
 	_ = controls.Set()
 

@@ -22,16 +22,15 @@ type FileTransaction struct {
 
 // NewFileTransaction loads file information into a file transaction.
 // Exported fields will be zero valued when the file doesn't exist.
-func NewFileTransaction(tx *sql.Tx, username, alias string) (*FileTransaction, error) {
+func NewFileTransaction(tx *sql.Tx, userID int64, alias string) (*FileTransaction, error) {
 	ft := &FileTransaction{tx: tx}
 
 	row := ft.tx.
 		QueryRow(`
 SELECT files.id, current_commit_id, hash, path
 FROM files  
-JOIN users ON users.id = user_id
 JOIN commits ON current_commit_id = commits.id
-WHERE username = ? AND alias = ?`, username, alias)
+WHERE user_id = ? AND alias = ?`, userID, alias)
 
 	err := row.Scan(
 		&ft.FileID,
@@ -45,7 +44,7 @@ WHERE username = ? AND alias = ?`, username, alias)
 	}
 
 	if err != nil {
-		return nil, errors.Wrapf(err, "querying for user %q file %q", username, alias)
+		return nil, errors.Wrapf(err, "querying for user %d file %q", userID, alias)
 	}
 
 	ft.FileExists = true
@@ -55,13 +54,13 @@ WHERE username = ? AND alias = ?`, username, alias)
 
 // StageFile returns a file transaction loaded with a users temp file.
 // Returns an error when the temp file does not exist.
-func StageFile(tx *sql.Tx, username string, alias string) (*FileTransaction, error) {
-	ft, err := NewFileTransaction(tx, username, alias)
+func StageFile(tx *sql.Tx, userID int64, alias string) (*FileTransaction, error) {
+	ft, err := NewFileTransaction(tx, userID, alias)
 	if err != nil {
 		return nil, err
 	}
 
-	ft.Staged, err = TempFile(tx, username, alias)
+	ft.Staged, err = TempFile(tx, userID, alias)
 	if err != nil {
 		return nil, err
 	}
@@ -167,13 +166,13 @@ func (ft *FileTransaction) SetRevision(hash string) error {
 }
 
 // InitOrCommit uses the content in a temp file to initialize a file or create a new commit.
-func InitOrCommit(username, alias, message string) error {
+func InitOrCommit(userID int64, alias, message string) error {
 	tx, err := Connection.Begin()
 	if err != nil {
 		return errors.Wrap(err, "starting transaction for confirm temp file")
 	}
 
-	ft, err := StageFile(tx, username, alias)
+	ft, err := StageFile(tx, userID, alias)
 	if err != nil {
 		return Rollback(tx, err)
 	}

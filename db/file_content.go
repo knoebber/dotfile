@@ -1,18 +1,22 @@
 package db
 
-import "github.com/pkg/errors"
-
 // FileContent implements file.Getter.
 // It pulls content from temp_files and commits.
 type FileContent struct {
 	Username   string
+	UserID     int64
 	Alias      string
 	Connection Executor
 }
 
 // DirtyContent returns content from the users temp file.
+// Returns nil when UserID is not set - this is so that only file owners can see their temp.
 func (fc *FileContent) DirtyContent() ([]byte, error) {
-	temp, err := TempFile(fc.Connection, fc.Username, fc.Alias)
+	if fc.UserID < 1 {
+		return nil, nil
+	}
+
+	temp, err := TempFile(fc.Connection, fc.UserID, fc.Alias)
 	if err != nil {
 		return nil, err
 	}
@@ -28,22 +32,4 @@ func (fc *FileContent) Revision(hash string) ([]byte, error) {
 	}
 
 	return commit.Revision, nil
-}
-
-// HasCommit determines if a commit at hash exists.
-func (fc *FileContent) HasCommit(hash string) (exists bool, err error) {
-	var count int
-
-	err = fc.Connection.QueryRow(`
-SELECT COUNT(*) 
-FROM commits
-JOIN files ON files.id = file_id
-JOIN users ON users.id = user_id
-WHERE username = ? AND alias = ? AND hash = ?`, fc.Username, fc.Alias, hash).
-		Scan(&count)
-	if err != nil {
-		return false, errors.Wrapf(err, "has commit %q %q %q", fc.Username, fc.Alias, hash)
-	}
-	return count > 0, nil
-
 }

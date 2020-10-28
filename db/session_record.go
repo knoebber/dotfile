@@ -16,8 +16,6 @@ type SessionRecord struct {
 	ID        int64
 	Session   string `validate:"required"`
 	UserID    int64  `validate:"required"`
-	Username  string
-	Theme     UserTheme
 	IP        string
 	CreatedAt time.Time
 	DeletedAt *time.Time
@@ -79,41 +77,11 @@ func session() (string, error) {
 	return base64.URLEncoding.EncodeToString(buff), nil
 }
 
-// Session returns a valid session.
-func Session(e Executor, session string) (*SessionRecord, error) {
-	s := new(SessionRecord)
-
-	err := e.QueryRow(`
-SELECT sessions.id,
-       session,
-       users.id,
-       username,
-       theme,
-       sessions.created_at
-FROM sessions
-JOIN users ON users.id = user_id
-WHERE deleted_at IS NULL AND session = ?`, session).
-		Scan(
-			&s.ID,
-			&s.Session,
-			&s.UserID,
-			&s.Username,
-			&s.Theme,
-			&s.CreatedAt,
-		)
-
-	if err != nil {
-		return nil, errors.Wrapf(err, "querying for session %q", session)
-	}
-
-	return s, nil
-}
-
 // Logout sets the session to deleted.
-func Logout(e Executor, sessionID int64) error {
-	_, err := e.Exec("UPDATE sessions SET deleted_at = ? WHERE id = ?", time.Now(), sessionID)
+func Logout(e Executor, session string) error {
+	_, err := e.Exec("UPDATE sessions SET deleted_at = ? WHERE session = ?", time.Now(), session)
 	if err != nil {
-		return errors.Wrapf(err, "setting session %d to deleted", sessionID)
+		return errors.Wrapf(err, "setting session %q to deleted", session)
 	}
 
 	return nil

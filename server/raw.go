@@ -28,7 +28,7 @@ func handleRawFile(w http.ResponseWriter, r *http.Request) {
 func handleRawUncompressedCommit(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	commit, err := db.UncompressCommit(db.Connection, vars["username"], vars["alias"], vars["hash"])
+	commit, err := db.UncompressCommit(db.Connection, vars["username"], vars["alias"], vars["hash"], nil)
 	if err != nil {
 		rawContentError(w, err)
 		return

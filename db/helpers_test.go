@@ -14,18 +14,19 @@ import (
 )
 
 const (
-	testDir            = "testdata/"
-	testAlias          = "testalias"
-	testPath           = "~/dotfile/test-file.txt"
-	testUserID         = 1
-	testContent        = "Testing content. Stored as a blob."
-	testUpdatedContent = testContent + "\n New content!\n"
-	testHash           = "9abdbcf4ea4e2c1c077c21b8c2f2470ff36c31ce"
-	testMessage        = "commit message"
-	testUsername       = "genericusername"
-	testPassword       = "ilovecatS!"
-	testEmail          = "dot@dotfilehub.com"
-	testCliToken       = "12345678"
+	testDir                = "testdata/"
+	testAlias              = "testalias"
+	testPath               = "~/dotfile/test-file.txt"
+	testUserID             = 1
+	testContent            = "Testing content. Stored as a blob."
+	testUpdatedContent     = testContent + "\n New content!\n"
+	testHash               = "9abdbcf4ea4e2c1c077c21b8c2f2470ff36c31ce"
+	testMessage            = "commit message"
+	testUsername           = "genericusername"
+	testPassword           = "ilovecatS!"
+	testEmail              = "dot@dotfilehub.com"
+	testCliToken           = "12345678"
+	testPasswordResetToken = "12345678"
 )
 
 func assertUsererror(t *testing.T, err error) {
@@ -72,14 +73,6 @@ func testUserList(t *testing.T) (usernames []string) {
 
 }
 
-func countTestUser(t *testing.T, username string) (count int) {
-	err := Connection.
-		QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", username).
-		Scan(&count)
-	failIf(t, err, "counting test user", username)
-	return
-}
-
 func resetTestDB(t *testing.T) {
 	usernames := testUserList(t)
 
@@ -91,7 +84,9 @@ func resetTestDB(t *testing.T) {
 }
 
 func createTestUser(t *testing.T, userID int64, username, email string) {
-	if countTestUser(t, username) > 0 {
+	exists, err := userExists(Connection, username)
+	failIf(t, err, "counting", username)
+	if exists {
 		return
 	}
 
@@ -101,13 +96,14 @@ func createTestUser(t *testing.T, userID int64, username, email string) {
 	}
 
 	_, err = Connection.Exec(`
-INSERT INTO users(id, username, email, password_hash, cli_token) 
-VALUES(?, ?, ?, ?, ?)`,
+INSERT INTO users(id, username, email, password_hash, cli_token, password_reset_token) 
+VALUES(?, ?, ?, ?, ?, ?)`,
 		userID,
 		username,
 		email,
 		hashed,
 		testCliToken,
+		testPasswordResetToken,
 	)
 	if err != nil {
 		t.Fatalf("creating test user %q: %s", username, err)
@@ -150,7 +146,7 @@ func initTestFile(t *testing.T) *FileView {
 	createTestTempFile(t, testContent)
 
 	tx := testTransaction(t)
-	ft, err := StageFile(tx, testUsername, testAlias)
+	ft, err := StageFile(tx, testUserID, testAlias)
 	failIf(t, err, "new storage in init test file")
 	failIf(t, dotfile.Init(ft, testPath, testAlias), "initialing test file")
 	failIf(t, tx.Commit())
@@ -165,10 +161,10 @@ func initTestFileAndCommit(t *testing.T) (initialCommit CommitSummary, currentCo
 	initTestFile(t)
 
 	// Latest commit will have this content.
-	createTestTempFile(t, testUpdatedContent)
+	createTestTempFile(t, testUsername)
 
 	tx := testTransaction(t)
-	ft, err := StageFile(tx, testUsername, testAlias)
+	ft, err := StageFile(tx, testUserID, testAlias)
 	failIf(t, err, "staging test file")
 
 	// Ensure that the new commit has a different timestamp - unix time is by the second.
@@ -177,7 +173,7 @@ func initTestFileAndCommit(t *testing.T) (initialCommit CommitSummary, currentCo
 	failIf(t, dotfile.NewCommit(ft, "Commiting test updated content"))
 	failIf(t, tx.Commit())
 
-	lst, err := CommitList(Connection, testUsername, testAlias)
+	lst, err := CommitList(Connection, testUsername, testAlias, nil)
 	failIf(t, err, "getting test commit")
 
 	if len(lst) != 2 {

@@ -12,8 +12,7 @@ SELECT
 alias,
 path,
 username,
-updated_at,
-timezone
+updated_at
 `
 	fileSearchBody = `
 FROM users
@@ -31,11 +30,8 @@ type FileSearchResult struct {
 }
 
 // SearchFiles looks for files by their alias or path.
-func SearchFiles(e Executor, controls *PageControls) (*HTMLTable, error) {
-	var (
-		timezone  *string
-		updatedAt time.Time
-	)
+func SearchFiles(e Executor, controls *PageControls, timezone *string) (*HTMLTable, error) {
+	var updatedAt time.Time
 
 	res := &HTMLTable{
 		Columns:  []string{"Alias", "Path", "Username", "Updated At"},
@@ -65,7 +61,6 @@ func SearchFiles(e Executor, controls *PageControls) (*HTMLTable, error) {
 			&current.Path,
 			&current.Username,
 			&updatedAt,
-			&timezone,
 		); err != nil {
 			return nil, errors.Wrap(err, "scanning files for file search")
 		}

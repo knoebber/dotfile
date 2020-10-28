@@ -14,7 +14,7 @@ func searchFiles(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, err)
 	}
 	// TODO timestamps aren't in users timezone. Session should have a timezone field.
-	p.Table, err = db.SearchFiles(db.Connection, controls)
+	p.Table, err = db.SearchFiles(db.Connection, controls, p.Timezone())
 	if err != nil {
 		return p.setError(w, err)
 	}

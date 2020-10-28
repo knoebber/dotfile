@@ -78,7 +78,7 @@ func createTestFile(t *testing.T, userID int64) {
 		t.Fatalf("creating temp file: %s", err)
 	}
 
-	if err := db.InitOrCommit(testUsername, testAlias, ""); err != nil {
+	if err := db.InitOrCommit(userID, testAlias, ""); err != nil {
 		t.Fatalf("creating test file: %s", err)
 	}
 }

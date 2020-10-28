@@ -38,7 +38,7 @@ func handleFileListJSON(w http.ResponseWriter, r *http.Request) {
 	username := vars["username"]
 	addPath := r.URL.Query().Get("path") == "true"
 
-	files, err := db.FilesByUsername(db.Connection, username)
+	files, err := db.FilesByUsername(db.Connection, username, nil)
 	if err != nil {
 		apiError(w, err)
 		return
@@ -73,25 +73,20 @@ func handleRawCompressedCommit(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func validateAPIUser(w http.ResponseWriter, r *http.Request) *db.UserRecord {
-	username, password, ok := r.BasicAuth()
+func validateAPIUser(w http.ResponseWriter, r *http.Request) int64 {
+	username, token, ok := r.BasicAuth()
 	if !ok {
 		authError(w, errors.New("basic auth not provided"))
-		return nil
+		return 0
 	}
 
-	user, err := db.User(db.Connection, username)
+	userID, err := db.UserLoginAPI(db.Connection, username, token)
 	if err != nil {
 		authError(w, err)
-		return nil
+		return 0
 	}
 
-	if user.CLIToken != password {
-		authError(w, errors.New("user CLI token does not match password"))
-		return nil
-	}
-
-	return user
+	return userID
 }
 
 func multipartReader(w http.ResponseWriter, r *http.Request) *multipart.Reader {
@@ -153,7 +148,7 @@ func savePushedRevision(ft *db.FileTransaction, p *multipart.Part, commitMap map
 	return nil
 }
 
-func push(mr *multipart.Reader, user *db.UserRecord, alias string) error {
+func push(mr *multipart.Reader, userID int64, alias string) error {
 	jsonPart, err := mr.NextPart()
 	if err != nil {
 		return errors.Wrap(err, "reading json part")
@@ -169,13 +164,13 @@ func push(mr *multipart.Reader, user *db.UserRecord, alias string) error {
 		return errors.Wrap(err, "starting transaction for handle push")
 	}
 
-	ft, err := db.NewFileTransaction(tx, user.Username, alias)
+	ft, err := db.NewFileTransaction(tx, userID, alias)
 	if err != nil {
 		return db.Rollback(tx, err)
 	}
 
 	if !ft.FileExists {
-		if err := ft.SaveFile(user.ID, alias, fileData.Path); err != nil {
+		if err := ft.SaveFile(userID, alias, fileData.Path); err != nil {
 			return db.Rollback(tx, err)
 		}
 	} else {
@@ -221,8 +216,8 @@ func push(mr *multipart.Reader, user *db.UserRecord, alias string) error {
 func handlePush(w http.ResponseWriter, r *http.Request) {
 	var mr *multipart.Reader
 
-	user := validateAPIUser(w, r)
-	if user == nil {
+	userID := validateAPIUser(w, r)
+	if userID < 1 {
 		return
 	}
 
@@ -230,7 +225,7 @@ func handlePush(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := push(mr, user, mux.Vars(r)["alias"]); err != nil {
+	if err := push(mr, userID, mux.Vars(r)["alias"]); err != nil {
 		apiError(w, err)
 		return
 	}

@@ -12,7 +12,7 @@ func updateFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	alias := r.Form.Get("alias")
 	path := r.Form.Get("path")
 
-	record, err := db.File(db.Connection, p.Session.Username, currentAlias)
+	record, err := db.File(db.Connection, p.Username(), currentAlias)
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -21,7 +21,7 @@ func updateFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, err)
 	}
 
-	http.Redirect(w, r, "/"+p.Session.Username+"/"+alias, http.StatusSeeOther)
+	http.Redirect(w, r, "/"+p.Username()+"/"+alias, http.StatusSeeOther)
 	return true
 }
 
@@ -40,7 +40,7 @@ func clearFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, errors.Wrap(err, "committing transaction for clear file"))
 	}
 
-	http.Redirect(w, r, "/"+p.Session.Username+"/"+alias+"/commits", http.StatusSeeOther)
+	http.Redirect(w, r, "/"+p.Username()+"/"+alias+"/commits", http.StatusSeeOther)
 	return true
 }
 
@@ -64,7 +64,7 @@ func deleteFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, errors.Wrap(err, "committing transaction for delete file"))
 	}
 
-	http.Redirect(w, r, "/"+p.Session.Username, http.StatusSeeOther)
+	http.Redirect(w, r, "/"+p.Username(), http.StatusSeeOther)
 	return true
 
 }

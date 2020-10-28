@@ -67,7 +67,6 @@ func (u *UserRecord) insertStmt(e Executor) (sql.Result, error) {
 }
 
 func (u *UserRecord) check(e Executor) error {
-	var count int
 	if err := validateStringSizes(u.Username, u.Email); err != nil {
 		return err
 	}
@@ -76,13 +75,12 @@ func (u *UserRecord) check(e Executor) error {
 		return err
 	}
 
-	err := e.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", u.Username).
-		Scan(&count)
+	exists, err := userExists(e, u.Username)
 	if err != nil {
-		return errors.Wrapf(err, "checking if username %q is unique", u.Username)
+		return err
 	}
 
-	if count > 0 {
+	if exists {
 		return usererror.Duplicate("Username", u.Username)
 	}
 
@@ -125,6 +123,18 @@ func compareUserPassword(e Executor, username string, password string) error {
 
 	return nil
 
+}
+
+// ValidateUserExists throws a sql.ErrNoRows when the username does not exist.
+func ValidateUserExists(e Executor, username string) error {
+	exists, err := userExists(e, username)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return sql.ErrNoRows
+	}
+	return nil
 }
 
 // SetPasswordResetToken creates and saves a reset token for the user.
@@ -204,51 +214,6 @@ WHERE username = ?`, passwordHash, username)
 	}
 
 	return username, nil
-}
-
-// User returns the user with username.
-// This does not set password_hash or password_reset_token.
-func User(e Executor, username string) (*UserRecord, error) {
-	var (
-		email, timezone *string
-		createdAt       time.Time
-	)
-
-	user := new(UserRecord)
-
-	err := e.QueryRow(`
-SELECT id,
-       username,
-       email,
-       email_confirmed,
-       cli_token,
-       theme,
-       timezone,
-       created_at
-FROM users
-WHERE username = ?
-`, username).Scan(
-		&user.ID,
-		&user.Username,
-		&email,
-		&user.EmailConfirmed,
-		&user.CLIToken,
-		&user.Theme,
-		&timezone,
-		&createdAt,
-	)
-	if err != nil {
-		return nil, errors.Wrapf(err, "querying for user %q", username)
-	}
-	if email != nil {
-		user.Email = *email
-	}
-	if timezone != nil {
-		user.Timezone = *timezone
-	}
-	user.CreatedAt = formatTime(createdAt, timezone)
-
-	return user, nil
 }
 
 // CreateUser inserts a new user into the users table.
@@ -367,10 +332,10 @@ WHERE username = ?`, passwordHash, username)
 }
 
 // UpdateTheme updates a users theme setting.
-func UpdateTheme(e Executor, username string, theme UserTheme) error {
-	_, err := e.Exec("UPDATE users SET theme = ? WHERE username = ?", theme, username)
+func UpdateTheme(e Executor, userID int64, theme UserTheme) error {
+	_, err := e.Exec("UPDATE users SET theme = ? WHERE id = ?", theme, userID)
 	if err != nil {
-		return errors.Wrapf(err, "updating %q to theme %q", username, theme)
+		return errors.Wrapf(err, "updating user %d to theme %q", userID, theme)
 	}
 
 	return nil
@@ -384,6 +349,20 @@ func UserLogin(e Executor, username, password, ip string) (*SessionRecord, error
 	}
 
 	return createSession(e, username, ip)
+}
+
+// UserLoginAPI checks a username and CLI token combination.
+func UserLoginAPI(e Executor, username, cliToken string) (int64, error) {
+	var userID int64
+
+	err := e.QueryRow(`
+SELECT id FROM users WHERE username = ? AND cli_token = ?`, username, cliToken).
+		Scan(&userID)
+	if err != nil {
+		return 0, errors.Wrapf(err, "attempting to authenticate user %q for API access", username)
+	}
+
+	return userID, nil
 }
 
 // DeleteUser deletes a user and their data.
@@ -402,6 +381,17 @@ func DeleteUser(username, password string) error {
 	return nil
 }
 
+func userExists(e Executor, username string) (bool, error) {
+	var count int
+	err := e.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", username).
+		Scan(&count)
+	if err != nil {
+		return false, errors.Wrapf(err, "checking if username %q exists", username)
+	}
+
+	return count == 1, nil
+}
+
 func deleteUser(tx *sql.Tx, username, password string) error {
 	if err := compareUserPassword(tx, username, password); err != nil {
 		return err
@@ -411,7 +401,7 @@ func deleteUser(tx *sql.Tx, username, password string) error {
 		return err
 	}
 
-	fileList, err := FilesByUsername(tx, username)
+	fileList, err := FilesByUsername(tx, username, nil)
 	if err != nil {
 		return err
 	}

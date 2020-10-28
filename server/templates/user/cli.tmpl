@@ -7,8 +7,8 @@
     <button>Submit</button>
   </form>
   {{ else }}
-    <pre><code>dotfile config username {{ .Session.Username }}</code></pre>
-    <pre><code>dotfile config token {{ .Data.token }}</code></pre>
+    <pre><code>dotfile config username {{ .Username }}</code></pre>
+    <pre><code>dotfile config token {{ .CLIToken }}</code></pre>
     <pre><code>dotfile config remote {{ .Data.remote }}</code></pre>
   <form method="post" class="inline">
     <input type="hidden" name="token" value="{{ .Data.token }}"/>

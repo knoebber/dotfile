@@ -119,15 +119,14 @@ DELETE FROM temp_files WHERE user_id = (SELECT id FROM users WHERE username = ?)
 // TempFile finds a user's temp file.
 // Users can only have one temp file at a time so alias can be empty.
 // When alias is present, ensures that temp file exists with alias.
-func TempFile(e Executor, username string, alias string) (*TempFileRecord, error) {
+func TempFile(e Executor, userID int64, alias string) (*TempFileRecord, error) {
 	res := new(TempFileRecord)
 
 	if err := e.
 		QueryRow(`
 SELECT temp_files.* 
 FROM temp_files 
-JOIN users ON user_id = users.id
-WHERE username = ? AND (? = '' OR alias = ?)`, username, alias, alias).
+WHERE user_id = ? AND (? = '' OR alias = ?)`, userID, alias, alias).
 		Scan(
 			&res.ID,
 			&res.UserID,
@@ -136,7 +135,7 @@ WHERE username = ? AND (? = '' OR alias = ?)`, username, alias, alias).
 			&res.Content,
 			&res.CreatedAt,
 		); err != nil {
-		return nil, errors.Wrapf(err, "querying for user %q temp file %q", username, alias)
+		return nil, errors.Wrapf(err, "querying for user %d temp file %q", userID, alias)
 	}
 
 	buff, err := dotfile.Uncompress(res.Content)

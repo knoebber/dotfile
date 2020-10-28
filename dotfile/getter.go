@@ -13,7 +13,6 @@ import (
 type Getter interface {
 	DirtyContent() (contents []byte, err error)        // Uncommitted changes.
 	Revision(hash string) (revision []byte, err error) // Revision at hash.
-	HasCommit(hash string) (exists bool, err error)    // Checks if commit exists.
 }
 
 // UncompressRevision reads a revision and uncompresses it.

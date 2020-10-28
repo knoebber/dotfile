@@ -10,7 +10,7 @@ import (
 
 func loadCommits(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	alias := p.Vars["alias"]
-	commits, err := db.CommitList(db.Connection, p.Vars["username"], alias)
+	commits, err := db.CommitList(db.Connection, p.Vars["username"], alias, p.Timezone())
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -30,7 +30,7 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	hash := p.Vars["hash"]
 	username := p.Vars["username"]
 
-	commit, err := db.UncompressCommit(db.Connection, username, alias, hash)
+	commit, err := db.UncompressCommit(db.Connection, username, alias, hash, p.Timezone())
 	if err != nil {
 		return p.setError(w, err)
 	}

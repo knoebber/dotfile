@@ -16,6 +16,7 @@ type CommitSummary struct {
 	Timestamp          int64
 	DateString         string
 	ForkedFromUsername *string // The owner of the file that this commit was forked from.
+	// TODO ForkedFromAlias - for the case that new owner changes the alias, link breaks.
 }
 
 // CommitView is used for an individual commit view.
@@ -26,9 +27,8 @@ type CommitView struct {
 }
 
 // CommitList gets a summary of all commits for a file.
-func CommitList(e Executor, username, alias string) ([]CommitSummary, error) {
+func CommitList(e Executor, username, alias string, timezone *string) ([]CommitSummary, error) {
 	var (
-		timezone   *string
 		forkedFrom *int64
 		result     []CommitSummary
 	)
@@ -38,7 +38,6 @@ SELECT hash,
        forked_from,
        message, 
        current_commit_id = commits.id AS current,
-       timezone,
        timestamp
 FROM commits
 JOIN files ON commits.file_id = files.id
@@ -59,7 +58,6 @@ ORDER BY timestamp DESC
 			&forkedFrom,
 			&c.Message,
 			&c.Current,
-			&timezone,
 			&c.Timestamp,
 		); err != nil {
 			return nil, errors.Wrapf(err, "scanning commits for user %q file %q", username, alias)
@@ -83,9 +81,8 @@ ORDER BY timestamp DESC
 }
 
 // UncompressCommit gets a commit and uncompresses its contents.
-func UncompressCommit(e Executor, username, alias, hash string) (*CommitView, error) {
+func UncompressCommit(e Executor, username, alias, hash string, timezone *string) (*CommitView, error) {
 	var (
-		timezone   *string
 		forkedFrom *int64
 		revision   []byte
 	)
@@ -99,7 +96,6 @@ SELECT hash,
        path,
        current_commit_id = commits.id AS current,
        revision,
-       timezone,
        timestamp
 FROM commits
 JOIN files ON commits.file_id = files.id
@@ -113,7 +109,6 @@ WHERE username = ? AND alias = ? AND hash = ?
 			&result.Path,
 			&result.Current,
 			&revision,
-			&timezone,
 			&result.Timestamp,
 		)
 	if err != nil {

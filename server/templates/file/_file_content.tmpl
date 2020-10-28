@@ -30,7 +30,7 @@
   </form>
   {{- end }}
   {{- if and (not $owned) .Session }}
-  <form method="post" class="inline" action="/{{ .Session.Username }}/{{ $alias }}">
+  <form method="post" class="inline" action="/{{ .Username }}/{{ $alias }}">
     <input type="hidden" name="username" value="{{ $username }}"/>
     <input type="hidden" name="alias" value="{{ $alias }}"/>
     <input type="hidden" name="hash" value="{{ .Data.hash }}"/>

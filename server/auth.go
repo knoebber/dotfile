@@ -11,8 +11,7 @@ import (
 
 const passwordResetSubject = "Dotfilehub Password Reset"
 
-// Redirects to index when session exists.
-func checkSession(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+func redirectWhenLoggedIn(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	if p.Session != nil {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return true
@@ -128,7 +127,7 @@ func handleSignup(secure bool) pageBuilder {
 }
 
 func handleLogout(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	if err := db.Logout(db.Connection, p.Session.ID); err != nil {
+	if err := db.Logout(db.Connection, p.session()); err != nil {
 		log.Print(err)
 	}
 
@@ -145,7 +144,7 @@ func loginHandler(secure bool) http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "login.tmpl",
 		title:        loginTitle,
-		loadData:     checkSession,
+		loadData:     redirectWhenLoggedIn,
 		handleForm:   handleLogin(secure),
 	})
 }
@@ -154,7 +153,7 @@ func signupHandler(secure bool) http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "signup.tmpl",
 		title:        "Signup",
-		loadData:     checkSession,
+		loadData:     redirectWhenLoggedIn,
 		handleForm:   handleSignup(secure),
 	})
 }

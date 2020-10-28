@@ -43,7 +43,7 @@ type Page struct {
 	Data           map[string]interface{}
 
 	Table        *db.HTMLTable
-	Session      *db.SessionRecord
+	Session      *db.UserSession
 	templateName string
 	htmlFile     string
 	// When true restrict page access to logged in page owners.
@@ -62,6 +62,73 @@ func (p *Page) Owned() bool {
 
 	return pageOwner == "" ||
 		(p.Session != nil && strings.EqualFold(p.Session.Username, pageOwner))
+}
+
+// Timezone returns the logged in user's timezone.
+func (p *Page) Timezone() *string {
+	if p.Session != nil {
+		return p.Session.Timezone
+	}
+	return nil
+}
+
+// Username returns the logged in user's username.
+func (p *Page) Username() string {
+	if p.Session != nil {
+		return p.Session.Username
+	}
+	return ""
+}
+
+// Email returns the logged in user's email.
+func (p *Page) Email() string {
+	if p.Session != nil && p.Session.Email != nil {
+		return *p.Session.Email
+	}
+
+	return ""
+}
+
+// Theme returns the logged in user's theme.
+func (p *Page) Theme() db.UserTheme {
+	if p.Session != nil {
+		return p.Session.Theme
+	}
+
+	return ""
+}
+
+// CLIToken returns the logged in user's CLI token.
+func (p *Page) CLIToken() string {
+	if p.Session != nil {
+		return p.Session.CLIToken
+	}
+
+	return ""
+}
+
+// UserCreatedAt returns the logged in user's creation date.
+func (p *Page) UserCreatedAt() string {
+	if p.Session != nil {
+		return p.Session.UserCreatedAt
+	}
+
+	return ""
+}
+
+func (p *Page) session() string {
+	if p.Session != nil {
+		return p.Session.Session
+	}
+	return ""
+}
+
+func (p *Page) userID() int64 {
+	if p.Session != nil {
+		return p.Session.UserID
+	}
+
+	return -1
 }
 
 func (p *Page) flashSuccess(msg string) {

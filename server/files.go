@@ -18,12 +18,12 @@ func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	if err != nil {
 		return p.setError(w, err)
 	}
-	if err := db.ValidateFileNotExists(db.Connection, p.Session.UserID, alias, path); err != nil {
+	if err := db.ValidateFileNotExists(db.Connection, p.userID(), alias, path); err != nil {
 		return p.setError(w, err)
 	}
 
 	tempFile := &db.TempFileRecord{
-		UserID:  p.Session.UserID,
+		UserID:  p.userID(),
 		Alias:   alias,
 		Path:    path,
 		Content: []byte(content),
@@ -50,7 +50,7 @@ func editFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	path := existingFile.Path
 
 	tempFile := &db.TempFileRecord{
-		UserID:  p.Session.UserID,
+		UserID:  p.userID(),
 		Alias:   alias,
 		Path:    path,
 		Content: []byte(content),
@@ -67,7 +67,7 @@ func editFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 // Handles submitting the confirm file form.
 // Either initializes a new file or makes a commit to an existing.
 func confirmTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	if err := db.InitOrCommit(p.Session.Username, p.Vars["alias"], r.Form.Get("message")); err != nil {
+	if err := db.InitOrCommit(p.userID(), p.Vars["alias"], r.Form.Get("message")); err != nil {
 		return p.setError(w, err)
 	}
 
@@ -137,7 +137,7 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 		return
 	}
 	if editing {
-		tempFile, err := db.TempFile(db.Connection, p.Session.Username, pageAlias)
+		tempFile, err := db.TempFile(db.Connection, p.userID(), pageAlias)
 		if err != nil && !db.NotFound(err) {
 			return p.setError(w, err)
 		}
@@ -161,7 +161,7 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 		p.Data["content"] = string(file.Content)
 		return
 	} else if !newFile && !editing && at != "" {
-		commit, err := db.UncompressCommit(db.Connection, p.Vars["username"], pageAlias, at)
+		commit, err := db.UncompressCommit(db.Connection, p.Vars["username"], pageAlias, at, p.Timezone())
 		if err != nil {
 			return p.setError(w, err)
 		}
@@ -188,7 +188,8 @@ func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bo
 
 	diff, err := dotfile.DiffPrettyHTML(&db.FileContent{
 		Connection: db.Connection,
-		Username:   p.Session.Username,
+		Username:   p.Username(),
+		UserID:     p.userID(),
 		Alias:      alias,
 	}, f.Hash, "")
 
@@ -202,7 +203,7 @@ func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bo
 
 // Loads the contents of a users temp file for the new file page.
 func loadNewFileConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	tempFile, err := db.TempFile(db.Connection, p.Session.Username, p.Vars["alias"])
+	tempFile, err := db.TempFile(db.Connection, p.userID(), p.Vars["alias"])
 	if err != nil {
 		return p.setError(w, err)
 	}

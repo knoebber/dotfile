@@ -70,11 +70,10 @@ WHERE username = ? AND alias = ?
 }
 
 // FilesByUsername returns all of a users files.
-func FilesByUsername(e Executor, username string) ([]FileSummary, error) {
+func FilesByUsername(e Executor, username string, timezone *string) ([]FileSummary, error) {
 	var (
-		alias, path, timezone *string
-		updatedAt             time.Time
-		result                []FileSummary
+		updatedAt time.Time
+		result    []FileSummary
 	)
 
 	f := FileSummary{}
@@ -83,7 +82,6 @@ func FilesByUsername(e Executor, username string) ([]FileSummary, error) {
 SELECT alias,
        path,
        COUNT(commits.id) AS num_commits,
-       timezone,
        updated_at
 FROM users
 JOIN files ON user_id = users.id
@@ -98,19 +96,15 @@ ORDER BY alias`, username)
 
 	for rows.Next() {
 		if err := rows.Scan(
-			&alias,
-			&path,
+			&f.Alias,
+			&f.Path,
 			&f.NumCommits,
-			&timezone,
 			&updatedAt,
 		); err != nil {
 			return nil, errors.Wrapf(err, "scanning files for user %q", username)
 		}
 
 		f.UpdatedAt = formatTime(updatedAt, timezone)
-		f.Alias = *alias
-		f.Path = *path
-
 		result = append(result, f)
 	}
 

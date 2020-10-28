@@ -8,7 +8,7 @@ import (
 )
 
 func handleEmail(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	if err := db.UpdateEmail(db.Connection, p.Session.UserID, r.Form.Get("email")); err != nil {
+	if err := db.UpdateEmail(db.Connection, p.userID(), r.Form.Get("email")); err != nil {
 		return p.setError(w, err)
 	}
 	p.Data["email"] = r.Form.Get("email")
@@ -28,7 +28,7 @@ func handleTokenForm(w http.ResponseWriter, r *http.Request, p *Page) (done bool
 	}
 
 	password := r.Form.Get("password")
-	if err := db.CheckPassword(db.Connection, p.Session.Username, password); err != nil {
+	if err := db.CheckPassword(db.Connection, p.Username(), password); err != nil {
 		return p.setError(w, err)
 	}
 
@@ -46,7 +46,7 @@ func handlePassword(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 		return p.setError(w, usererror.Invalid("Confirm does not match."))
 	}
 
-	if err := db.UpdatePassword(db.Connection, p.Session.Username, currentPass, newPass); err != nil {
+	if err := db.UpdatePassword(db.Connection, p.Username(), currentPass, newPass); err != nil {
 		return p.setError(w, err)
 	}
 
@@ -73,7 +73,7 @@ func handleDeleteUser(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 func handleTheme(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	newTheme := db.UserTheme(r.Form.Get("theme"))
 
-	if err := db.UpdateTheme(db.Connection, p.Session.Username, newTheme); err != nil {
+	if err := db.UpdateTheme(db.Connection, p.userID(), newTheme); err != nil {
 		return p.setError(w, err)
 	}
 	p.Session.Theme = newTheme
@@ -92,26 +92,9 @@ func handleTimezone(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 
 func loadUserCLI(config Config) pageBuilder {
 	return func(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-		user, err := db.User(db.Connection, p.Session.Username)
-		if err != nil {
-			return p.setError(w, err)
-		}
-
-		p.Data["token"] = user.CLIToken
 		p.Data["remote"] = config.URL(r)
-
 		return
 	}
-}
-
-func loadUserSettings(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	user, err := db.User(db.Connection, p.Session.Username)
-	if err != nil {
-		return p.setError(w, err)
-	}
-
-	p.Data["user"] = user
-	return
 }
 
 func loadThemes(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
@@ -124,16 +107,13 @@ func loadThemes(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 
 func loadUserFiles(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	username := p.Vars["username"]
-	// Not doing anything with the user yet
-	// Error is used to throw 404 when the user doesn't exist.
-	_, err := db.User(db.Connection, username)
-	if err != nil {
+	p.Title = username
+
+	if err := db.ValidateUserExists(db.Connection, username); err != nil {
 		return p.setError(w, err)
 	}
 
-	p.Title = username
-
-	files, err := db.FilesByUsername(db.Connection, username)
+	files, err := db.FilesByUsername(db.Connection, username, p.Timezone())
 	if db.NotFound(err) {
 		return
 	} else if err != nil {
@@ -155,7 +135,6 @@ func settingsHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "user_settings.tmpl",
 		title:        settingsTitle,
-		loadData:     loadUserSettings,
 		handleForm:   handleEmail,
 		protected:    true,
 	})
@@ -185,7 +164,6 @@ func emailHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "email.tmpl",
 		title:        "Set Email",
-		loadData:     loadUserSettings,
 		handleForm:   handleEmail,
 		protected:    true,
 	})
@@ -195,7 +173,6 @@ func timezoneHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "timezone.tmpl",
 		title:        "Set Timezone",
-		loadData:     loadUserSettings,
 		handleForm:   handleTimezone,
 		protected:    true,
 	})
