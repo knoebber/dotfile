@@ -1,11 +1,9 @@
 #+TITLE: Web Documentation
 * Dotfilehub
-[[https://dotfilehub.com][Dotfilehub]] is a web front end for Dotfile. It is designed to be usable
-with basic browsers that do not support JavaScript. This could be
-useful for finding files from the CLI only - maybe X11 isn't starting
-and you want to find =~/.xinitrc= examples.
+[[https://dotfilehub.com][Dotfilehub]] is a web interface for Dotfile. It has no JavaScript and
+should be usable with basic browsers.
 
-The index page is a form that does a site wide file search. It finds
+The index page is a form that does a global search. It finds
 files that have aliases or paths that match any part of the
 query. Results can be ordered by clicking the links on the table
 header.
@@ -34,14 +32,17 @@ The path is the location that the CLI will install the file to. Paths
 must start in either =/= or =~/=, E.G. =~/.bashrc=, =/etc/aliases=. It
 cannot have a trailing slash.
 
-Carriage return characters, "\r", are stripped before being saved.
+Carriage return characters - "\r" - are stripped before being saved.
 ** Edit
 Editing a file is the same as committing changes with the CLI. This
 will show the diff before confirming the new change. Commits can be
 rolled back by selecting a different commit and hitting "revert".
+
+Like create, all carriage return characters are stripped from the
+edited file.
 ** Settings
 File settings provides the following options: 
-+ Update a files alias or path
++ Update a file's alias or path
 + Remove all commits except the current
 + Delete the file
 Be careful - changing the alias or path can cause CLI operations that

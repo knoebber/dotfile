@@ -14,6 +14,8 @@ const (
 	testUsername = "testusername"
 	testPassword = "test_password"
 	testAlias    = "test_alias"
+	testEmail    = "test@example.com"
+	testTZ       = "America/Los_Angeles"
 	testFilePath = "/" + testUsername + "/" + testAlias + "/no_hash"
 )
 

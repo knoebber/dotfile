@@ -81,7 +81,7 @@ func ReadConfig(path string) (*Config, error) {
 	}
 
 	if err = json.Unmarshal(bytes, cfg); err != nil {
-		return nil, errors.Wrapf(err, "unmarshaling user config to struct")
+		return nil, errors.Wrap(err, "unmarshaling user config to struct")
 	}
 
 	return cfg, nil
