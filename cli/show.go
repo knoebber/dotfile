@@ -68,6 +68,9 @@ func (sc *showCommand) showRemote() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if content == nil {
+		return nil, fmt.Errorf("file not found")
+	}
 
 	if err := json.Indent(&buff, content, "", "  "); err != nil {
 		return nil, err
