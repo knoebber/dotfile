@@ -8,10 +8,11 @@ import (
 )
 
 func handleEmail(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	if err := db.UpdateEmail(db.Connection, p.userID(), r.Form.Get("email")); err != nil {
+	newEmail := r.Form.Get("email")
+	if err := db.UpdateEmail(db.Connection, p.userID(), newEmail); err != nil {
 		return p.setError(w, err)
 	}
-	p.Data["email"] = r.Form.Get("email")
+	p.Session.Email = &newEmail
 
 	p.flashSuccess("Updated email")
 	return
@@ -82,10 +83,12 @@ func handleTheme(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 }
 
 func handleTimezone(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	if err := db.UpdateTimezone(db.Connection, p.Session.UserID, r.Form.Get("timezone")); err != nil {
+	newTimezone := r.Form.Get("timezone")
+	if err := db.UpdateTimezone(db.Connection, p.Session.UserID, newTimezone); err != nil {
 		return p.setError(w, err)
 	}
 
+	p.Session.Timezone = &newTimezone
 	p.flashSuccess("Updated timezone")
 	return
 }
