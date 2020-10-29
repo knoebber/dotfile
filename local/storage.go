@@ -261,7 +261,7 @@ func (s *Storage) Push(client *dotfileclient.Client) error {
 // Pull retrieves a file's commits from a dotfile server.
 // Updates the local file with the new content from remote.
 // FileData does not need to be set; its possible to pull a file that does not yet exist.
-func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
+func (s *Storage) Pull(client *dotfileclient.Client) error {
 	var newHashes []string
 
 	hasSavedData := s.hasSavedData()
@@ -297,12 +297,6 @@ func (s *Storage) Pull(client *dotfileclient.Client, createDirs bool) error {
 	path, err := s.Path()
 	if err != nil {
 		return err
-	}
-
-	if createDirs {
-		if err := createDirectories(path); err != nil {
-			return err
-		}
 	}
 
 	// If the pulled file is new and a file with the remotes path already exists.

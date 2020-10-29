@@ -107,7 +107,7 @@ dotfile show <alias>
 + =-r, --remote= Show a file on a remote server.
 + =-u, --username= Override the configured username.
 * List
-List tracked files. Asterisks are added to files that have uncommited
+List tracked files. Asterisks are added to files that have uncommitted
 changes.
 #+BEGIN_SRC bash
 dotfile ls
@@ -142,8 +142,8 @@ Revert a file to a past revision.
 #+BEGIN_SRC bash
 dotfile checkout <alias> <hash>
 #+END_SRC
-Hash is optional. When empty it will default to the current
-revision. This will remove any changes on the file since the last
+Hash is optional. Defaults to the current revision when empty.
+This will remove any changes on the file since the last
 commit or checkout command.
 
 To checkout to a specific revision use the =dotfile log= command to find the hash.
@@ -152,7 +152,7 @@ Read and set user configuration.
 #+BEGIN_SRC bash
 dotfile config <keyname> <value>
 #+END_SRC Set a config value
-Keyname and value are optional. When empty it will print the current config.
+Keyname and value are optional. Prints the current config when empty.
 
 Valid values for keyname are =username=, =remote=, or =token=.
 * Push
@@ -171,7 +171,6 @@ dotfile pull <alias>
 #+END_SRC
 + =-u, --username= Override the configured username.
 + =-a, --all= Pull all files
-+ =-p, --parent-dirs= Create parent directories that do not yet exist.
 
 Alternatively pull a file without using the dotfile CLI:
 #+BEGIN_SRC bash
@@ -188,7 +187,7 @@ Change a file's path.
 dotfile mv <alias> <path>
 #+END_SRC
 * Rename
-Change a files alias.
+Change a file's alias.
 #+BEGIN_SRC bash
 dotfile rename <alias> <new-alias>
 #+END_SRC
