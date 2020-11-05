@@ -2,99 +2,40 @@ package cli
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
-
-	"github.com/knoebber/dotfile/file"
-	"github.com/knoebber/dotfile/local"
+	"github.com/knoebber/dotfile/dotfile"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-const (
-	diffCmd     = "diff"
-	diffType    = "-u" // unified view
-	colorOption = "--color"
-)
-
+// TODO commitHash should match on first 7 characters as well.
+// Same for checkout
 type diffCommand struct {
-	fileName   string
+	alias      string
 	commitHash string
 }
 
-func (d *diffCommand) run(ctx *kingpin.ParseContext) error {
-	s, err := loadFile(d.fileName)
+func (d *diffCommand) run(*kingpin.ParseContext) error {
+	s, err := loadFile(d.alias)
 	if err != nil {
 		return err
 	}
 
 	if d.commitHash == "" {
-		d.commitHash = s.Tracking.Revision
+		d.commitHash = s.FileData.Revision
 	}
 
-	if _, err := exec.LookPath(diffCmd); err != nil {
-		return fmt.Errorf("%s not found in $PATH", diffCmd)
-	}
-
-	return diff(s, d.fileName, d.commitHash)
-}
-
-// Color is supported by GNU diff utilities 3.4 and greater.
-// https://savannah.gnu.org/forum/forum.php?forum_id=8639
-func diffSupportsColor() bool {
-	return execCommand(diffCmd, colorOption, "/dev/null", "/dev/null").Run() == nil
-}
-
-func diff(s *local.Storage, fileName, hash string) error {
-	var cmd *exec.Cmd
-
-	path, err := s.GetPath()
+	diff, err := dotfile.DiffPrettyText(s, d.commitHash, "")
 	if err != nil {
 		return err
 	}
 
-	lastRevision, err := file.UncompressRevision(s, hash)
-	if err != nil {
-		return err
-	}
-
-	if diffSupportsColor() {
-		cmd = execCommand(diffCmd, diffType, colorOption, "-", path)
-	} else {
-		cmd = execCommand(diffCmd, diffType, "-", path)
-	}
-
-	cmd.Stdin = lastRevision
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err = cmd.Run()
-
-	if err == nil {
-		fmt.Println("No changes")
-		return nil
-	}
-
-	exitErr, ok := err.(*exec.ExitError)
-	if !ok {
-		return err
-	}
-
-	exitCode := exitErr.ExitCode()
-
-	// diff returns 1 when file has changes.
-	if exitCode == 1 {
-		return nil
-	} else if exitCode > 1 {
-		return err
-	}
-
+	fmt.Println(diff)
 	return nil
 }
 
 func addDiffSubCommandToApplication(app *kingpin.Application) {
 	dc := new(diffCommand)
 	c := app.Command("diff", "check changes to tracked file").Action(dc.run)
-	c.Arg("file-name", "file to check changes in").Required().StringVar(&dc.fileName)
+	c.Arg("alias", "file to check changes in").Required().StringVar(&dc.alias)
 	c.Arg("commit-hash",
 		"the revision to diff against; default current").
 		StringVar(&dc.commitHash)

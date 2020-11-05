@@ -1,0 +1,13 @@
+<main>
+  <h1>{{ .Title }}</h1>
+  {{- template "file_content" . }}
+  <div class="flex-between">
+    <form method="post">
+      <button class="success">Create</button>
+    </form>
+    <form method="get" action="{{ .Data.editAction }}">
+      <input type="hidden" name="edit" value="true"/>
+      <button class="danger">Edit</button>
+    </form>
+  </div>
+</main>

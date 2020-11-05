@@ -1,31 +1,50 @@
 package cli
 
 import (
-	"fmt"
-
+	"github.com/knoebber/dotfile/dotfileclient"
 	"github.com/knoebber/dotfile/local"
 	"github.com/pkg/errors"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type pullCommand struct {
-	getStorage func() (*local.Storage, error)
-	fileName   string
-	pullAll    bool
+	alias    string
+	username string
+	pullAll  bool
 }
 
-func (pc *pullCommand) run(ctx *kingpin.ParseContext) error {
-	_, err := loadFile(pc.fileName)
+func (pc *pullCommand) run(*kingpin.ParseContext) error {
+	var err error
+
+	client, err := newDotfileClient(false)
 	if err != nil {
 		return err
 	}
 
+	if pc.username != "" {
+		client.Username = pc.username
+	}
 	if pc.pullAll {
-		fmt.Println("TODO: Pull all")
-	} else if pc.fileName != "" {
-		fmt.Printf("TODO: Pull %#v\n", pc.fileName)
+		return pullAll(client)
+	} else if pc.alias != "" {
+		storage := &local.Storage{Dir: flags.storageDir, Alias: pc.alias}
+		return storage.Pull(client)
 	} else {
-		return errors.New("neither filename nor --all provided to pull")
+		return errors.New("neither alias nor --all provided to pull")
+	}
+}
+
+func pullAll(client *dotfileclient.Client) error {
+	files, err := client.List(false)
+	if err != nil {
+		return err
+	}
+
+	for _, alias := range files {
+		storage := &local.Storage{Dir: flags.storageDir, Alias: alias}
+		if err := storage.Pull(client); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -34,6 +53,7 @@ func addPullSubCommandToApplication(app *kingpin.Application) {
 	pc := new(pullCommand)
 
 	p := app.Command("pull", "pull changes from central service").Action(pc.run)
-	p.Arg("file-name", "the file to pull").StringVar(&pc.fileName)
-	p.Flag("all", "pull all tracked files").BoolVar(&pc.pullAll)
+	p.Arg("alias", "the file to pull").StringVar(&pc.alias)
+	p.Flag("username", "override config username").Short('u').StringVar(&pc.username)
+	p.Flag("all", "pull all tracked files").Short('a').BoolVar(&pc.pullAll)
 }

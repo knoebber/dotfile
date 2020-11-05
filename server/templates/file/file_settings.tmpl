@@ -1,0 +1,7 @@
+<main>
+  {{- template "file_settings_header" . }}
+  {{- $settings := printf "/%s/%s/settings" .Vars.username .Vars.alias }}
+    <p><a href="{{ $settings }}/update">Update</a></p>
+    <p><a href="{{ $settings }}/clear">Clear</a></p>
+    <p><a href="{{ $settings }}/delete">Delete</a></p>
+</main>

@@ -1,0 +1,40 @@
+<main>
+  {{- template "settings_header" . }}
+  {{- $email := .Email }}
+  {{- $timezone := .Timezone }}
+  <section>
+    <h2>User Data</h2>
+    <p>Joined: <strong>{{ .UserCreatedAt }}</strong></p>
+    {{- if $email }}
+    <p>Email:
+      <strong>{{ $email }}</strong>
+      <a href="/settings/email">(edit)</a>
+    </p>
+    {{- end }}
+    {{- if $timezone }}
+    <p>Timezone:
+      <strong>{{ $timezone }}</strong>
+      <a href="/settings/timezone">(edit)</a>
+    </p>
+    {{- end }}
+    <p>Theme:
+      <strong>{{ .Theme }}</strong>
+      <a href="/settings/theme">(edit)</a>
+    </p>
+  </section>
+  <section>
+    <h2>Options</h2>
+    <p><a href="/settings/cli">Setup CLI</a></p>
+    {{- if not $email }}
+    <p><a href="/settings/email">Enable account recovery</a></p>
+    {{- end }}
+    {{- if not $timezone }}
+    <p><a href="/settings/timezone">Set timezone</a></p>
+    {{- end }}
+    <p><a href="/settings/password">Update password</a></p>
+    <p><a href="/settings/delete">Delete account</a></p>
+  </section>
+  <form action="/logout" method="post" class="inline">
+    <button class="danger">Logout</button>
+  </form>
+</main>

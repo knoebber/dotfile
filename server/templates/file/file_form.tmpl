@@ -1,0 +1,27 @@
+<main>
+  <h1>
+    {{- if .Data.newFile }}
+    {{ .Title }}
+    {{ else }}
+    {{- template "file_header" . }}
+    {{ end -}}
+  </h1>
+  <form method="post">
+    {{- if .Data.newFile }}
+    <label for="alias">Alias:</label>
+    <input id="alias" name="alias" placeholder="bashrc" value="{{ .Data.alias }}"/>
+    <label for="path">Path:</label>
+    <input id="path" name="path" placeholder="~/.bashrc" value="{{ .Data.path }}" required="required"/>
+    {{ end -}}
+    <label for="contents">Contents:</label>
+    <textarea
+      cols="80"
+      rows="30"
+      id="contents"
+      name="contents"
+      spellcheck="false"
+      required="required"
+    >{{ .Data.content }}</textarea>
+    <button>Submit</button>
+  </form>
+</main>

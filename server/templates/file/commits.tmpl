@@ -1,0 +1,33 @@
+<main>
+  {{- $username := .Vars.username }}
+  {{- $alias := .Vars.alias }}
+  {{- template "file_header" . }}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Hash</th>
+          <th>Message</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{- range .Data.commits }}
+        <tr>
+          <td>
+            <a {{ if .Current }}class="active"{{ end }} href="/{{ $username }}/{{ $alias }}/{{ .Hash }}">{{ shortenHash .Hash }}</a>
+          </td>
+          <td>
+            {{- if .ForkedFromUsername }}
+            <a href="/{{ .ForkedFromUsername }}/{{ $alias }}/{{ .Hash }}">Forked from</a>
+            {{- else }}
+            {{ .Message }}
+            {{ end -}}
+          </td>
+          <td>{{ .DateString }}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</main>

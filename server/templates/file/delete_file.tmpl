@@ -1,0 +1,9 @@
+<main>
+  {{- template "file_settings_header" . }}
+  <p>Delete the file and all its commits.</p>
+  <form method="post">
+    <label for="delete">Write the file's alias:</label>
+    <input id="delete" name="delete" required="required"/>
+    <button class="danger">Delete</button>
+  </form>
+</main>

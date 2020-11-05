@@ -1,0 +1,14 @@
+<main>
+  {{- template "settings_header" . }}
+  <form method="post">
+    <label for="email">Email:</label>
+    <input
+      value="{{ .Email }}"
+      id="email"
+      name="email"
+      type="email"
+      required="required"
+    />
+    <button>Submit</button>
+  </form>
+</main>

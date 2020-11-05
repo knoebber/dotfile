@@ -1,25 +1,25 @@
 package cli
 
 import (
-	"github.com/knoebber/dotfile/file"
+	"github.com/knoebber/dotfile/dotfile"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type checkoutCommand struct {
-	fileName   string
+	alias      string
 	commitHash string
 }
 
-func (c *checkoutCommand) run(ctx *kingpin.ParseContext) error {
-	s, err := loadFile(c.fileName)
+func (c *checkoutCommand) run(*kingpin.ParseContext) error {
+	s, err := loadFile(c.alias)
 	if err != nil {
 		return err
 	}
 	if c.commitHash == "" {
-		c.commitHash = s.Tracking.Revision
+		c.commitHash = s.FileData.Revision
 	}
 
-	if err := file.Checkout(s, c.commitHash); err != nil {
+	if err := dotfile.Checkout(s, c.commitHash); err != nil {
 		return err
 	}
 
@@ -30,6 +30,6 @@ func addCheckoutSubCommandToApplication(app *kingpin.Application) {
 	cc := new(checkoutCommand)
 
 	c := app.Command("checkout", "revert a file to a previously committed state").Action(cc.run)
-	c.Arg("file-name", "name of file to revert changes in").Required().StringVar(&cc.fileName)
+	c.Arg("alias", "name of file to revert changes in").Required().StringVar(&cc.alias)
 	c.Arg("commit-hash", "the revision to revert to").StringVar(&cc.commitHash)
 }

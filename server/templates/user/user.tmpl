@@ -1,0 +1,35 @@
+<main>
+  <h1><a href="/{{ .Vars.username }}">{{ .Vars.username }}</a></h1>
+  {{- if .Owned }}
+  <p><a href="/new_file">Add a new file</a></p>
+  {{- end }}
+  {{- if .Data.files }}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Alias</th>
+          <th>Path</th>
+          <th># Commits</th>
+          <th>Updated At</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{- $username := .Vars.username }}
+        {{- range .Data.files }}
+        <tr>
+          <td>
+            <a href="/{{ $username }}/{{ .Alias }}">{{ .Alias }}</a>
+          </td>
+          <td>{{ .Path }}</td>
+          <td>{{ .NumCommits }}</td>
+          <td>{{ .UpdatedAt }}</td>
+        </tr>
+        {{- end }}
+      </tbody>
+    </table>
+  </div>
+  {{- else }}
+  <p>No files uploaded</p>
+  {{- end }}
+</main>

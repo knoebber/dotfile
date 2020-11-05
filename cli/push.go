@@ -1,28 +1,28 @@
 package cli
 
-import (
-	"fmt"
-
-	"gopkg.in/alecthomas/kingpin.v2"
-)
+import "gopkg.in/alecthomas/kingpin.v2"
 
 type pushCommand struct {
-	fileName string
+	alias string
 }
 
-func (pc *pushCommand) run(ctx *kingpin.ParseContext) error {
-	_, err := loadFile(pc.fileName)
+func (pc *pushCommand) run(*kingpin.ParseContext) error {
+	s, err := loadFile(pc.alias)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("TODO: Push %#v", pc.fileName)
-	return nil
+	client, err := newDotfileClient(true)
+	if err != nil {
+		return err
+	}
+
+	return s.Push(client)
 }
 
 func addPushSubCommandToApplication(app *kingpin.Application) {
 	pc := new(pushCommand)
 
-	p := app.Command("push", "push committed changes to central service").Action(pc.run)
-	p.Arg("file-name", "the file to push").Required().StringVar(&pc.fileName)
+	p := app.Command("push", "push committed changes to a dotfile server").Action(pc.run)
+	p.Arg("alias", "the file to push").Required().StringVar(&pc.alias)
 }

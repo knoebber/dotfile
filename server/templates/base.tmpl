@@ -1,0 +1,53 @@
+{{ define "base" -}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="description" content="Version control for dotfiles"/>
+  <style>
+   {{- if not .Dark }}
+   :root { /* Light theme */
+       --background: #fffffe;
+       --headline: #181818;
+       --paragraph: #2e2e2e;
+       --highlight: #4fc4cf;
+       --main: #f2eef5;
+       --secondary: #994ff3;
+       --tertiary: #fbdd74;
+   }
+   {{ else }}
+   :root { /* Dark theme */
+       --background: #16161a;
+       --headline: #fffffe;
+       --paragraph: #fffffe;
+       --highlight: #7f5af0;
+       --main: #242526;
+       --secondary: #2cb67d;
+       --tertiary: #ff4b55;
+   }
+   {{ end -}}
+  </style>
+  <link rel="stylesheet" type="text/css" href="/style.css" />
+  <title>{{ .Title }}</title>
+</head>
+<body>
+  <nav>
+    {{- range .Links }}
+    <a class="{{.Class}}" href="{{.URL}}">{{ .Title }}</a>
+    {{- end }}
+  </nav>
+  {{- if .SuccessMessage }}
+  <div class="flash-success">
+    {{ .SuccessMessage }}
+  </div>
+  {{ end }}
+  {{- if .ErrorMessage }}
+  <div class="flash-error">
+    {{ .ErrorMessage }}
+  </div>
+  {{ end }}
+  {{- content -}}
+</body>
+</html>
+{{- end }}

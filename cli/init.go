@@ -12,13 +12,13 @@ type initCommand struct {
 	alias string
 }
 
-func (ic *initCommand) run(ctx *kingpin.ParseContext) error {
-	alias, err := local.InitFile(config.home, config.storageDir, ic.path, ic.alias)
+func (ic *initCommand) run(*kingpin.ParseContext) error {
+	storage, err := local.InitializeFile(flags.storageDir, ic.path, ic.alias)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Initialized %s as %#v\n", ic.path, alias)
+	fmt.Printf("Initialized as %q\n", storage.Alias)
 	return nil
 }
 

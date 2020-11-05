@@ -1,0 +1,34 @@
+{{ define "diff" -}}
+<div>
+  <div class="file-controls flex-between">
+    <strong>{{ .Data.path }}</strong>
+    {{- if .Data.commits }}
+    {{- $on := .Data.on }}
+    {{- $against := .Data.against }}
+    <em>Compare Hashes</em>
+    <form class="inline">
+      <label for="on">On</label>
+      <select id="on" name="on">
+        {{ range .Data.commits }}
+        <option{{ if eq .Hash $on }} selected="selected"{{ end }} value="{{ .Hash }}">
+          {{ shortenHash .Hash }}
+          "{{ .Message }}"
+        </option>
+        {{- end }}
+      </select>
+      <label for="against">Against</label>
+      <select name="against" id="against">
+        {{- range .Data.commits }}
+        <option{{ if eq .Hash $against }} selected="selected"{{ end }} value="{{ .Hash }}">
+          {{ shortenHash .Hash }}
+          "{{ .Message }}"
+        </option>
+        {{- end }}
+      </select>
+      <button>Diff</button>
+    </form>
+    {{- end }}
+  </div>
+  <pre class="file-content"><code>{{ .Data.diff }}</code></pre>
+</div>
+{{- end }}

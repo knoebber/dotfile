@@ -1,0 +1,16 @@
+<main>
+  {{- template "settings_header" . }}
+  <form method="post">
+    <label for="theme">New Theme:</label>
+    <select name="theme" id="theme">
+      {{- $theme := .Theme -}}
+      {{- range .Data.themes -}}
+      <option{{ if eq . $theme }} selected="selected" {{ end }}>
+        {{- . -}}
+      </option>
+      {{- end -}}
+    </select>
+    <br/>
+    <button>Submit</button>
+  </form>
+</main>

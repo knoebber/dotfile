@@ -1,0 +1,33 @@
+<main>
+  <h1>Dotfilehub</h1>
+  <form method="get" class="inline">
+    <label for="q">Find Files</label>
+    <input value="{{ .Table.Query }}" id="q" name="q" type="search" placeholder="~/.vimrc"/>
+    <button type="submit">Search</button>
+  </form>
+  {{- if .Table.Rows }}
+  <hr>
+  <div class="table-wrapper">
+    {{- $pages := .Table.Pages }}
+    <div class="table-controls">{{ $pages }}</div>
+    <table>
+      <thead>
+        <tr>{{- .Table.Header }}</tr>
+      </thead>
+      <tbody>
+        {{- range .Table.Rows }}
+        <tr>
+          <td><a href="/{{ .Username }}/{{ .Alias }}">{{ .Alias }}</a></td>
+          <td>{{ .Path }}</td>
+          <td><a href="/{{ .Username }}">{{ .Username }}</a></td>
+          <td>{{ .UpdatedAt }}</td>
+        </tr>
+        {{ end -}}
+      </tbody>
+    </table>
+    <div class="table-controls">{{ $pages }}</div>
+  </div>
+  {{- else if and (not .Table.Rows) .Table.Query }}
+  <strong>No results</strong>
+  {{ end -}}
+</main>

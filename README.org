@@ -1,0 +1,93 @@
+#+TITLE: Dotfile
+Dotfile is a version control system designed for [[https://en.wikipedia.org/wiki/Hidden_file_and_hidden_directory][dotfiles]]. It aliases
+file paths to short names and provides an interface to manage file
+state. Use a remote server like [[https://dotfilehub.com][dotfilehub.com]] to push, pull, or find
+new files.
+* Why Dotfile?
+Most [[https://wiki.archlinux.org/index.php/Dotfiles#Tools][existing solutions]] are built on some combination of
+git/stow/symlinks. This introduces the complexities and potential
+pitfalls of these tools. Git is designed for a directory of related
+files, whereas dotfiles are often scattered unrelated files.
+
+Dotfile is a self contained system designed from the ground up to make
+managing single files as simple as possible. Files are stored in their
+normal locations on disk without any symbolic links. Dotfile doesn't
+care if tracked files are moved or edited with external tools.
+
+*Advantages over git based systems:*
++ Not limited to one parent directory - initialize any file, even
+  outside =$HOME=
++ No merge conflicts
++ Pull or push a single file instead of the entire repo
++ Revert a single file to a past revision without affecting other
+  files
++ Easily rewrite or delete file history
++ Simple web interface for managing files remotely
+
+*Things Dotfile doesn't do:*
++ File encryption
++ Manage non text files
++ Manage large files
++ Templates
++ Branches
+* Getting Started
+1. [[docs/cli.org#install][Install]] the CLI
+2. [[https://dotfilehub.com/signup][Create a Dotfilehub]] account to share files between machines
+3. [[https://dotfilehub.com/settings/cli][Setup the CLI]] to use remote functions
+
+Optionally [[docs/web.org#self-host][self host]] a Dotfilehub instance.
+* Documentation
++ [[docs/cli.org][CLI Documentation]]
++ [[docs/web.org][Web Documentation]]
++ [[docs/acknowledgments.org][Acknowledgments]]
+* Examples
+Dotfile commands are like git but simplified.
+
+Check a file in:
+#+BEGIN_SRC bash
+dotfile init ~/.bashrc
+#+END_SRC
+
+This creates an initial commit. Dotfile will store the path of the
+file and give it a default alias of =bashrc=. Use the alias to refer
+to it at anytime.
+
+Open =~/.bashrc= in =$EDITOR=:
+#+BEGIN_SRC bash
+dotfile edit bashrc
+#+END_SRC
+
+Check the diff after making changes:
+#+BEGIN_SRC bash
+dotfile diff bashrc
+#+END_SRC
+
+Commit new changes:
+#+BEGIN_SRC bash
+dotfile commit bashrc "Add dotfile alias"
+#+END_SRC
+
+View commit history:
+#+BEGIN_SRC bash
+dotfile log bashrc
+#+END_SRC
+
+Revert its uncommitted changes:
+#+BEGIN_SRC bash
+dotfile checkout bashrc
+#+END_SRC
+
+Push to a remote server:
+#+BEGIN_SRC bash
+dotfile push bashrc
+#+END_SRC
+
+Install all of your dotfiles:
+#+BEGIN_SRC bash
+dotfile pull --all
+#+END_SRC
+* Contribute
+Want to contribute? Open a pull request or an issue at
+[[https://github.com/knoebber/dotfile][github.com/knoebber/dotfile]]
+
+Feedback is always appreciated - contact me at [[mailto:knoebber@gmail.com][knoebber@gmail.com]]

@@ -14,21 +14,21 @@ const (
 )
 
 type logCommand struct {
-	fileName string
+	alias string
 }
 
-func (l *logCommand) run(ctx *kingpin.ParseContext) error {
-	s, err := loadFile(l.fileName)
+func (l *logCommand) run(*kingpin.ParseContext) error {
+	s, err := loadFile(l.alias)
 	if err != nil {
 		return err
 	}
 
-	revision := s.Tracking.Revision
+	revision := s.FileData.Revision
 	delim := strings.Repeat(delimChar, len(revision))
 
 	halfHeaderDelim := strings.Repeat(delimChar, (len(revision)-9)/2)
 	currentDelim := halfHeaderDelim + " CURRENT " + halfHeaderDelim + delimChar
-	for _, commit := range s.Tracking.Commits {
+	for _, commit := range s.FileData.Commits {
 		timeStamp := time.Unix(commit.Timestamp, 0).Format(timestampDisplayFormat)
 
 		fmt.Println("")
@@ -52,5 +52,5 @@ func addLogSubCommandToApplication(app *kingpin.Application) {
 	lc := new(logCommand)
 
 	c := app.Command("log", "shows revision history with commit hashes for a tracked file").Action(lc.run)
-	c.Arg("file-name", "tracked file to show history for").Required().StringVar(&lc.fileName)
+	c.Arg("alias", "tracked file to show history for").Required().StringVar(&lc.alias)
 }

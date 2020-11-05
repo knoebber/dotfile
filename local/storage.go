@@ -1,25 +1,3 @@
-// Package local tracks files by writing to JSON files in the dotfile directory.
-//
-// For every new file that is tracked a new .json file is created.
-// For each commit on a tracked file, a new file is created with the same name as the hash.
-//
-// Example: ~/.emacs.d/init.el is added with alias "emacs".
-// Supposing Storage.dir is ~/.config/dotfile, then the following files are created:
-//
-// ~/.config/dotfile/emacs.json
-// ~/.config/dotfile/emacs/8f94c7720a648af9cf9dab33e7f297d28b8bf7cd
-//
-// The emacs.json file would look something like this:
-// {
-//   "path": "~/.emacs.d/init.el",
-//   "revision": "8f94c7720a648af9cf9dab33e7f297d28b8bf7cd"
-//   "commits": [{
-//     "hash": "8f94c7720a648af9cf9dab33e7f297d28b8bf7cd",
-//     "timestamp": 1558896290,
-//     "message": "Initial commit"
-//   }]
-// }
-
 package local
 
 import (
@@ -27,51 +5,87 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
-	"time"
+	"strings"
 
+	"github.com/knoebber/dotfile/dotfile"
+	"github.com/knoebber/dotfile/dotfileclient"
+	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
 
-// Storage implements the file.Storer interface.
-// It represents the local data storage for a file that dot is Tracking.
-type Storage struct {
-	Home     string // The path to the users home directory.
-	Alias    string // A friendly name for the file that is being tracked.
-	Tracking *trackedFile
+var (
+	// ErrNotTracked is returned when the current alias in storage is not tracked.
+	ErrNotTracked = errors.New("file not tracked")
+	// ErrNoData is returned when a method expects non nil file data.
+	ErrNoData = errors.New("tracking data not loaded")
+)
 
-	dir      string // The path to the folder where data will be stored.
-	jsonPath string
+// Storage provides methods for manipulating tracked files on the file system.
+type Storage struct {
+	Alias    string                // The name of the file that is being tracked.
+	Dir      string                // The path to the folder where data will be stored.
+	FileData *dotfile.TrackingData // The current file that storage is tracking.
 }
 
-// Load the tracked file.
-func (s *Storage) get() error {
-	bytes, err := ioutil.ReadFile(s.jsonPath)
+func (s *Storage) jsonPath() string {
+	return filepath.Join(s.Dir, s.Alias+".json")
+}
+
+func (s *Storage) hasSavedData() bool {
+	return exists(s.jsonPath())
+}
+
+// JSON returns the tracked files json.
+func (s *Storage) JSON() ([]byte, error) {
+	jsonContent, err := ioutil.ReadFile(s.jsonPath())
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, ErrNotTracked
+	} else if err != nil {
+		return nil, errors.Wrap(err, "reading tracking data")
+	}
+
+	return jsonContent, nil
+}
+
+// SetTrackingData reads the tracking data from the filesystem into FileData.
+func (s *Storage) SetTrackingData() error {
+	if s.Alias == "" {
+		return errors.New("cannot set tracking data: alias is empty")
+	}
+	if s.Dir == "" {
+		return errors.New("cannot set tracking data: dir is empty")
+	}
+
+	s.FileData = new(dotfile.TrackingData)
+
+	jsonContent, err := s.JSON()
 	if err != nil {
-		return errors.Wrap(err, "reading tracking data")
+		return err
 	}
 
-	if len(bytes) == 0 {
-		return fmt.Errorf("%s is empty", s.jsonPath)
-	}
-
-	s.Tracking = new(trackedFile)
-
-	if err := json.Unmarshal(bytes, &s.Tracking); err != nil {
+	if err = json.Unmarshal(jsonContent, s.FileData); err != nil {
 		return errors.Wrapf(err, "unmarshaling tracking data")
 	}
+
 	return nil
 }
 
-// Updates the json file with the updated data from the tracked file.
 func (s *Storage) save() error {
-	bytes, err := json.MarshalIndent(s.Tracking, "", " ")
+	content, err := json.MarshalIndent(s.FileData, "", jsonIndent)
 	if err != nil {
 		return errors.Wrap(err, "marshalling tracking data to json")
 	}
 
-	// Example: ~/.config/dotfile/bash_profile.json
-	if err := ioutil.WriteFile(s.jsonPath, bytes, 0644); err != nil {
+	// Create the storage directory if it does not yet exist.
+	// Example: ~/.local/share/dotfile
+	if err := createDir(s.Dir); err != nil {
+		return err
+	}
+
+	// Example: ~/.local/share/dotfile/bash_profile.json
+	if err := ioutil.WriteFile(s.jsonPath(), content, 0644); err != nil {
 		return errors.Wrap(err, "saving tracking data")
 	}
 
@@ -79,9 +93,12 @@ func (s *Storage) save() error {
 }
 
 // HasCommit return whether the file has a commit with hash.
-// This never returns an error; it's present to satisfy a file.Storer requirement.
 func (s *Storage) HasCommit(hash string) (exists bool, err error) {
-	for _, c := range s.Tracking.Commits {
+	if s.FileData == nil {
+		return false, ErrNoData
+	}
+
+	for _, c := range s.FileData.Commits {
 		if c.Hash == hash {
 			return true, nil
 		}
@@ -89,70 +106,300 @@ func (s *Storage) HasCommit(hash string) (exists bool, err error) {
 	return
 }
 
-// GetRevision returns the files state at hash.
-// The bytes are zlib compressed - see file/commit.go.
-func (s *Storage) GetRevision(hash string) ([]byte, error) {
-	revisionPath := filepath.Join(s.dir, s.Alias, hash)
+// Revision returns the files state at hash.
+func (s *Storage) Revision(hash string) ([]byte, error) {
+	revisionPath := filepath.Join(s.Dir, s.Alias, hash)
 
-	bytes, err := ioutil.ReadFile(revisionPath)
+	content, err := ioutil.ReadFile(revisionPath)
 	if err != nil {
-		return nil, errors.Wrap(err, "reading revision")
+		return nil, errors.Wrapf(err, "reading revision %q", hash)
 	}
 
-	return bytes, nil
+	return content, nil
 }
 
-// GetContents reads the contents of the file that is being tracked.
-func (s *Storage) GetContents() ([]byte, error) {
-	contents, err := ioutil.ReadFile(fullPath(s.Tracking.Path, s.Home))
+// DirtyContent reads the content of the tracked file.
+func (s *Storage) DirtyContent() ([]byte, error) {
+	path, err := s.Path()
 	if err != nil {
-		return nil, errors.Wrap(err, "reading file contents")
+		return nil, err
 	}
 
-	return contents, nil
+	result, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, errors.Wrapf(err, "reading %q", s.Alias)
+	}
+
+	return result, nil
 }
 
 // SaveCommit saves a commit to the file system.
 // Creates a new directory when its the first commit.
 // Updates the file's revision field to point to the new hash.
-func (s *Storage) SaveCommit(buff *bytes.Buffer, hash, message string, timestamp time.Time) error {
-	s.Tracking.Commits = append(s.Tracking.Commits, commit{
-		Hash:      hash,
-		Message:   message,
-		Timestamp: timestamp.Unix(),
-	})
-
-	// The directory for the files commits.
-	commitDir := filepath.Join(s.dir, s.Alias)
-
-	// Example: ~/.config/dotfile/bash_profile
-	if err := createDir(commitDir); err != nil {
-		return errors.Wrap(err, "creating directory for revision")
+func (s *Storage) SaveCommit(buff *bytes.Buffer, c *dotfile.Commit) error {
+	if s.FileData == nil {
+		return ErrNoData
 	}
 
-	// Example: ~/.config/dotfile/bash_profile/8f94c7720a648af9cf9dab33e7f297d28b8bf7cd
-	commitPath := filepath.Join(commitDir, hash)
-
-	if err := ioutil.WriteFile(commitPath, buff.Bytes(), 0644); err != nil {
-		return errors.Wrap(err, "writing revision")
+	s.FileData.Commits = append(s.FileData.Commits, *c)
+	if err := writeCommit(buff.Bytes(), s.Dir, s.Alias, c.Hash); err != nil {
+		return err
 	}
 
-	s.Tracking.Revision = hash
+	s.FileData.Revision = c.Hash
 	return s.save()
 }
 
-// Revert overwrites a file at path with contents.
+// Revert writes files with buff and sets it current revision to hash.
 func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
-	err := ioutil.WriteFile(fullPath(s.Tracking.Path, s.Home), buff.Bytes(), 0644)
+	path, err := s.Path()
 	if err != nil {
-		return errors.Wrap(err, "reverting file")
+		return err
 	}
 
-	s.Tracking.Revision = hash
+	if err := createDirectories(path); err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(path, buff.Bytes(), 0644)
+	if err != nil {
+		return errors.Wrapf(err, "reverting file %q", s.Alias)
+	}
+
+	s.FileData.Revision = hash
 	return s.save()
 }
 
-// GetPath gets the full path to the file.
-func (s *Storage) GetPath() (string, error) {
-	return fullPath(s.Tracking.Path, s.Home), nil
+// Path gets the full path to the file.
+// Utilizes $HOME to convert paths with ~ to absolute.
+func (s *Storage) Path() (string, error) {
+	if s.FileData == nil {
+		return "", ErrNoData
+	}
+	if s.FileData.Path == "" {
+		return "", errors.New("file data is missing path")
+	}
+
+	// If the saved path is absolute return it.
+	if filepath.IsAbs(s.FileData.Path) {
+		return s.FileData.Path, nil
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Replace(s.FileData.Path, "~", home, 1), nil
+}
+
+// Push pushes a file's commits to a remote dotfile server.
+// Updates the remote file with the new content from local.
+func (s *Storage) Push(client *dotfileclient.Client) error {
+	var newHashes []string
+
+	if s.FileData == nil {
+		return ErrNoData
+	}
+
+	remoteData, err := client.TrackingData(s.Alias)
+	if err != nil {
+		return err
+	}
+
+	if remoteData == nil {
+		// File isn't yet tracked on remote, push all local revisions.
+		for _, c := range s.FileData.Commits {
+			newHashes = append(newHashes, c.Hash)
+		}
+	} else {
+		s.FileData, newHashes, err = dotfile.MergeTrackingData(remoteData, s.FileData)
+		if err != nil {
+			return err
+		}
+	}
+	revisions := make([]*dotfileclient.Revision, len(newHashes))
+
+	for i, hash := range newHashes {
+		revision, err := s.Revision(hash)
+		if err != nil {
+			return err
+		}
+
+		revisions[i] = &dotfileclient.Revision{
+			Bytes: revision,
+			Hash:  hash,
+		}
+	}
+
+	if err := client.UploadRevisions(s.Alias, s.FileData, revisions); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Pull retrieves a file's commits from a dotfile server.
+// Updates the local file with the new content from remote.
+// FileData does not need to be set; its possible to pull a file that does not yet exist.
+func (s *Storage) Pull(client *dotfileclient.Client) error {
+	var newHashes []string
+
+	hasSavedData := s.hasSavedData()
+
+	if hasSavedData {
+		if err := s.SetTrackingData(); err != nil {
+			return err
+		}
+
+		clean, err := dotfile.IsClean(s, s.FileData.Revision)
+		if err != nil {
+			return err
+		}
+
+		if !clean {
+			return usererror.Invalid("file has uncommitted changes")
+		}
+	}
+
+	remoteData, err := client.TrackingData(s.Alias)
+	if err != nil {
+		return err
+	}
+	if remoteData == nil {
+		return fmt.Errorf("%q not found on remote %q", s.Alias, client.Remote)
+	}
+
+	s.FileData, newHashes, err = dotfile.MergeTrackingData(s.FileData, remoteData)
+	if err != nil {
+		return err
+	}
+
+	path, err := s.Path()
+	if err != nil {
+		return err
+	}
+
+	// If the pulled file is new and a file with the remotes path already exists.
+	if exists(path) && !hasSavedData {
+		return usererror.Invalid(remoteData.Path +
+			" already exists and is not tracked by dotfile (remove the file or initialize it before pulling)")
+	}
+
+	fmt.Printf("pulling %d new revisions for %s\n", len(newHashes), s.FileData.Path)
+
+	revisions, err := client.Revisions(s.Alias, newHashes)
+	if err != nil {
+		return err
+	}
+
+	for _, revision := range revisions {
+		if err = writeCommit(revision.Bytes, s.Dir, s.Alias, revision.Hash); err != nil {
+			return err
+		}
+	}
+
+	return dotfile.Checkout(s, s.FileData.Revision)
+}
+
+// Move moves the file currently tracked by storage.
+func (s *Storage) Move(newPath string, parentDirs bool) error {
+	fmt.Println(parentDirs)
+	currentPath, err := s.Path()
+	if err != nil {
+		return err
+	}
+
+	if parentDirs {
+		if err := createDirectories(newPath); err != nil {
+			return err
+		}
+	}
+
+	if err := os.Rename(currentPath, newPath); err != nil {
+		return err
+	}
+
+	s.FileData.Path, err = convertPath(newPath)
+	if err != nil {
+		return err
+	}
+
+	return s.save()
+}
+
+// Rename changes a files alias.
+func (s *Storage) Rename(newAlias string) error {
+	if err := dotfile.CheckAlias(newAlias); err != nil {
+		return err
+	}
+
+	newDir := filepath.Join(s.Dir, newAlias)
+	if exists(newDir) {
+		return usererror.Invalid(fmt.Sprintf("%q already exists", newAlias))
+	}
+
+	err := os.Rename(filepath.Join(s.Dir, s.Alias), newDir)
+	if err != nil {
+		return err
+	}
+
+	jsonPath := s.jsonPath()
+	s.Alias = newAlias
+
+	err = os.Rename(jsonPath, s.jsonPath())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Forget removes all tracking information for alias.
+func (s *Storage) Forget() error {
+	if err := os.Remove(s.jsonPath()); err != nil {
+		return err
+	}
+
+	return os.RemoveAll(filepath.Join(s.Dir, s.Alias))
+}
+
+// RemoveCommits removes all commits except for the current.
+func (s *Storage) RemoveCommits() error {
+	var current dotfile.Commit
+
+	if s.FileData == nil {
+		return ErrNoData
+	}
+
+	for _, c := range s.FileData.Commits {
+		if c.Hash == s.FileData.Revision {
+			current = c
+			continue
+		}
+		if err := os.Remove(filepath.Join(s.Dir, s.Alias, c.Hash)); err != nil {
+			return err
+		}
+	}
+
+	if current.Hash != "" {
+		s.FileData.Commits = []dotfile.Commit{current}
+		return s.save()
+	}
+
+	return nil
+}
+
+// Remove deletes the file that is tracked and all its data.
+func (s *Storage) Remove() error {
+	path, err := s.Path()
+	if err != nil {
+		return err
+	}
+
+	if err = os.Remove(path); err != nil {
+		return err
+	}
+
+	return s.Forget()
 }

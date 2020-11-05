@@ -1,0 +1,243 @@
+/* See base.tmpl for variables */
+
+html {
+    box-sizing: border-box;
+    font-size: 18px;
+    background: var(--background);
+    line-height: 1.6;
+    font-family: Roboto, Arial, sans-serif;
+    padding-bottom: 1rem;
+}
+
+body {
+    max-width: 1000px;
+    margin: auto;
+}
+
+main {
+    margin-top: 2rem;
+}
+
+*,
+*:before,
+*:after {
+    box-sizing: inherit;
+}
+
+button, a, h1, h2, h3, h4, label, strong, th, legend {
+    color: var(--headline);
+}
+
+i, em, p, li, pre, code, td, textarea, input {
+    color: var(--paragraph);
+}
+
+a:hover, .active {
+    color: var(--highlight);
+}
+
+h1 > a {
+    text-decoration: none;
+}
+
+nav {
+    display: flex;
+    flex-direction: row;
+    border-bottom: solid 3px var(--secondary);
+    font-size: 1.3rem;
+}
+
+nav > a:nth-child(3) {
+    /* Pushes everything after this child to the right nav. */
+    margin-left: auto;
+}
+
+nav > a {
+    text-decoration: none;
+    padding: 1rem;
+}
+
+button {
+    background-color: var(--highlight);
+    font-weight: 500;
+    cursor: pointer;
+    padding: 10px;
+    border: solid 1px var(--highlight);
+    border-radius: 3px;
+    font-size: 1.05rem;
+}
+
+button:hover {
+    box-shadow: 0 5px 15px -10px rgba(31, 18, 53, 0.6)
+}
+
+form:not(.inline) {
+    display: grid;
+    max-width: 500px;
+    gap: 1rem;
+}
+
+form > label, form > button {
+    min-width: 100px;
+    grid-column: 1;
+}
+
+form > input, form > textarea, form > select {
+    grid-column: 2 / 4;
+}
+
+input {
+    font-size: 1.1rem;
+}
+
+input, textarea, pre, code {
+    background-color: var(--main);
+}
+
+pre, code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, Courier New, monospace;
+    border-radius: 3px;
+}
+
+pre {
+    padding: 10px;
+    margin-top: 0;
+    overflow: auto;
+    max-height: 60vh;
+    border: solid 1px var(--paragraph);
+}
+
+table {
+    min-width: 800px;
+    width: 100%;
+}
+
+th, td {
+    letter-spacing: 1px;
+}
+
+
+th {
+    text-align: left;
+    padding-bottom: 1rem;
+}
+
+td {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+ins {
+    color: green;
+}
+
+del {
+    color: red;
+}
+
+.flash-error, .flash-success {
+    padding: 1rem;
+    border-radius: 3px;
+}
+
+.flash-success, .success {
+    background: var(--highlight);
+    border: solid 1px var(--highlight);
+}
+
+.flash-error, .danger {
+    background: var(--tertiary);
+    border: solid 1px var(--tertiary);
+}
+
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+}
+
+.table-wrapper {
+    overflow: auto;
+}
+
+.table-controls {
+    text-align: right;
+}
+
+.file-controls {
+    /* Applied to div placed above a <pre> element */
+    border-top: solid 1px var(--paragraph);
+    border-left: solid 1px var(--paragraph);
+    border-right: solid 1px var(--paragraph);
+    border-radius: 3px 3px 0 0;
+    align-items: center;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.file-controls > form {
+    margin: 0;
+    align-items: center;
+}
+
+.file-controls button {
+    min-width: unset;
+    padding: 0 1rem 0 1rem;
+    margin-left: 1rem;
+}
+
+.file-content {
+    border-radius: 0 0 3px 3px;
+}
+
+@media (min-width: 1051px) {
+    /* Break point for desktop views */
+    html {
+	/* Create a margin the size of the scroll bar.
+	 * Prevents layout from jumping between pages with and without vertical scroll bar */
+	margin-left: calc(100vw - 100%);
+    }
+}
+
+
+@media (max-width: 1050px) {
+    /* Break point of when nav bar takes most of the screen up */
+    body {
+	margin: 0 2rem 1rem 2rem;
+    }
+
+    main {
+	margin: unset;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Break point for mobile views */
+    body {
+	margin: .5rem;
+    }
+
+    form > input, form > textarea, form > select {
+	grid-column: 1;
+    }
+
+    nav {
+	flex-direction: column;
+	align-items: center;
+	letter-spacing: 2px;
+    }
+
+    nav > a {
+	padding: 0;
+    }
+
+    nav > a:nth-child(3) {
+	margin-left: unset;
+    }
+
+    .file-controls {
+	flex-direction: column;
+    }
+}

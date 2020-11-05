@@ -3,6 +3,7 @@ package cli
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,23 +19,23 @@ const (
 	updatedTestFileContents = initialTestFileContents + "Some new content!\n"
 )
 
-// Based on https://npf.io/2015/06/testing-exec-command/
-
-var sneakyTestingReference *testing.T
-
 func init() {
-	home, _ := getHome()
-	config = cliConfig{
-		home:       home,
+	flags = globalFlags{
+		configPath: filepath.Join(testDir, "config.json"),
 		storageDir: testDir,
 	}
 }
 
 func initTestFile(t *testing.T) {
-	os.Mkdir(testDir, 0755)
+	_ = os.Mkdir(testDir, 0755)
 	writeTestFile(t, []byte(initialTestFileContents))
-	initCommand := &initCommand{path: trackedFile}
-	err := initCommand.run(nil)
+	fullPath, err := filepath.Abs(trackedFile)
+	if err != nil {
+		t.Fatalf("getting full path for %q: %v", trackedFile, err)
+	}
+
+	initCommand := &initCommand{path: fullPath}
+	err = initCommand.run(nil)
 	assert.NoError(t, err)
 }
 
@@ -42,8 +43,13 @@ func updateTestFile(t *testing.T) {
 	writeTestFile(t, []byte(updatedTestFileContents))
 }
 
+func resetTestStorage() {
+	clearTestStorage()
+	_ = os.Mkdir(testDir, 0755)
+}
+
 func clearTestStorage() {
-	os.RemoveAll(testDir)
+	_ = os.RemoveAll(testDir)
 }
 
 func writeTestFile(t *testing.T, contents []byte) {

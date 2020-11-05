@@ -1,0 +1,11 @@
+<main>
+  {{- template "settings_header" . }}
+  <p>Warning - this will delete all your data. Are you sure?</p>
+  <form method="post">
+    <label for="username">Username</label>
+    <input id="username" name="username" type="text" required="required"/>
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" required="required"/>
+    <button class="danger">Submit</button>
+  </form>
+</main>

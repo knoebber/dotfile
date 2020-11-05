@@ -8,14 +8,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Based on https://npf.io/2015/06/testing-exec-command/
+var sneakyTestingReference *testing.T
+
 const arbitraryEditor = "nano"
 
 func fakeEditCommand(command string, args ...string) *exec.Cmd {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic("$HOME is required for edit test")
+	}
+
 	assert.Equal(sneakyTestingReference, arbitraryEditor, command)
 	cs := []string{"-test.run=TestEditHelperProcess", "--", command}
 	cs = append(cs, args...)
 	cmd := exec.Command(os.Args[0], cs...)
-	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
+	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1", "HOME=" + home}
 	return cmd
 }
 
@@ -26,10 +34,10 @@ func TestEditCommandLaunchesEditor(t *testing.T) {
 	defer func() { execCommand = exec.Command }()
 
 	defer os.Setenv("EDITOR", os.Getenv("EDITOR"))
-	os.Setenv("EDITOR", arbitraryEditor)
+	_ = os.Setenv("EDITOR", arbitraryEditor)
 
 	editCommand := &editCommand{
-		fileName: trackedFileAlias,
+		alias: trackedFileAlias,
 	}
 
 	clearTestStorage()
@@ -48,10 +56,10 @@ func TestEditCommandLaunchesEditor(t *testing.T) {
 
 func TestErrorIfEditorNotSet(t *testing.T) {
 	defer os.Setenv("EDITOR", os.Getenv("EDITOR"))
-	os.Unsetenv("EDITOR")
+	_ = os.Unsetenv("EDITOR")
 
 	command := editCommand{
-		fileName: trackedFileAlias,
+		alias: trackedFileAlias,
 	}
 	err := command.run(nil)
 	assert.Equal(t, errEditorEnvVarNotSet, err)
@@ -61,6 +69,7 @@ func TestEditHelperProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
 		return
 	}
+
 	assert.Equal(t, trackedFileAlias, os.Args[1])
 	os.Exit(0)
 }

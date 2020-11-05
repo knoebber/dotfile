@@ -1,0 +1,154 @@
+#+TITLE: Web Documentation
+* Dotfilehub
+[[https://dotfilehub.com][Dotfilehub]] is a web interface for Dotfile. It has no JavaScript and
+should be usable with basic browsers.
+
+The index page is a form that does a global search. It finds
+files that have aliases or paths that match any part of the
+query. Results can be ordered by clicking the links on the table
+header.
+* Files
+** View
+All files are globally viewable at the path =/{username}/{alias}=.
+There are no private files.
+
+Files only render in HTML if the client sends an accept header that
+contains =html=. This allows users to download files easily if they
+are in an environment without the Dotfile CLI.  For example:
+#+BEGIN_SRC bash
+curl https://dotfilehub.com/knoebber/bashrc > ~/.bashrc
+#+END_SRC
+** Create
+Creating a file online is the same as pushing a file with the CLI.
+
+To create a file, login and navigate to your username. Click the "Add
+a new file" link at the top. Enter an alias, a path, and the files
+content.
+
+The alias must contain only letters, numbers, and underscores. When
+alias is omitted it will be generated from the path.
+
+The path is the location that the CLI will install the file to. Paths
+must start in either =/= or =~/=, E.G. =~/.bashrc=, =/etc/aliases=. It
+cannot have a trailing slash.
+
+Carriage return characters - "\r" - are stripped from the file content
+before being saved.
+** Edit
+Editing a file is the same as committing changes with the CLI. This
+will show the diff before confirming the new change. Commits can be
+rolled back by selecting a different commit and hitting "revert".
+
+Like create, all carriage return characters are stripped from the
+edited file.
+** Settings
+File settings provides the following options: 
++ Update a file's alias or path
++ Remove all commits except the current
++ Delete the file
+Note that changing the alias or path can cause CLI operations that
+use the API to throw errors.
+* User Settings
+** Setup CLI
+Select "Setup CLI" and enter your password. Then enter the commands
+into a shell. The token can be rotated at anytime - this ends all CLI
+write access until it's reconfigured with the new token.
+** Set Timezone
+:PROPERTIES:
+:custom_id: set-timezone
+:END:
+This will convert timestamps from the database to a timezone. The
+default is UTC. The form expects a string like the /TZ database name/
+column found here:
+[[https://en.wikipedia.org/wiki/List_of_tz_database_time_zones]]
+
+Depending on the server's host the available zones may be different.
+Consult [[https://golang.org/pkg/time/#LoadLocation]] for more
+information.
+** Account Recovery
+To enable account recovery save an email to your account. Emails are not used for
+anything else and are not visible by other users.
+** Delete Account
+This will delete all user data including files, commits, and session data.
+* API
+See
+[[https://github.com/knoebber/dotfile/tree/master/dotfileclient/dotfileclient.go]]
+for an example of building a client for the Dotfile API.
+** List Files
+#+BEGIN_SRC
+GET /api/v1/user/{username}
+GET /api/v1/user/{username}?path=true
+#+END_SRC
+Returns a list of aliases for username. Include paths with the =?path= parameter.
+** Get File Data
+#+BEGIN_SRC bash
+GET /api/v1/user/{username}/{alias}
+#+END_SRC
+Returns a file's data in JSON format.
+** Get Raw Content
+#+BEGIN_SRC bash
+GET /api/v1/user/{username}/{alias}/raw
+#+END_SRC
+Uncompresses the current revision.
+** Get Revision
+#+BEGIN_SRC bash
+GET /api/v1/user/{username}/{alias}/{hash}
+#+END_SRC
+Returns a file's compressed revision at hash.
+** Push File
+#+BEGIN_SRC bash
+POST /api/v1/user/{username}/{alias}
+#+END_SRC
+Post a file to the server. This can either be a new or existing file.
+The request body is a multipart file upload.
+The first part is a JSON encoding of the file data.
+Every hash that is part of the file's data should have a corresponding
+file part in the request.  The file parts are zlib compressed
+revisions that are named as the uncompressed contents hash.
+
+The request must have basic auth headers with the dotfilehub username
+and CLI token as the password.
+* Self host
+:PROPERTIES:
+:custom_id: self-host
+:END:
+Clone the repository and build the binary. The build step copies all
+of the required assets into the =/bin= directory.
+#+BEGIN_SRC bash
+git clone https://github.com/knoebber/dotfile
+cd dotfile
+make dotfilehub
+cd bin
+./dotfilehub
+#+END_SRC
+The server is configured through the following optional flags:
+** -addr
+The address to listen on. Defaults to =localhost:3000=.
+** -db
+The location of the sqlite database. Creates a new database when it
+does not yet exist.
+Defaults to =~/.dotfilehub.db=.
+** -host
+The name of the host. Used for displaying the host name in
+the CLI setup page and the password reset email.
+If this is not set the server will use the host header which is often
+incorrect. This shouldn't contain =http://= or =https://=.
+** -secure
+Boolean flag, defaults false.
+Set this to true when the host is using HTTPS.
+** -proxyheaders
+Boolean flag, defaults false.
+When true, the server will log request IPs by inspecting reverse proxy headers.
+** -smtp-config-path
+Sets up a SMTP client for account recovery. The value should be a
+path to a JSON file. The file must contain the following keys:
+#+BEGIN_SRC javascript
+{
+    "host": "",
+    "port": 0,
+    "username": "",
+    "password": "",
+    "sender": ""
+}
+#+END_SRC
+The client will use PLAIN authentication.

@@ -3,49 +3,71 @@ package local
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
+
+	"github.com/knoebber/dotfile/dotfile"
 )
 
 const (
-	testHome           = "/home/testing"
 	testAlias          = "testalias"
 	testMessage        = "test message"
 	testHash           = "9abdbcf4ea4e2c1c077c21b8c2f2470ff36c31ce"
 	testUpdatedHash    = "5d12fbbc6038e0b6a3e798dd790512ba03de7b6a"
-	nonExistantFile    = "file_does_not_exist"
-	notTrackedFile     = "/dev/null"
 	testDir            = "testdata/"
+	testConfigPath     = testDir + "test_config.json"
 	testTrackedFile    = testDir + "testfile.txt"
 	testContent        = "Some stuff.\n"
-	updatedTestContent = testContent + "Some new content!\n"
+	testUpdatedContent = testContent + "Some new content.\nNew lines!\n"
 )
 
-func initTestdata(t *testing.T) {
+func initTestData(t *testing.T) {
 	_ = os.Mkdir(testDir, 0755)
 	writeTestFile(t, []byte(testContent))
 }
 
 func updateTestFile(t *testing.T) {
-	writeTestFile(t, []byte(updatedTestContent))
+	writeTestFile(t, []byte(testUpdatedContent))
 }
 
 func clearTestStorage() {
 	_ = os.RemoveAll(testDir)
 }
 
+func resetTestStorage(t *testing.T) {
+	clearTestStorage()
+	initTestData(t)
+}
+
+func testStorage() *Storage {
+	return &Storage{
+		Dir:   testDir,
+		Alias: testAlias,
+	}
+}
+
 func setupTestFile(t *testing.T) *Storage {
 	clearTestStorage()
-	os.Mkdir(testDir, 0755)
-	writeTestFile(t, []byte(testContent))
+	initTestData(t)
 
-	_, err := InitFile(testHome, testDir, testTrackedFile, testAlias)
+	fullPath, err := filepath.Abs(testTrackedFile)
 	if err != nil {
-		t.Fatalf("initializing test file: %s", err)
+		t.Fatalf("getting full path for %q: %v", testTrackedFile, err)
 	}
 
-	s, err := LoadFile(testHome, testDir, testAlias)
-	if err != nil {
-		t.Fatalf("loading test file: %s", err)
+	s := testStorage()
+	s.FileData = &dotfile.TrackingData{
+		Path:    fullPath,
+		Commits: []dotfile.Commit{},
+	}
+
+	if err := dotfile.Init(s, fullPath, testAlias); err != nil {
+		t.Fatalf("initializing test file: %v", err)
+	}
+
+	// Read the newly initialized test file.
+	if err := s.SetTrackingData(); err != nil {
+		t.Fatalf("reading test file tracking data: %v", err)
 	}
 
 	return s
