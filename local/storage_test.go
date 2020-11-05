@@ -314,3 +314,17 @@ func TestStorage_RemoveCommits(t *testing.T) {
 		assert.Equal(t, 1, len(s.FileData.Commits))
 	})
 }
+
+func TestStorage_Remove(t *testing.T) {
+	setupTestFile(t)
+	s := testStorage()
+
+	t.Run("error when tracking data not loaded", func(t *testing.T) {
+		assert.Error(t, s.Remove())
+	})
+
+	t.Run("ok", func(t *testing.T) {
+		assert.NoError(t, s.SetTrackingData())
+		assert.NoError(t, s.Remove())
+	})
+}

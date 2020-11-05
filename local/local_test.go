@@ -58,5 +58,4 @@ func TestConvertPath(t *testing.T) {
 		_, err := convertPath("~/.bashrc")
 		assert.Error(t, err)
 	})
-
 }

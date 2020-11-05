@@ -5,6 +5,13 @@
 :END:
 Dotfile should work on most unix systems. [[https://golang.org][Golang]] is required to build Dotfile.
 
+
+*Install with go get*
+#+BEGIN_SRC bash
+GO111MODULE=on go get github.com/knoebber/dotfile/cmd/dotfile@latest
+#+END_SRC
+
+*Install with make*
 #+BEGIN_SRC bash
 git clone https://github.com/knoebber/dotfile
 cd dotfile
@@ -18,8 +25,10 @@ path. This allows for quick access regardless of the working
 directory. For example, the following command prints the content in
 =~/.bashrc=:
 #+BEGIN_SRC:
-dot show bashrc
+dotfile show bashrc
 #+END_SRC
+
+Use =dotfile --help= to learn more.
 * Data Storage
 Dotfile stores tracking data in =~/.local/share/dotfile=.
 If its parent directory does not exist it will fallback to =~/.dotfile=.
