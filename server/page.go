@@ -32,7 +32,7 @@ var (
 	pageTemplates *template.Template
 )
 
-// Page is used for rendering pages and tracking request state.
+// Page renders pages and tracks request state.
 // Exported fields/methods may be used within templates.
 type Page struct {
 	Title          string
@@ -46,7 +46,7 @@ type Page struct {
 	Session      *db.UserSession
 	templateName string
 	htmlFile     string
-	// When true restrict page access to logged in page owners.
+	// Page access is restricted to their owners when true.
 	protected bool
 }
 

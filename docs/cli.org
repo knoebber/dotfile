@@ -61,7 +61,7 @@ history. It's possible to restore revisions manually by decompressing
 the revision files with zlib.
 * User Config
 Remote commands require a user configuration. By default Dotfile
-creates a config file named =config.json= in a location returned by
+creates a config file named =dotfile.json= in a location returned by
 https://golang.org/pkg/os/#UserConfigDir. This can be changed with the
 =--config-file= flag.
 
@@ -69,9 +69,9 @@ The config file can be edited manually or with the =dotfile config=
 command. The config file has the following keys:
 + *remote*  - The remote server to use.
 + *username* - A Dotfilehub username. Pull, push, and commands with the =--remote= flag use this for account lookups.
-+ *token* - A secret required for write access on a remote server. Find this under "Settings" / "Setup CLI" in the web interface.
++ *token* - A secret required for writing to a remote server. Find this under "Settings" / "Setup CLI" in the web interface.
 
-*Example: ~/.config/dotfile/config.json*
+*Example: ~/.config/dotfile/dotfile.json*
 #+BEGIN_SRC javascript
 {
   "remote": "https://dotfilehub.com",
@@ -84,7 +84,7 @@ Initialize a file.
 #+BEGIN_SRC bash
 dotfile init <path> <alias>
 #+END_SRC
-When alias is omitted =init= generates the alias from the path.
+Alias is optional. It's generated from the path when empty.
 
 Initialize as "bashrc":
 #+BEGIN_SRC bash
@@ -103,7 +103,7 @@ Show a file.
 #+BEGIN_SRC bash
 dotfile show <alias>
 #+END_SRC
-+ =-d, --data= Show the JSON data.
++ =-d, --data= Show the file's json data.
 + =-r, --remote= Show a file on a remote server.
 + =-u, --username= Override the configured username.
 * List
@@ -112,7 +112,7 @@ changes.
 #+BEGIN_SRC bash
 dotfile ls
 #+END_SRC
-+ =-p, --path= Include the files path in the list.
++ =-p, --path= Include the file path in the output.
 + =-r, --remote= List the remote users files.
 + =-u, --username= Override the configured username.
 * Edit
@@ -142,11 +142,12 @@ Revert a file to a past revision.
 #+BEGIN_SRC bash
 dotfile checkout <alias> <hash>
 #+END_SRC
-Hash is optional. Defaults to the current revision when empty.
-This will remove any changes on the file since the last
-commit or checkout command.
+Hash is optional. Defaults to the current revision when empty - this
+removes any changes on the file since the last commit or checkout
+command.
 
-To checkout to a specific revision use the =dotfile log= command to find the hash.
+To checkout a specific revision first use the =dotfile log= command to
+find the hash.
 * Config
 Read and set user configuration.
 #+BEGIN_SRC bash
@@ -170,9 +171,9 @@ new file at path when it does not yet exist.
 dotfile pull <alias>
 #+END_SRC
 + =-u, --username= Override the configured username.
-+ =-a, --all= Pull all files
++ =-a, --all= Pull all files.
 
-Alternatively pull a file without using the dotfile CLI:
+Alternatively pull a file without using the Dotfile CLI:
 #+BEGIN_SRC bash
 # Get a list of user's files:
 curl https://dotfilehub.com/api/knoebber
@@ -186,6 +187,7 @@ Change a file's path.
 #+BEGIN_SRC bash
 dotfile mv <alias> <path>
 #+END_SRC
++ =-p, --parent-dirs= Create parent directories that don't exist.
 * Rename
 Change a file's alias.
 #+BEGIN_SRC bash
@@ -194,13 +196,12 @@ dotfile rename <alias> <new-alias>
 * Forget
 Untracks a file - removes all Dotfile data for the file. Leaves the
 file in its current state on the filesystem.
-
-+ =-c, --commits= Remove all commits except for the current. File is still tracked but history is removed.
 #+BEGIN_SRC bash
 dotfile forget <alias>
 #+END_SRC
++ =-c, --commits= Remove all data except for the current revision. (Deletes history)
 * Remove
-Untrack and remove the file from the filesystem.
+Untrack and remove the file from the filesystem. Equivalent to =dot forget bashrc && rm ~/.bashrc=.
 #+BEGIN_SRC bash
 dotfile rm <alias>
 #+END_SRC

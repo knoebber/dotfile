@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 
-	"github.com/knoebber/dotfile/dotfile"
 	"github.com/knoebber/dotfile/local"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -14,17 +13,12 @@ type initCommand struct {
 }
 
 func (ic *initCommand) run(*kingpin.ParseContext) error {
-	alias, err := dotfile.Alias(ic.alias, ic.path)
+	storage, err := local.InitializeFile(flags.storageDir, ic.path, ic.alias)
 	if err != nil {
 		return err
 	}
 
-	storage := &local.Storage{Dir: flags.storageDir, Alias: alias}
-	if err = storage.InitFile(ic.path); err != nil {
-		return err
-	}
-
-	fmt.Printf("Initialized as %q\n", alias)
+	fmt.Printf("Initialized as %q\n", storage.Alias)
 	return nil
 }
 

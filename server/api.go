@@ -241,7 +241,7 @@ func setJSON(w http.ResponseWriter, body interface{}) {
 }
 
 func authError(w http.ResponseWriter, err error) {
-	log.Print(err)
+	log.Printf("api authentication error %s", err)
 	w.WriteHeader(http.StatusUnauthorized)
 }
 
@@ -254,7 +254,7 @@ func apiError(w http.ResponseWriter, err error) {
 		return
 	}
 
-	log.Printf("api error: %v", err)
+	log.Printf("api error: %s", err)
 
 	if errors.As(err, &usererr) {
 		http.Error(w, usererr.Message, http.StatusBadRequest)

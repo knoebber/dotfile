@@ -73,7 +73,7 @@ func dotfileRoutes(r *mux.Router, config Config) {
 }
 
 // Prevent users for registering any username that conflicts with an existing route.
-// For example a user named "about" wouldn't be able to see their files.
+// For example a user named "login" wouldn't be able to see their files.
 func createReservedUsernames(r *mux.Router) error {
 	var reserved []interface{}
 	err := r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {

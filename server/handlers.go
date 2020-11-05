@@ -36,6 +36,7 @@ func createStaticHandler(title, htmlFile string) http.HandlerFunc {
 
 		if err := page.writeFromHTML(w); err != nil {
 			staticError(w, title, err)
+			return
 		}
 	}
 
@@ -82,6 +83,7 @@ func createHandler(desc *pageDescription) http.HandlerFunc {
 
 		if err := page.writeFromTemplate(w); err != nil {
 			templateError(w, page.Title, err)
+			return
 		}
 	}
 }

@@ -15,9 +15,10 @@ const (
 	testHash           = "9abdbcf4ea4e2c1c077c21b8c2f2470ff36c31ce"
 	testUpdatedHash    = "5d12fbbc6038e0b6a3e798dd790512ba03de7b6a"
 	testDir            = "testdata/"
+	testConfigPath     = testDir + "test_config.json"
 	testTrackedFile    = testDir + "testfile.txt"
 	testContent        = "Some stuff.\n"
-	updatedTestContent = testContent + "Some new content!\n"
+	testUpdatedContent = testContent + "Some new content.\nNew lines!\n"
 )
 
 func initTestData(t *testing.T) {
@@ -26,7 +27,7 @@ func initTestData(t *testing.T) {
 }
 
 func updateTestFile(t *testing.T) {
-	writeTestFile(t, []byte(updatedTestContent))
+	writeTestFile(t, []byte(testUpdatedContent))
 }
 
 func clearTestStorage() {

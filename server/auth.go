@@ -113,8 +113,7 @@ func handleSignup(secure bool) pageBuilder {
 		confirm := r.Form.Get("confirm")
 
 		if password != confirm {
-			p.setError(w, usererror.Invalid("Passwords do not match."))
-			return false
+			return p.setError(w, usererror.Invalid("Passwords do not match."))
 		}
 
 		_, err := db.CreateUser(db.Connection, username, password)

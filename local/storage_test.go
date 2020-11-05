@@ -2,7 +2,10 @@ package local
 
 import (
 	"bytes"
+	"github.com/knoebber/dotfile/dotfileclient"
+	"github.com/pkg/errors"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,6 +14,15 @@ import (
 	"github.com/knoebber/dotfile/dotfile"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestStorage_JSON(t *testing.T) {
+	t.Run("not tracked error", func(t *testing.T) {
+		s := testStorage()
+		s.Dir = "/does/not/exist"
+		_, err := s.JSON()
+		assert.True(t, errors.Is(err, ErrNotTracked))
+	})
+}
 
 func TestStorage_SetTrackingData(t *testing.T) {
 	t.Run("error when storage dir is empty", func(t *testing.T) {
@@ -46,8 +58,14 @@ func TestStorage_SetTrackingData(t *testing.T) {
 }
 
 func TestStorage_save(t *testing.T) {
-	t.Run("error when directory does not exist", func(t *testing.T) {
+	t.Run("error when directory doesn't exist", func(t *testing.T) {
 		s := &Storage{Dir: "/not/exist"}
+		assert.Error(t, s.save())
+	})
+	t.Run("error when json path doesn't exist", func(t *testing.T) {
+		resetTestStorage(t)
+		s := testStorage()
+		s.Alias = "not/tracked"
 		assert.Error(t, s.save())
 	})
 }
@@ -96,7 +114,7 @@ func TestStorage_Revert(t *testing.T) {
 
 	t.Run("ok", func(t *testing.T) {
 		s := setupTestFile(t)
-		err := s.Revert(bytes.NewBuffer([]byte(updatedTestContent)), testUpdatedHash)
+		err := s.Revert(bytes.NewBuffer([]byte(testUpdatedContent)), testUpdatedHash)
 		assert.NoError(t, err)
 		assert.Equal(t, testUpdatedHash, s.FileData.Revision)
 	})
@@ -132,7 +150,7 @@ func TestStorage_SaveCommit(t *testing.T) {
 			Message:   testMessage,
 		}
 
-		err := s.SaveCommit(bytes.NewBuffer([]byte(updatedTestContent)), c)
+		err := s.SaveCommit(bytes.NewBuffer([]byte(testUpdatedContent)), c)
 
 		assert.NoError(t, err)
 		assert.Equal(t, testUpdatedHash, s.FileData.Revision)
@@ -154,6 +172,17 @@ func TestStorage_Path(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+	t.Run("error when $HOME not set", func(t *testing.T) {
+		defer os.Setenv("HOME", os.Getenv("HOME"))
+		_ = os.Unsetenv("HOME")
+
+		s := testStorage()
+		s.FileData = &dotfile.TrackingData{Path: "~/relative-path"}
+
+		_, err := s.Path()
+		assert.Error(t, err)
+	})
+
 	t.Run("ok", func(t *testing.T) {
 		s := testStorage()
 		s.FileData = &dotfile.TrackingData{Path: "~/relative-path"}
@@ -161,5 +190,127 @@ func TestStorage_Path(t *testing.T) {
 		path, err := s.Path()
 		assert.NoError(t, err)
 		assert.NotEmpty(t, path)
+	})
+}
+
+func TestStorage_Push(t *testing.T) {
+	t.Run("error when data not loaded", func(t *testing.T) {
+		s := testStorage()
+		assert.Error(t, s.Push(nil))
+	})
+	t.Run("error when client fails to connect", func(t *testing.T) {
+		client := new(dotfileclient.Client)
+		s := testStorage()
+		assert.Error(t, s.Push(client))
+	})
+}
+
+func TestStorage_Pull(t *testing.T) {
+	s := testStorage()
+	client := new(dotfileclient.Client)
+	client.Client = http.DefaultClient
+	t.Run("error on attempt to load invalid json", func(t *testing.T) {
+		setupTestFile(t)
+
+		if err := ioutil.WriteFile(testDir+testAlias+".json", []byte("invalid json"), 0644); err != nil {
+			t.Fatalf("writing test json")
+		}
+		assert.Error(t, s.Pull(client))
+	})
+
+	t.Run("uncommitted changes", func(t *testing.T) {
+		setupTestFile(t)
+		updateTestFile(t)
+		err := s.Pull(client)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "uncommitted")
+	})
+
+	t.Run("client error", func(t *testing.T) {
+		setupTestFile(t)
+		err := s.Pull(client)
+		assert.Error(t, err)
+	})
+}
+
+func TestStorage_Move(t *testing.T) {
+	s := testStorage()
+	setupTestFile(t)
+
+	t.Run("error when no data", func(t *testing.T) {
+		assert.Error(t, s.Move(testTrackedFile, false))
+	})
+
+	assert.NoError(t, s.SetTrackingData())
+
+	t.Run("parent dirs works", func(t *testing.T) {
+		nested := testDir + "new/file.txt"
+		assert.Error(t, s.Move(nested, false))
+		assert.NoError(t, s.Move(nested, true))
+	})
+
+	t.Run("error when path can't be made", func(t *testing.T) {
+		assert.Error(t, s.Move("/not/real.txt", true))
+	})
+}
+
+func TestStorage_Rename(t *testing.T) {
+	s := testStorage()
+	setupTestFile(t)
+
+	t.Run("error when alias exists", func(t *testing.T) {
+		assert.Error(t, s.Rename(testAlias))
+	})
+
+	t.Run("error when alias has invalid format", func(t *testing.T) {
+		assert.Error(t, s.Rename("invalid/alias"))
+	})
+
+	t.Run("error when dir doesn't exist", func(t *testing.T) {
+		invalidStorage := &Storage{
+			Alias: testAlias,
+			Dir:   "/does/not/exist",
+		}
+
+		assert.Error(t, invalidStorage.Rename("newalias"))
+	})
+
+	t.Run("ok", func(t *testing.T) {
+		assert.NoError(t, s.Rename("new"))
+	})
+}
+
+func TestStorage_Forget(t *testing.T) {
+	t.Run("error when dir doesn't exist", func(t *testing.T) {
+		invalidStorage := &Storage{Dir: "/does/not/exist"}
+		assert.Error(t, invalidStorage.Forget())
+	})
+
+	t.Run("ok", func(t *testing.T) {
+		setupTestFile(t)
+		s := testStorage()
+		assert.NoError(t, s.Forget())
+	})
+}
+
+func TestStorage_RemoveCommits(t *testing.T) {
+	setupTestFile(t)
+	s := testStorage()
+
+	t.Run("error when file data not set", func(t *testing.T) {
+		assert.Error(t, s.RemoveCommits())
+	})
+
+	t.Run("ok with no commits", func(t *testing.T) {
+		s.FileData = new(dotfile.TrackingData)
+		assert.NoError(t, s.RemoveCommits())
+	})
+
+	t.Run("removes non current commit", func(t *testing.T) {
+		updateTestFile(t)
+		assert.NoError(t, s.SetTrackingData())
+		assert.NoError(t, dotfile.NewCommit(s, "testing remove commits"))
+		assert.NoError(t, s.RemoveCommits())
+		assert.Equal(t, 1, len(s.FileData.Commits))
 	})
 }

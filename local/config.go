@@ -48,7 +48,7 @@ func configBytes(path string) ([]byte, error) {
 
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, errors.Wrap(err, "reading config directory")
+		return nil, errors.Wrap(err, "reading config bytes")
 	}
 
 	return bytes, nil
@@ -81,7 +81,7 @@ func ReadConfig(path string) (*Config, error) {
 	}
 
 	if err = json.Unmarshal(bytes, cfg); err != nil {
-		return nil, errors.Wrap(err, "unmarshaling user config to struct")
+		return nil, errors.Wrap(err, "unmarshalling config")
 	}
 
 	return cfg, nil

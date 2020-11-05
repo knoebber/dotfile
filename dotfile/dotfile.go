@@ -114,7 +114,7 @@ func Alias(alias, path string) (string, error) {
 	return matches[1], nil
 }
 
-// CheckAlias checks whether the alias format is allowed.
+// CheckAlias checks whether the alias is a valid format.
 func CheckAlias(alias string) error {
 	if !validAliasRegex.Match([]byte(alias)) {
 		return usererror.Invalid(fmt.Sprintf("%q has non word characters", alias))
@@ -123,7 +123,7 @@ func CheckAlias(alias string) error {
 	return nil
 }
 
-// CheckPath checks whether the alias format is allowed.
+// CheckPath checks whether the path is a valid format.
 func CheckPath(path string) error {
 	l := len(path)
 	if l == 0 {
@@ -139,7 +139,7 @@ func CheckPath(path string) error {
 	}
 
 	if !filepath.IsAbs(path) {
-		return usererror.Invalid("File path cannot be relative")
+		return usererror.Invalid("File path must start with ~/ or be absolute")
 	}
 
 	return nil

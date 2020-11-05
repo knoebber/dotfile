@@ -46,7 +46,7 @@ func (lc *listCommand) listRemote() ([]string, error) {
 
 func addListSubCommandToApplication(app *kingpin.Application) {
 	lc := new(listCommand)
-	c := app.Command("ls", "list all tracked files, an asterisks signifies uncommited changes").Action(lc.run)
+	c := app.Command("ls", "list all tracked files, an asterisks signifies uncommitted changes").Action(lc.run)
 	c.Flag("path", "include path in list").Short('p').BoolVar(&lc.path)
 	c.Flag("remote", "read file list from remote").Short('r').BoolVar(&lc.remote)
 	c.Flag("username", "read files owned by username on remote").Short('u').StringVar(&lc.username)

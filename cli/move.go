@@ -5,7 +5,7 @@ import "gopkg.in/alecthomas/kingpin.v2"
 type moveCommand struct {
 	alias      string
 	newPath    string
-	createDirs bool
+	parentDirs bool
 }
 
 func (mc *moveCommand) run(*kingpin.ParseContext) error {
@@ -14,7 +14,7 @@ func (mc *moveCommand) run(*kingpin.ParseContext) error {
 		return err
 	}
 
-	return s.Move(mc.newPath, mc.createDirs)
+	return s.Move(mc.newPath, mc.parentDirs)
 }
 
 func addMoveSubCommandToApplication(app *kingpin.Application) {
@@ -23,5 +23,5 @@ func addMoveSubCommandToApplication(app *kingpin.Application) {
 	p := app.Command("mv", "move a file").Action(mc.run)
 	p.Arg("alias", "the file to move").Required().StringVar(&mc.alias)
 	p.Arg("new path", "the path to the new destination").StringVar(&mc.newPath)
-	p.Flag("create-dirs", "create directories that do not exist").Short('c').BoolVar(&mc.createDirs)
+	p.Flag("parent-dirs", "create parent directories that do not exist").Short('p').BoolVar(&mc.parentDirs)
 }

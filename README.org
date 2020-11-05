@@ -72,7 +72,7 @@ View commit history:
 dotfile log bashrc
 #+END_SRC
 
-Revert its uncommited changes:
+Revert its uncommitted changes:
 #+BEGIN_SRC bash
 dotfile checkout bashrc
 #+END_SRC

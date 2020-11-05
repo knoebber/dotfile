@@ -169,7 +169,7 @@ func (ft *FileTransaction) SetRevision(hash string) error {
 func InitOrCommit(userID int64, alias, message string) error {
 	tx, err := Connection.Begin()
 	if err != nil {
-		return errors.Wrap(err, "starting transaction for confirm temp file")
+		return errors.Wrap(err, "starting transaction for init or commit")
 	}
 
 	ft, err := StageFile(tx, userID, alias)
@@ -186,7 +186,7 @@ func InitOrCommit(userID int64, alias, message string) error {
 		return Rollback(tx, err)
 	}
 	if err := tx.Commit(); err != nil {
-		return errors.Wrap(err, "closing transaction for confirm temp file")
+		return errors.Wrap(err, "closing transaction for init or commit")
 	}
 
 	return nil

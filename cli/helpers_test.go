@@ -43,6 +43,11 @@ func updateTestFile(t *testing.T) {
 	writeTestFile(t, []byte(updatedTestFileContents))
 }
 
+func resetTestStorage() {
+	clearTestStorage()
+	_ = os.Mkdir(testDir, 0755)
+}
+
 func clearTestStorage() {
 	_ = os.RemoveAll(testDir)
 }

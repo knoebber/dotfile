@@ -126,6 +126,35 @@ func DefaultStorageDir() (storageDir string, err error) {
 	return
 }
 
+// InitializeFile sets up a new file to be tracked.
+// When alias is empty its generated from path.
+// Returns a Storage that is loaded with the new file.
+func InitializeFile(storageDir, path, alias string) (*Storage, error) {
+	var err error
+
+	alias, err = dotfile.Alias(alias, path)
+	if err != nil {
+		return nil, err
+	}
+
+	s := &Storage{Dir: storageDir, Alias: alias}
+	if s.hasSavedData() {
+		return nil, fmt.Errorf("%q is already tracked", alias)
+	}
+
+	s.FileData = new(dotfile.TrackingData)
+	s.FileData.Path, err = convertPath(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := dotfile.Init(s, s.FileData.Path, s.Alias); err != nil {
+		return nil, err
+	}
+
+	return s, nil
+}
+
 // List returns a slice of aliases for all locally tracked files.
 // When the file has uncommitted changes an asterisks is added to the end.
 func List(storageDir string, path bool) ([]string, error) {

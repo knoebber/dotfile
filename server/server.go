@@ -2,7 +2,6 @@
 package server
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -12,6 +11,8 @@ import (
 	"github.com/knoebber/dotfile/db"
 	"github.com/pkg/errors"
 )
+
+const timeout = 10 * time.Second
 
 // Config configures the server.
 type Config struct {
@@ -39,29 +40,26 @@ func (c Config) URL(r *http.Request) string {
 	return protocol + c.Host
 }
 
-const timeout = 10 * time.Second
-
-// Start starts the dotfile web server.
+// New returns a dotfilehub web server.
 // Expects an assets folder in the same directory from where the binary is ran.
-func Start(config Config) error {
+func New(config Config) (*http.Server, error) {
 	var err error
 
 	if err = db.Start(config.DBPath); err != nil {
-		return errors.Wrapf(err, "starting database")
+		return nil, errors.Wrapf(err, "starting database")
 	}
-	defer db.Close()
 
 	if config.SMTPConfigPath != "" {
 		config.SMTP, err = smtpConfig(config.SMTPConfigPath)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	r := mux.NewRouter()
 
 	if err := setupRoutes(r, config); err != nil {
-		return err
+		return nil, err
 	}
 
 	s := &http.Server{
@@ -77,12 +75,8 @@ func Start(config Config) error {
 	}
 
 	if err := loadTemplates(); err != nil {
-		return err
+		return nil, err
 	}
 
-	log.Printf("using sqlite3 database %s", config.DBPath)
-	log.Println("serving dotfiles at", config.Addr)
-
-	log.Panicf("dotfilehub listen and serve: %v", s.ListenAndServe())
-	return nil
+	return s, nil
 }

@@ -17,9 +17,9 @@ import (
 
 var (
 	// ErrNotTracked is returned when the current alias in storage is not tracked.
-	ErrNotTracked = errors.New("file is not tracked")
+	ErrNotTracked = errors.New("file not tracked")
 	// ErrNoData is returned when a method expects non nil file data.
-	ErrNoData = errors.New("tracking data is not loaded")
+	ErrNoData = errors.New("tracking data not loaded")
 )
 
 // Storage provides methods for manipulating tracked files on the file system.
@@ -39,19 +39,17 @@ func (s *Storage) hasSavedData() bool {
 
 // JSON returns the tracked files json.
 func (s *Storage) JSON() ([]byte, error) {
-	if !s.hasSavedData() {
-		return nil, ErrNotTracked
-	}
-
 	jsonContent, err := ioutil.ReadFile(s.jsonPath())
-	if err != nil {
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, ErrNotTracked
+	} else if err != nil {
 		return nil, errors.Wrap(err, "reading tracking data")
 	}
 
 	return jsonContent, nil
 }
 
-// SetTrackingData reads the tracking data from the filesytem into FileData.
+// SetTrackingData reads the tracking data from the filesystem into FileData.
 func (s *Storage) SetTrackingData() error {
 	if s.Alias == "" {
 		return errors.New("cannot set tracking data: alias is empty")
@@ -88,30 +86,13 @@ func (s *Storage) save() error {
 
 	// Example: ~/.local/share/dotfile/bash_profile.json
 	if err := ioutil.WriteFile(s.jsonPath(), content, 0644); err != nil {
-		return errors.Wrapf(err, "saving tracking data to %q", s.jsonPath())
+		return errors.Wrap(err, "saving tracking data")
 	}
 
 	return nil
 }
 
-// InitFile sets up a new file to be tracked.
-// It will setup the storage directory if its the first use.
-func (s *Storage) InitFile(path string) (err error) {
-	if s.hasSavedData() {
-		return fmt.Errorf("%q is already tracked", s.Alias)
-	}
-
-	s.FileData = new(dotfile.TrackingData)
-	s.FileData.Path, err = convertPath(path)
-	if err != nil {
-		return
-	}
-
-	return dotfile.Init(s, s.FileData.Path, s.Alias)
-}
-
 // HasCommit return whether the file has a commit with hash.
-// This never returns an error; it's present to satisfy a dotfile.Storer requirement.
 func (s *Storage) HasCommit(hash string) (exists bool, err error) {
 	if s.FileData == nil {
 		return false, ErrNoData
@@ -322,16 +303,14 @@ func (s *Storage) Pull(client *dotfileclient.Client) error {
 }
 
 // Move moves the file currently tracked by storage.
-func (s *Storage) Move(newPath string, createDirs bool) error {
-	if s.FileData == nil {
-		return ErrNoData
-	}
+func (s *Storage) Move(newPath string, parentDirs bool) error {
+	fmt.Println(parentDirs)
 	currentPath, err := s.Path()
 	if err != nil {
 		return err
 	}
 
-	if createDirs {
+	if parentDirs {
 		if err := createDirectories(newPath); err != nil {
 			return err
 		}
@@ -351,6 +330,10 @@ func (s *Storage) Move(newPath string, createDirs bool) error {
 
 // Rename changes a files alias.
 func (s *Storage) Rename(newAlias string) error {
+	if err := dotfile.CheckAlias(newAlias); err != nil {
+		return err
+	}
+
 	newDir := filepath.Join(s.Dir, newAlias)
 	if exists(newDir) {
 		return usererror.Invalid(fmt.Sprintf("%q already exists", newAlias))
@@ -385,6 +368,10 @@ func (s *Storage) Forget() error {
 func (s *Storage) RemoveCommits() error {
 	var current dotfile.Commit
 
+	if s.FileData == nil {
+		return ErrNoData
+	}
+
 	for _, c := range s.FileData.Commits {
 		if c.Hash == s.FileData.Revision {
 			current = c
@@ -394,9 +381,13 @@ func (s *Storage) RemoveCommits() error {
 			return err
 		}
 	}
-	s.FileData.Commits = []dotfile.Commit{current}
 
-	return s.save()
+	if current.Hash != "" {
+		s.FileData.Commits = []dotfile.Commit{current}
+		return s.save()
+	}
+
+	return nil
 }
 
 // Remove deletes the file that is tracked and all its data.
