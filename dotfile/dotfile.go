@@ -12,14 +12,15 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strings"
 )
 
 var (
 	// Captures the last part of the path without its file ending.
-	pathToAliasRegex = regexp.MustCompile(`(\w+)(\.\w+)?$`)
+	pathToAliasRegex = regexp.MustCompile(`([^/.]+)(\..*)?$`)
 
-	// Alias must only be words.
-	validAliasRegex = regexp.MustCompile(`^\w+$`)
+	// Alias must only contain letters, dashes, numbers, underscores
+	validAliasRegex = regexp.MustCompile(`^[a-z0-9-_]+$`)
 
 	// ErrNoChanges is returned when a diff operation finds no changes.
 	ErrNoChanges = usererror.Invalid("No changes")
@@ -103,6 +104,9 @@ func MergeTrackingData(old, new *TrackingData) (merged *TrackingData, newHashes 
 //           ~/.config/i3/config: config
 //           ~/.config/alacritty/alacritty.yml: alacritty
 func Alias(alias, path string) (string, error) {
+	alias = strings.ToLower(alias)
+	path = strings.ToLower(path)
+
 	if alias != "" {
 		return alias, nil
 	}
@@ -117,7 +121,7 @@ func Alias(alias, path string) (string, error) {
 // CheckAlias checks whether the alias is a valid format.
 func CheckAlias(alias string) error {
 	if !validAliasRegex.Match([]byte(alias)) {
-		return usererror.Invalid(fmt.Sprintf("%q has non word characters", alias))
+		return usererror.Invalid(fmt.Sprintf("%q has non allowed characters", alias))
 	}
 
 	return nil

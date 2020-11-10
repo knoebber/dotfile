@@ -3,6 +3,7 @@ package db
 import (
 	"bytes"
 	"database/sql"
+	"strings"
 	"time"
 
 	"github.com/knoebber/dotfile/dotfile"
@@ -55,6 +56,8 @@ func (f *TempFileRecord) insertStmt(e Executor) (sql.Result, error) {
 	if err := checkSize(content, "File "+f.Alias); err != nil {
 		return nil, err
 	}
+	f.Alias = strings.ToLower(f.Alias)
+	f.Path = strings.ToLower(f.Path)
 
 	return e.Exec(`
 INSERT INTO temp_files

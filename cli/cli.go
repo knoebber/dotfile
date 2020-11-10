@@ -58,7 +58,7 @@ func setConfig(app *kingpin.Application) error {
 		return err
 	}
 
-	app.Version("1.0.0")
+	app.Version("1.0.1")
 
 	app.Flag("storage-dir", "The directory where dotfile data is stored").
 		Default(defaultStorageDir).

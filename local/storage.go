@@ -304,7 +304,6 @@ func (s *Storage) Pull(client *dotfileclient.Client) error {
 
 // Move moves the file currently tracked by storage.
 func (s *Storage) Move(newPath string, parentDirs bool) error {
-	fmt.Println(parentDirs)
 	currentPath, err := s.Path()
 	if err != nil {
 		return err

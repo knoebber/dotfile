@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/knoebber/dotfile/dotfile"
@@ -67,14 +68,17 @@ func (f *FileRecord) insertStmt(e Executor) (sql.Result, error) {
 	return e.Exec(`
 INSERT INTO files(user_id, alias, path, current_commit_id) VALUES(?, ?, ?, ?)`,
 		f.UserID,
-		f.Alias,
-		f.Path,
+		strings.ToLower(f.Alias),
+		strings.ToLower(f.Path),
 		f.CurrentCommitID,
 	)
 }
 
 // Update updates the alias or path if they are different.
 func (f *FileRecord) Update(e Executor, newAlias, newPath string) error {
+	newAlias = strings.ToLower(newAlias)
+	newPath = strings.ToLower(newPath)
+
 	if f.Alias == newAlias && f.Path == newPath {
 		return nil
 	}

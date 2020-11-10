@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"database/sql"
@@ -59,7 +60,7 @@ func (u *UserRecord) insertStmt(e Executor) (sql.Result, error) {
 		email = &u.Email
 	}
 	return e.Exec("INSERT INTO users(username, email, password_hash, cli_token) VALUES(?, ?, ?, ?)",
-		u.Username,
+		strings.ToLower(u.Username),
 		email,
 		u.PasswordHash,
 		u.CLIToken,
