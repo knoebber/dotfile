@@ -27,7 +27,10 @@ func init() {
 }
 
 func initTestFile(t *testing.T) {
-	_ = os.Mkdir(testDir, 0755)
+	if err := os.Mkdir(testDir, 0755); err != nil {
+		t.Fatalf("creating test dir: %s", err)
+	}
+
 	writeTestFile(t, []byte(initialTestFileContents))
 	fullPath, err := filepath.Abs(trackedFile)
 	if err != nil {
@@ -43,13 +46,15 @@ func updateTestFile(t *testing.T) {
 	writeTestFile(t, []byte(updatedTestFileContents))
 }
 
-func resetTestStorage() {
-	clearTestStorage()
+func resetTestStorage(t *testing.T) {
+	clearTestStorage(t)
 	_ = os.Mkdir(testDir, 0755)
 }
 
-func clearTestStorage() {
-	_ = os.RemoveAll(testDir)
+func clearTestStorage(t *testing.T) {
+	if err := os.RemoveAll(testDir); err != nil {
+		t.Fatalf("clearing test storage: %s", err)
+	}
 }
 
 func writeTestFile(t *testing.T, contents []byte) {

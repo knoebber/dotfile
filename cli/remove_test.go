@@ -6,7 +6,7 @@ import (
 )
 
 func TestRemove(t *testing.T) {
-	clearTestStorage()
+	clearTestStorage(t)
 	initTestFile(t)
 
 	removeCommand := new(removeCommand)

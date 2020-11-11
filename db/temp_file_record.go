@@ -57,7 +57,6 @@ func (f *TempFileRecord) insertStmt(e Executor) (sql.Result, error) {
 		return nil, err
 	}
 	f.Alias = strings.ToLower(f.Alias)
-	f.Path = strings.ToLower(f.Path)
 
 	return e.Exec(`
 INSERT INTO temp_files

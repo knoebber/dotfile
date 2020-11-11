@@ -26,6 +26,7 @@ func TestAlias(t *testing.T) {
 			"./testdata/ok.txt":                 "ok",
 			"/home/nicolas/projects/dotfile/.travis.yml": "travis",
 			"/home/nicolas/.config/dotfile/dotfile.json": "dotfile",
+			"/github.com/testdata/testfile.txt":          "testfile",
 		} {
 			alias, err := Alias("", path)
 			assert.NoError(t, err)

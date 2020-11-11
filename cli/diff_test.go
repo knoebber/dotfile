@@ -7,7 +7,7 @@ import (
 )
 
 func TestDiff(t *testing.T) {
-	clearTestStorage()
+	clearTestStorage(t)
 	initTestFile(t)
 
 	diffCommand := new(diffCommand)

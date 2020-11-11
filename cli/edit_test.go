@@ -40,7 +40,7 @@ func TestEditCommandLaunchesEditor(t *testing.T) {
 		alias: trackedFileAlias,
 	}
 
-	clearTestStorage()
+	clearTestStorage(t)
 
 	t.Run("error before init", func(t *testing.T) {
 		err := editCommand.run(nil)

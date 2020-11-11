@@ -7,7 +7,7 @@ import (
 )
 
 func TestInit(t *testing.T) {
-	clearTestStorage()
+	clearTestStorage(t)
 
 	initCommand := new(initCommand)
 

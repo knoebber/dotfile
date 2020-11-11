@@ -6,7 +6,7 @@ import (
 )
 
 func TestPush(t *testing.T) {
-	resetTestStorage()
+	resetTestStorage(t)
 	pc := &pushCommand{alias: "test"}
 	t.Run("returns error when config not set", func(t *testing.T) {
 		assert.Error(t, pc.run(nil))

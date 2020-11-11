@@ -14,7 +14,7 @@ func TestList(t *testing.T) {
 
 	// Running test remote commands creates a config.json file in the same directory (testdata/) as tracking files.
 	// This will break the local list.
-	clearTestStorage()
+	clearTestStorage(t)
 	initTestFile(t)
 
 	t.Run("ok", func(t *testing.T) {

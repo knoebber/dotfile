@@ -6,7 +6,7 @@ import (
 )
 
 func TestRename(t *testing.T) {
-	clearTestStorage()
+	clearTestStorage(t)
 	initTestFile(t)
 
 	renameCommand := new(renameCommand)

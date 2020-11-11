@@ -57,10 +57,11 @@ CREATE INDEX IF NOT EXISTS users_username_index ON users(username);`
 func (u *UserRecord) insertStmt(e Executor) (sql.Result, error) {
 	var email *string
 	if u.Email != "" {
+		u.Email = strings.ToLower(u.Email)
 		email = &u.Email
 	}
 	return e.Exec("INSERT INTO users(username, email, password_hash, cli_token) VALUES(?, ?, ?, ?)",
-		strings.ToLower(u.Username),
+		u.Username,
 		email,
 		u.PasswordHash,
 		u.CLIToken,
@@ -95,7 +96,8 @@ func (u *UserRecord) check(e Executor) error {
 func checkUniqueEmail(e Executor, email string) error {
 	var count int
 
-	err := e.QueryRow("SELECT COUNT(*) FROM users WHERE email = ?", email).Scan(&count)
+	err := e.QueryRow("SELECT COUNT(*) FROM users WHERE email = ?", strings.ToLower(email)).
+		Scan(&count)
 
 	if err != nil {
 		return errors.Wrapf(err, "checking if email %q is unique", email)
@@ -247,6 +249,8 @@ func CreateUser(e Executor, username, password string) (*UserRecord, error) {
 
 // UpdateEmail updates a users email and sets email_confirmed to false.
 func UpdateEmail(e Executor, userID int64, email string) error {
+	email = strings.ToLower(email)
+
 	if err := validateStringSizes(email); err != nil {
 		return err
 	}

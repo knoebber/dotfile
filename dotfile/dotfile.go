@@ -17,7 +17,7 @@ import (
 
 var (
 	// Captures the last part of the path without its file ending.
-	pathToAliasRegex = regexp.MustCompile(`([^/.]+)(\..*)?$`)
+	pathToAliasRegex = regexp.MustCompile(`([^/.]+)(\.[^/]*)?$`)
 
 	// Alias must only contain letters, dashes, numbers, underscores
 	validAliasRegex = regexp.MustCompile(`^[a-z0-9-_]+$`)
@@ -104,18 +104,15 @@ func MergeTrackingData(old, new *TrackingData) (merged *TrackingData, newHashes 
 //           ~/.config/i3/config: config
 //           ~/.config/alacritty/alacritty.yml: alacritty
 func Alias(alias, path string) (string, error) {
-	alias = strings.ToLower(alias)
-	path = strings.ToLower(path)
-
 	if alias != "" {
-		return alias, nil
+		return strings.ToLower(alias), nil
 	}
 
 	matches := pathToAliasRegex.FindStringSubmatch(path)
 	if len(matches) < 2 {
 		return "", fmt.Errorf("creating alias for %q", path)
 	}
-	return matches[1], nil
+	return strings.ToLower(matches[1]), nil
 }
 
 // CheckAlias checks whether the alias is a valid format.

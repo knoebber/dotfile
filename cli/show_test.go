@@ -7,7 +7,7 @@ import (
 )
 
 func TestShow(t *testing.T) {
-	clearTestStorage()
+	clearTestStorage(t)
 
 	t.Run("error on attempt to show remote file without config set", func(t *testing.T) {
 		showCommand := &showCommand{remote: true}

@@ -69,7 +69,7 @@ func (f *FileRecord) insertStmt(e Executor) (sql.Result, error) {
 INSERT INTO files(user_id, alias, path, current_commit_id) VALUES(?, ?, ?, ?)`,
 		f.UserID,
 		strings.ToLower(f.Alias),
-		strings.ToLower(f.Path),
+		f.Path,
 		f.CurrentCommitID,
 	)
 }
@@ -77,7 +77,6 @@ INSERT INTO files(user_id, alias, path, current_commit_id) VALUES(?, ?, ?, ?)`,
 // Update updates the alias or path if they are different.
 func (f *FileRecord) Update(e Executor, newAlias, newPath string) error {
 	newAlias = strings.ToLower(newAlias)
-	newPath = strings.ToLower(newPath)
 
 	if f.Alias == newAlias && f.Path == newPath {
 		return nil

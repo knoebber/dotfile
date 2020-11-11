@@ -7,7 +7,7 @@ import (
 )
 
 func TestCommit(t *testing.T) {
-	clearTestStorage()
+	clearTestStorage(t)
 	initTestFile(t)
 
 	commitCommand := &commitCommand{

@@ -7,7 +7,7 @@ import (
 )
 
 func TestLog(t *testing.T) {
-	clearTestStorage()
+	clearTestStorage(t)
 	initTestFile(t)
 
 	logCommand := new(logCommand)

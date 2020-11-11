@@ -7,7 +7,7 @@ import (
 )
 
 func TestCheckout(t *testing.T) {
-	clearTestStorage()
+	clearTestStorage(t)
 	initTestFile(t)
 
 	checkoutCommand := new(checkoutCommand)

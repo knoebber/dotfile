@@ -8,7 +8,7 @@ import (
 )
 
 func TestForget(t *testing.T) {
-	clearTestStorage()
+	clearTestStorage(t)
 	initTestFile(t)
 
 	forgetCommand := &forgetCommand{}

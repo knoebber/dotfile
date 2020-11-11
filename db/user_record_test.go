@@ -20,7 +20,6 @@ func TestCreateUser(t *testing.T) {
 
 		_, err := insert(Connection, u)
 		assert.Error(t, err)
-
 	})
 
 	t.Run("ok", func(t *testing.T) {
@@ -30,7 +29,20 @@ func TestCreateUser(t *testing.T) {
 		_, err = CreateUser(Connection, "user2", testPassword)
 		assert.NoError(t, err)
 	})
+}
 
+func TestUpdateEmail(t *testing.T) {
+	createTestDB(t)
+	createTestUser(t, testUserID, testUsername, testEmail)
+	createTestUser(t, testUserID+1, testUsername+"1", "second.email@example.com")
+
+	t.Run("error on same email", func(t *testing.T) {
+		assert.Error(t, UpdateEmail(Connection, testUserID+1, strings.ToUpper(testEmail)))
+	})
+
+	t.Run("ok", func(t *testing.T) {
+		assert.NoError(t, UpdateEmail(Connection, testUserID+1, "updated.email@example.com"))
+	})
 }
 
 func TestCheckPasswordResetToken(t *testing.T) {

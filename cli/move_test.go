@@ -8,7 +8,7 @@ import (
 )
 
 func TestMove(t *testing.T) {
-	clearTestStorage()
+	clearTestStorage(t)
 	initTestFile(t)
 
 	newPath := filepath.Join(testDir, "newpath.txt")
