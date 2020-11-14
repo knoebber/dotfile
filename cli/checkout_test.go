@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,4 +28,11 @@ func TestCheckout(t *testing.T) {
 		checkoutCommand.alias = trackedFileAlias
 		assert.Error(t, checkoutCommand.run(nil))
 	})
+
+	t.Run("ok to checkout deleted file", func(t *testing.T) {
+		_ = os.Remove(trackedFile)
+		checkoutCommand.alias = trackedFileAlias
+		assert.NoError(t, checkoutCommand.run(nil))
+	})
+
 }

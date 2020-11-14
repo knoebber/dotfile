@@ -22,6 +22,7 @@ type MockStorer struct {
 	revertErr           bool
 	hasCommit           bool
 	hasCommitErr        bool
+	noDirtyContent      bool
 }
 
 func (ms *MockStorer) HasCommit(string) (bool, error) {
@@ -34,6 +35,9 @@ func (ms *MockStorer) HasCommit(string) (bool, error) {
 func (ms *MockStorer) DirtyContent() ([]byte, error) {
 	if ms.dirtyContentErr {
 		return nil, errors.New("get contents error")
+	}
+	if ms.noDirtyContent {
+		return nil, nil
 	}
 	return []byte(testDirtyContent), nil
 }

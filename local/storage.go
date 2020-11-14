@@ -118,7 +118,8 @@ func (s *Storage) Revision(hash string) ([]byte, error) {
 	return content, nil
 }
 
-// DirtyContent reads the content of the tracked file.
+// DirtyContent reads the current content of the tracked file.
+// Returns nil when the file no longer exists.
 func (s *Storage) DirtyContent() ([]byte, error) {
 	path, err := s.Path()
 	if err != nil {
@@ -126,6 +127,10 @@ func (s *Storage) DirtyContent() ([]byte, error) {
 	}
 
 	result, err := ioutil.ReadFile(path)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+
 	if err != nil {
 		return nil, errors.Wrapf(err, "reading %q", s.Alias)
 	}

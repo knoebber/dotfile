@@ -28,6 +28,26 @@ func TestUncompressRevision(t *testing.T) {
 
 }
 
+func TestIsClean(t *testing.T) {
+	t.Run("content error", func(t *testing.T) {
+		s := &MockStorer{dirtyContentErr: true}
+		_, err := IsClean(s, testHash)
+		assert.Error(t, err)
+	})
+	t.Run("true with no dirty content", func(t *testing.T) {
+		s := &MockStorer{noDirtyContent: true}
+		clean, err := IsClean(s, testHash)
+		assert.NoError(t, err)
+		assert.True(t, clean)
+	})
+	t.Run("false", func(t *testing.T) {
+		s := &MockStorer{}
+		clean, err := IsClean(s, testHash)
+		assert.NoError(t, err)
+		assert.False(t, clean)
+	})
+}
+
 func TestDiff(t *testing.T) {
 	t.Run("uncompress error", func(t *testing.T) {
 		s := &MockStorer{uncompressErr: true}

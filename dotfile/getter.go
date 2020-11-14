@@ -32,10 +32,14 @@ func UncompressRevision(g Getter, hash string) (*bytes.Buffer, error) {
 }
 
 // IsClean returns whether the dirty content matches the hash.
+// Returns true when there is no dirty content.
 func IsClean(g Getter, hash string) (bool, error) {
 	contents, err := g.DirtyContent()
 	if err != nil {
 		return false, err
+	}
+	if contents == nil {
+		return true, nil
 	}
 
 	return hash == hashContent(contents), nil
