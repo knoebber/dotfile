@@ -20,6 +20,6 @@ func addRenameSubCommandToApplication(app *kingpin.Application) {
 	rc := new(renameCommand)
 
 	p := app.Command("rename", "change a files alias").Action(rc.run)
-	p.Arg("alias", "the file to rename").Required().StringVar(&rc.alias)
+	p.Arg("alias", "the file to rename").HintAction(flags.defaultAliasList).Required().StringVar(&rc.alias)
 	p.Arg("new alias", "the new name").Required().StringVar(&rc.newAlias)
 }

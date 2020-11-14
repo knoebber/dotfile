@@ -12,6 +12,12 @@ func TestDefaultStorageDir(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestListAliases(t *testing.T) {
+	setupTestFile(t)
+	files := ListAliases(testDir)()
+	assert.NotEmpty(t, files)
+}
+
 func TestList(t *testing.T) {
 	setupTestFile(t)
 	files, err := List(testDir, true)

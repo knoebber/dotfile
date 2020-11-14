@@ -53,7 +53,7 @@ func addPullSubCommandToApplication(app *kingpin.Application) {
 	pc := new(pullCommand)
 
 	p := app.Command("pull", "pull changes from central service").Action(pc.run)
-	p.Arg("alias", "the file to pull").StringVar(&pc.alias)
+	p.Arg("alias", "the file to pull").HintAction(flags.defaultAliasList).StringVar(&pc.alias)
 	p.Flag("username", "override config username").Short('u').StringVar(&pc.username)
 	p.Flag("all", "pull all tracked files").Short('a').BoolVar(&pc.pullAll)
 }

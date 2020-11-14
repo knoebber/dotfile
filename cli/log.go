@@ -52,5 +52,8 @@ func addLogSubCommandToApplication(app *kingpin.Application) {
 	lc := new(logCommand)
 
 	c := app.Command("log", "shows revision history with commit hashes for a tracked file").Action(lc.run)
-	c.Arg("alias", "tracked file to show history for").Required().StringVar(&lc.alias)
+	c.Arg("alias", "tracked file to show history for").
+		HintAction(flags.defaultAliasList).
+		Required().
+		StringVar(&lc.alias)
 }

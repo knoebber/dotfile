@@ -43,5 +43,5 @@ func (e *editCommand) run(*kingpin.ParseContext) error {
 func addEditSubCommandToApplication(app *kingpin.Application) {
 	ec := new(editCommand)
 	c := app.Command("edit", "open a tracked file in $EDITOR").Action(ec.run)
-	c.Arg("alias", "the file to edit").Required().StringVar(&ec.alias)
+	c.Arg("alias", "the file to edit").HintAction(flags.defaultAliasList).Required().StringVar(&ec.alias)
 }

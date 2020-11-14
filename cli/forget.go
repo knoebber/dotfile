@@ -24,6 +24,6 @@ func addForgetSubCommandToApplication(app *kingpin.Application) {
 	fc := new(forgetCommand)
 
 	c := app.Command("forget", "untrack a file - removes all tracking data").Action(fc.run)
-	c.Arg("alias", "the file to forget").Required().StringVar(&fc.alias)
+	c.Arg("alias", "the file to forget").HintAction(flags.defaultAliasList).Required().StringVar(&fc.alias)
 	c.Flag("commits", "remove all commits except the current").Short('c').BoolVar(&fc.commits)
 }

@@ -24,5 +24,5 @@ func addPushSubCommandToApplication(app *kingpin.Application) {
 	pc := new(pushCommand)
 
 	p := app.Command("push", "push committed changes to a dotfile server").Action(pc.run)
-	p.Arg("alias", "the file to push").Required().StringVar(&pc.alias)
+	p.Arg("alias", "the file to push").HintAction(flags.defaultAliasList).Required().StringVar(&pc.alias)
 }

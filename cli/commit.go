@@ -27,7 +27,10 @@ func addCommitSubCommandToApplication(app *kingpin.Application) {
 	cc := new(commitCommand)
 
 	c := app.Command("commit", "save a revision of file").Action(cc.run)
-	c.Arg("alias", "name of file to save new revision of").Required().StringVar(&cc.alias)
+	c.Arg("alias", "name of file to save new revision of").
+		HintAction(flags.defaultAliasList).
+		Required().
+		StringVar(&cc.alias)
 	c.Arg("commit-message",
 		"a memo to remind yourself what's in this version").
 		StringVar(&cc.commitMessage)

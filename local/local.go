@@ -155,26 +155,46 @@ func InitializeFile(storageDir, path, alias string) (*Storage, error) {
 	return s, nil
 }
 
-// List returns a slice of aliases for all locally tracked files.
-// When the file has uncommitted changes an asterisks is added to the end.
-func List(storageDir string, path bool) ([]string, error) {
-	var alias string
-
+func listAliases(storageDir string) ([]string, error) {
 	files, err := filepath.Glob(filepath.Join(storageDir, "*.json"))
 	if err != nil {
 		return nil, err
 	}
-	result := make([]string, len(files))
+
+	aliases := make([]string, len(files))
+	for i, filename := range files {
+		aliases[i] = strings.TrimSuffix(filepath.Base(filename), ".json")
+	}
+
+	return aliases, nil
+}
+
+// ListAliases returns a funtion that lists all aliases in the storage directory.
+func ListAliases(storageDir string) func() []string {
+	return func() []string {
+		aliases, err := listAliases(storageDir)
+		if err != nil {
+			return nil
+		}
+
+		return aliases
+	}
+}
+
+// List returns a slice of aliases for all locally tracked files.
+// When the file has uncommitted changes an asterisks is added to the end.
+func List(storageDir string, path bool) ([]string, error) {
+	aliases, err := listAliases(storageDir)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]string, len(aliases))
 
 	s := &Storage{Dir: storageDir}
 	s.FileData = new(dotfile.TrackingData)
-	for i, filename := range files {
-		parts := strings.Split(filename, "/")
-		if len(parts) != 0 {
-			alias = parts[len(parts)-1]
-		}
 
-		alias = strings.TrimSuffix(alias, ".json")
+	for i, alias := range aliases {
 		s.Alias = alias
 
 		if err := s.SetTrackingData(); err != nil {

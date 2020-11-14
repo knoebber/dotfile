@@ -10,8 +10,9 @@ import (
 
 // Flags that multiple cli commands share.
 type globalFlags struct {
-	storageDir string
-	configPath string
+	storageDir       string
+	configPath       string
+	defaultAliasList func() []string
 }
 
 var flags globalFlags
@@ -58,7 +59,10 @@ func setConfig(app *kingpin.Application) error {
 		return err
 	}
 
-	app.Version("1.0.1")
+	// Used for tab completion in commands that have an alias argument.
+	flags.defaultAliasList = local.ListAliases(defaultStorageDir)
+
+	app.Version("1.0.3")
 
 	app.Flag("storage-dir", "The directory where dotfile data is stored").
 		Default(defaultStorageDir).
@@ -66,7 +70,6 @@ func setConfig(app *kingpin.Application) error {
 	app.Flag("config-file", "The json file to use for configuration").
 		Default(defaultConfigPath).
 		StringVar(&flags.configPath)
-
 	return nil
 }
 
@@ -75,7 +78,6 @@ func AddCommandsToApplication(app *kingpin.Application) error {
 	if err := setConfig(app); err != nil {
 		return err
 	}
-
 	addInitSubCommandToApplication(app)
 	addShowSubCommandToApplication(app)
 	addListSubCommandToApplication(app)

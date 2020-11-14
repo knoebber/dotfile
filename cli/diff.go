@@ -35,7 +35,10 @@ func (d *diffCommand) run(*kingpin.ParseContext) error {
 func addDiffSubCommandToApplication(app *kingpin.Application) {
 	dc := new(diffCommand)
 	c := app.Command("diff", "check changes to tracked file").Action(dc.run)
-	c.Arg("alias", "file to check changes in").Required().StringVar(&dc.alias)
+	c.Arg("alias", "file to check changes in").
+		HintAction(flags.defaultAliasList).
+		Required().
+		StringVar(&dc.alias)
 	c.Arg("commit-hash",
 		"the revision to diff against; default current").
 		StringVar(&dc.commitHash)

@@ -18,6 +18,17 @@ cd dotfile
 make dotfile
 # copy bin/dotfile to somewhere in $PATH.
 #+END_SRC
+
+*Shell Completion*
+
+Add the following to your =~/.bashrc= or equivalent:
+#+BEGIN_SRC:
+eval "$(dotfile --completion-script-bash)"
+#+END_SRC
+Or
+#+BEGIN_SRC:
+eval "$(dotfile --completion-script-zsh)"
+#+END_SRC
 * Overview
 The Dotfile CLI is a version control system for single files. When a
 file is checked in an *alias* is created. The alias is mapped to the
@@ -70,8 +81,8 @@ history. It's possible to restore revisions manually by decompressing
 the revision files with zlib.
 * User Config
 Remote commands require a user configuration. By default Dotfile
-creates a config file named =dotfile.json= in a location returned by
-https://golang.org/pkg/os/#UserConfigDir. This can be changed with the
+creates a directory in a location returned by the Golang
+function [[https://golang.org/pkg/os/#UserConfigDir][os.UserConfigDir()]]. This can be overridden with the global
 =--config-file= flag.
 
 The config file can be edited manually or with the =dotfile config=
@@ -151,12 +162,11 @@ Revert a file to a past revision.
 #+BEGIN_SRC bash
 dotfile checkout <alias> <hash>
 #+END_SRC
-Hash is optional. Defaults to the current revision when empty - this
-removes any changes on the file since the last commit or checkout
-command.
++ =-f, --force= Overwrite unsaved changes
 
-To checkout a specific revision first use the =dotfile log= command to
-find the hash.
+Hash defaults to the current revision when empty.
+
+To checkout a specific revision use =dotfile log= to find the hash.
 * Config
 Read and set user configuration.
 #+BEGIN_SRC bash

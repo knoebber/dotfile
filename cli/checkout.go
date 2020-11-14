@@ -43,7 +43,10 @@ func addCheckoutSubCommandToApplication(app *kingpin.Application) {
 	cc := new(checkoutCommand)
 
 	c := app.Command("checkout", "revert a file to a previously committed state").Action(cc.run)
-	c.Arg("alias", "name of file to revert changes in").Required().StringVar(&cc.alias)
+	c.Arg("alias", "name of file to revert changes in").
+		HintAction(flags.defaultAliasList).
+		Required().
+		StringVar(&cc.alias)
 	c.Arg("commit-hash", "the revision to revert to").StringVar(&cc.commitHash)
 	c.Flag("force", "revert a file with uncommitted changes").Short('f').BoolVar(&cc.force)
 }

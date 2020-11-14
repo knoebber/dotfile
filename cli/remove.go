@@ -19,5 +19,5 @@ func addRemoveSubCommandToApplication(app *kingpin.Application) {
 	rc := new(removeCommand)
 
 	p := app.Command("rm", "remove the tracked file and all its data").Action(rc.run)
-	p.Arg("alias", "the file to remove").Required().StringVar(&rc.alias)
+	p.Arg("alias", "the file to remove").HintAction(flags.defaultAliasList).Required().StringVar(&rc.alias)
 }

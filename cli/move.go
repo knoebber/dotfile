@@ -21,7 +21,7 @@ func addMoveSubCommandToApplication(app *kingpin.Application) {
 	mc := new(moveCommand)
 
 	p := app.Command("mv", "move a file").Action(mc.run)
-	p.Arg("alias", "the file to move").Required().StringVar(&mc.alias)
+	p.Arg("alias", "the file to move").HintAction(flags.defaultAliasList).Required().StringVar(&mc.alias)
 	p.Arg("new path", "the path to the new destination").StringVar(&mc.newPath)
 	p.Flag("parent-dirs", "create parent directories that do not exist").Short('p').BoolVar(&mc.parentDirs)
 }
