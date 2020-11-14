@@ -21,4 +21,10 @@ func TestCheckout(t *testing.T) {
 		checkoutCommand.alias = trackedFileAlias
 		assert.NoError(t, checkoutCommand.run(nil))
 	})
+
+	t.Run("returns error when file has untracked changes", func(t *testing.T) {
+		updateTestFile(t)
+		checkoutCommand.alias = trackedFileAlias
+		assert.Error(t, checkoutCommand.run(nil))
+	})
 }
