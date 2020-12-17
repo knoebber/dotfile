@@ -92,10 +92,10 @@ func assertHTMLResponse(t *testing.T, body, name string) {
 func testPage(t *testing.T) *Page {
 	var (
 		mockRow struct { // Add columns that templates expect from table.Rows
-			Username  string
-			Path      string
-			Alias     string
-			UpdatedAt string
+			Username        string
+			Path            string
+			Alias           string
+			UpdatedAtString string
 		}
 	)
 	testData := make(map[string]interface{})

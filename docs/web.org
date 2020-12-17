@@ -1,12 +1,12 @@
 #+TITLE: Web Documentation
 * Dotfilehub
-[[https://dotfilehub.com][Dotfilehub]] is a web interface for Dotfile. It has no JavaScript and
-should be usable with basic browsers.
+[[https://dotfilehub.com][Dotfilehub]] is a web interface for Dotfile. It does not use JavaScript
+and should be usable with basic browsers.
 
-The index page is a form that does a global search. It finds
-files that have aliases or paths that match any part of the
-query. Results can be ordered by clicking the links on the table
-header.
+The index page is a form that does a global search. It finds files
+that have aliases or paths that match any part of the query. Results
+can be ordered by clicking the links on the table header. This is also
+available as an [[https://dotfilehub.com/feed.rss][RSS feed]].
 * Files
 ** View
 All files are globally viewable at the path =/{username}/{alias}=.
