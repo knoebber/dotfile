@@ -19,7 +19,6 @@ func setupRoutes(r *mux.Router, config Config) error {
 
 // Pages that get their content from the html/ directory.
 func staticRoutes(r *mux.Router) {
-	r.HandleFunc("/", indexHandler())
 	r.HandleFunc("/README.org", createStaticHandler(aboutTitle, "README.html"))
 	r.HandleFunc("/terms", createStaticHandler("Terms of Use", "terms.html"))
 	r.HandleFunc("/docs/cli.org", createStaticHandler("CLI Documentation", "cli.html"))
@@ -32,6 +31,7 @@ func assetRoutes(r *mux.Router) {
 	assets := http.FileSystem(http.Dir("assets/"))
 	r.Path("/style.css").Handler(http.FileServer(assets))
 	r.Path("/favicon.ico").Handler(http.FileServer(assets))
+	r.Path("/robots.txt").Handler(http.FileServer(assets))
 }
 
 func apiRoutes(r *mux.Router) {
@@ -43,6 +43,8 @@ func apiRoutes(r *mux.Router) {
 }
 
 func dotfileRoutes(r *mux.Router, config Config) {
+	r.HandleFunc("/", indexHandler())
+	r.HandleFunc("/feed.rss", createRSSFeed(config))
 	r.HandleFunc("/signup", signupHandler(config.Secure))
 	r.HandleFunc("/login", loginHandler(config.Secure))
 	r.HandleFunc("/account_recovery", accountRecoveryHandler(config))

@@ -8,9 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	sessionCookie = "dotfilehub-session"
-)
+const sessionCookie = "dotfilehub-session"
 
 type pageBuilder func(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 

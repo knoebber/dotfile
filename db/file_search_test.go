@@ -17,14 +17,42 @@ func TestSearch(t *testing.T) {
 		assert.Empty(t, table.TotalRows())
 	})
 
-	t.Run("ok with query", func(t *testing.T) {
+	t.Run("does query", func(t *testing.T) {
 		v := url.Values{}
 		v.Set("q", testAlias)
 		controls := &PageControls{Values: v}
 		failIf(t, controls.Set(), "setting page controls for file test")
-		table, err := SearchFiles(Connection, controls, nil)
+
+		t.Run("error", func(t *testing.T) {
+			tx, _ := Connection.Begin()
+			_ = tx.Commit()
+			_, err := SearchFiles(tx, controls, nil)
+			assert.Error(t, err)
+		})
+
+		t.Run("ok", func(t *testing.T) {
+			table, err := SearchFiles(Connection, controls, nil)
+			assert.NoError(t, err)
+			assert.NotEmpty(t, table.Rows)
+			assert.NotEmpty(t, table.TotalRows())
+		})
+	})
+}
+
+func TestFileFeed(t *testing.T) {
+	createTestDB(t)
+	initTestFile(t)
+
+	t.Run("error with bad connection", func(t *testing.T) {
+		tx, _ := Connection.Begin()
+		_ = tx.Commit()
+		_, err := FileFeed(tx, 0, nil)
+		assert.Error(t, err)
+	})
+
+	t.Run("returns result", func(t *testing.T) {
+		res, err := FileFeed(Connection, 1, nil)
 		assert.NoError(t, err)
-		assert.NotEmpty(t, table.Rows)
-		assert.NotEmpty(t, table.TotalRows())
+		assert.NotEmpty(t, res)
 	})
 }
