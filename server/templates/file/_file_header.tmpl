@@ -8,6 +8,7 @@
   {{- if and .Data.on .Data.against }}
   / <a href="{{ $fileLink }}/{{ .Data.on }}">{{ shortenHash .Data.on }}</a>
   vs. <a href="{{ $fileLink }}/{{ .Data.against }}">{{ shortenHash .Data.against }}</a>
+  {{- else if .Vars.hash }} / <a href="">{{ shortenHash .Vars.hash }}</a>
   {{- else if not (eq .Title $alias )}} / <a href="">{{ .Title }}</a>
   {{- end }}
 </h1>

@@ -43,7 +43,7 @@ func loadCommit(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	p.Data["current"] = commit.Current
 	p.Data["forkedFromUsername"] = commit.ForkedFromUsername
 
-	p.Title = dotfile.ShortenHash(hash)
+	p.Title = alias + " at " + dotfile.ShortenHash(hash)
 
 	return
 }
