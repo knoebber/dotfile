@@ -7,6 +7,8 @@
 
 *Golang Packages*
 + [[https://github.com/gorilla/mux][gorilla/mux]] - http routing
++ [[https://github.com/gorilla/feeds][gorilla/feeds]] - rss feed
++ [[https://github.com/gorilla/handlers][gorilla/handlers]] - middleware for logging with reverse proxy
 + [[https://github.com/alecthomas/kingpin][kingpin]] - command line parsing
 + [[https://github.com/mattn/go-sqlite3][go-sqlite3]] - go sqlite driver
 + [[https://github.com/sergi/go-diff][go-diff]] - diffing
