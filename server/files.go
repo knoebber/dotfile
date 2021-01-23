@@ -7,6 +7,7 @@ import (
 
 	"github.com/knoebber/dotfile/db"
 	"github.com/knoebber/dotfile/dotfile"
+	"github.com/knoebber/dotfile/usererror"
 )
 
 // Handles submitting the new file form.
@@ -33,7 +34,7 @@ func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, err)
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/%s/%s/init", p.Session.Username, alias), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/%s/%s/init", p.Username(), alias), http.StatusSeeOther)
 	return true
 }
 
@@ -41,7 +42,7 @@ func newTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 func editFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	content := r.Form.Get("contents")
 
-	existingFile, err := db.File(db.Connection, p.Session.Username, p.Vars["alias"])
+	existingFile, err := db.File(db.Connection, p.Username(), p.Vars["alias"])
 	if err != nil {
 		return p.setError(w, err)
 	}
@@ -60,7 +61,7 @@ func editFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		return p.setError(w, err)
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/%s/%s/commit", p.Session.Username, alias), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/%s/%s/commit", p.Username(), alias), http.StatusSeeOther)
 	return true
 }
 
@@ -71,7 +72,7 @@ func confirmTempFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool
 		return p.setError(w, err)
 	}
 
-	path := fmt.Sprintf("/%s/%s", p.Session.Username, p.Vars["alias"])
+	path := fmt.Sprintf("/%s/%s", p.Username(), p.Vars["alias"])
 	http.Redirect(w, r, path, http.StatusSeeOther)
 	return true
 }
@@ -81,8 +82,13 @@ func forkFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	username := r.Form.Get("username")
 	alias := r.Form.Get("alias")
 	hash := r.Form.Get("hash")
+	loggedInUserID := p.userID()
 
-	if err := db.ForkFile(username, alias, hash, p.Session.UserID); err != nil {
+	if loggedInUserID < 1 {
+		return p.setError(w, usererror.Invalid("Must be logged in to fork file."))
+	}
+
+	if err := db.ForkFile(username, alias, hash, loggedInUserID); err != nil {
 		return p.setError(w, err)
 	}
 
@@ -177,12 +183,12 @@ func loadTempFileForm(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	alias := p.Vars["alias"]
 
-	f, err := db.UncompressFile(db.Connection, p.Session.Username, alias)
+	f, err := db.UncompressFile(db.Connection, p.Username(), alias)
 	if err != nil {
 		return p.setError(w, err)
 	}
 
-	p.Data["editAction"] = fmt.Sprintf("/%s/%s/edit", p.Session.Username, alias)
+	p.Data["editAction"] = fmt.Sprintf("/%s/%s/edit", p.Username(), alias)
 	p.Data["alias"] = f.Alias
 	p.Data["path"] = f.Path
 
