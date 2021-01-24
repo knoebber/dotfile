@@ -110,7 +110,7 @@ func Alias(alias, path string) (string, error) {
 
 	matches := pathToAliasRegex.FindStringSubmatch(path)
 	if len(matches) < 2 {
-		return "", fmt.Errorf("creating alias for %q", path)
+		return "", fmt.Errorf("failed to alias file path %q: invalid format", path)
 	}
 	return strings.ToLower(matches[1]), nil
 }
@@ -158,6 +158,10 @@ func hashAndCompress(contents []byte) (*bytes.Buffer, string, error) {
 
 // Compress compresses bytes with zlib.
 func Compress(uncompressed []byte) (*bytes.Buffer, error) {
+	if len(uncompressed) == 0 {
+		return nil, errors.New("refusing to compress empty dotfile")
+	}
+
 	compressed := new(bytes.Buffer)
 	w := zlib.NewWriter(compressed)
 	defer w.Close()
