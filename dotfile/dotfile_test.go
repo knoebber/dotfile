@@ -85,3 +85,10 @@ func TestCheckPath(t *testing.T) {
 
 	})
 }
+
+func TestCompress(t *testing.T) {
+	t.Run("error on empty ", func(t *testing.T) {
+		_, err := Compress([]byte(""))
+		assert.Error(t, err)
+	})
+}

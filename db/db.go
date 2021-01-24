@@ -50,7 +50,7 @@ type inserter interface {
 }
 
 type checker interface {
-	check(e Executor) error
+	check(Executor) error
 }
 
 func validateStringSizes(strings ...string) error {

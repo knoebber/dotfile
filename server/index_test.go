@@ -6,7 +6,7 @@ import (
 )
 
 func TestIndexHandler(t *testing.T) {
-	router := setupTest(t, indexHandler())
+	router := setupTestRouter(t, indexHandler())
 	t.Run("ok", func(t *testing.T) {
 		assertOK(t, router, testFilePath, http.MethodGet)
 	})
