@@ -6,7 +6,7 @@ import (
 )
 
 func TestUserHandler(t *testing.T) {
-	router := setupTest(t, userHandler())
+	router := setupTestRouter(t, userHandler())
 	t.Run("404", func(t *testing.T) {
 		assertNotFound(t, router, testFilePath, http.MethodGet)
 	})

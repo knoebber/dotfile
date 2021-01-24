@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/knoebber/dotfile/db"
@@ -19,10 +20,14 @@ const (
 	testFilePath = "/" + testUsername + "/" + testAlias + "/no_hash"
 )
 
-func setupTest(t *testing.T, handler http.HandlerFunc) *mux.Router {
+func setupTestDB(t *testing.T) {
 	if err := db.Start(""); err != nil {
 		t.Fatalf("creating test db: %s", err)
 	}
+}
+
+func setupTestRouter(t *testing.T, handler http.HandlerFunc) *mux.Router {
+	setupTestDB(t)
 
 	if err := loadTemplates(); err != nil {
 		t.Fatalf("loading templates: %v", err)
@@ -32,6 +37,23 @@ func setupTest(t *testing.T, handler http.HandlerFunc) *mux.Router {
 
 	r.HandleFunc("/{username}/{alias}/{hash}", handler)
 	return r
+}
+
+func setupTestPage(t *testing.T) (http.ResponseWriter, *http.Request, *Page) {
+	p := new(Page)
+	u := createTestUser(t)
+	p.Session = &db.UserSession{
+		UserID:   u.ID,
+		Username: u.Username,
+	}
+	p.Vars = make(map[string]string)
+	p.Data = make(map[string]interface{})
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("", "/", nil)
+	r.Form = url.Values{}
+
+	return w, r, p
 }
 
 func clearTestUser(t *testing.T) {
@@ -68,17 +90,22 @@ func createTestUser(t *testing.T) *db.UserRecord {
 	return u
 }
 
-func createTestFile(t *testing.T, userID int64) {
+func createTestTempFile(t *testing.T, userID int64, content string) {
 	tempFile := &db.TempFileRecord{
 		UserID:  userID,
 		Alias:   testAlias,
 		Path:    "~/.test_file",
-		Content: []byte("content!"),
+		Content: []byte(content),
 	}
 
 	if err := tempFile.Create(db.Connection); err != nil {
 		t.Fatalf("creating temp file: %s", err)
 	}
+
+}
+
+func createTestFile(t *testing.T, userID int64) {
+	createTestTempFile(t, userID, "content!")
 
 	if err := db.InitOrCommit(userID, testAlias, ""); err != nil {
 		t.Fatalf("creating test file: %s", err)

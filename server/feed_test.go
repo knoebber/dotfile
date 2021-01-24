@@ -6,7 +6,7 @@ import (
 )
 
 func TestFileFeed(t *testing.T) {
-	router := setupTest(t, createRSSFeed(Config{}))
+	router := setupTestRouter(t, createRSSFeed(Config{}))
 
 	t.Run("ok", func(t *testing.T) {
 		u := createTestUser(t)
