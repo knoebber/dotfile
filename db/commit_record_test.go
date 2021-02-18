@@ -1,6 +1,7 @@
 package db
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -47,5 +48,16 @@ func TestCommitsTable(t *testing.T) {
 
 		_, err := insert(Connection, c)
 		assert.Error(t, err)
+	})
+}
+
+func TestCommitRecord_check(t *testing.T) {
+	createTestDB(t)
+
+	c := new(CommitRecord)
+	c.Message = strings.Repeat("c", maxCommitMessageSize+1)
+
+	t.Run("error when message longer than max length", func(t *testing.T) {
+		assert.Error(t, c.check(Connection))
 	})
 }
