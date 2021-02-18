@@ -130,7 +130,7 @@ func (ft *FileTransaction) InsertCommit(buff *bytes.Buffer, c *dotfile.Commit) (
 
 	newCommitID, err := insert(ft.tx, commit)
 	if err != nil {
-		return 0, errors.Wrapf(err, "inserting commit for file %d", ft.Staged.ID)
+		return 0, errors.Wrapf(err, "inserting commit %q for file %d", c.Hash, ft.FileID)
 	}
 
 	return newCommitID, nil
