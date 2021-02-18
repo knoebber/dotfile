@@ -2,10 +2,13 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/knoebber/dotfile/usererror"
 	"github.com/pkg/errors"
 )
+
+const maxCommitMessageSize = 1000
 
 // CommitRecord models the commits table.
 type CommitRecord struct {
@@ -38,8 +41,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS commits_file_hash_index ON commits(file_id, ha
 func (c *CommitRecord) check(e Executor) error {
 	var count int
 
-	if err := validateStringSizes(c.Message); err != nil {
-		return err
+	if len(c.Message) > maxCommitMessageSize {
+		return usererror.Invalid(fmt.Sprintf(
+			"The maximum commit message length is %d characters", maxCommitMessageSize))
+
 	}
 
 	exists, err := hasCommit(e, c.FileID, c.Hash)
