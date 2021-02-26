@@ -235,14 +235,13 @@ func handlePush(w http.ResponseWriter, r *http.Request) {
 func setJSON(w http.ResponseWriter, body interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(body); err != nil {
-		log.Printf("encoding json body: %s", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		apiError(w, fmt.Errorf("encoding json body: %w", err))
 	}
 }
 
 func authError(w http.ResponseWriter, err error) {
 	log.Printf("api authentication error %s", err)
-	w.WriteHeader(http.StatusUnauthorized)
+	http.Error(w, "authentication error, check that username and token are correct", http.StatusUnauthorized)
 }
 
 func apiError(w http.ResponseWriter, err error) {
@@ -250,16 +249,16 @@ func apiError(w http.ResponseWriter, err error) {
 
 	if db.NotFound(err) {
 		// Clients expect this when a file doesn't exist.
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, "file or user not found", http.StatusNotFound)
 		return
 	}
 
-	log.Printf("api error: %s", err)
-
 	if errors.As(err, &usererr) {
+		log.Printf("user api error: %s", usererr.Message)
 		http.Error(w, usererr.Message, http.StatusBadRequest)
 		return
 	}
 
-	w.WriteHeader(http.StatusInternalServerError)
+	log.Printf("unexpected api error: %s", err)
+	http.Error(w, "unexpected server error", http.StatusInternalServerError)
 }

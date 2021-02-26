@@ -46,7 +46,7 @@ func TestClient_List(t *testing.T) {
 	})
 
 	t.Run("not 200 error", func(t *testing.T) {
-		ts, client := setupTest(http.StatusInternalServerError, "[]")
+		ts, client := setupTest(http.StatusInternalServerError, "")
 		defer ts.Close()
 
 		_, err := client.List(true)
@@ -155,9 +155,8 @@ func TestClient_Content(t *testing.T) {
 		ts, client := setupTest(http.StatusNotFound, "")
 		defer ts.Close()
 
-		res, err := client.Content("test")
+		_, err := client.Content("test")
 		assert.Error(t, err)
-		println(res)
 	})
 
 	t.Run("ok", func(t *testing.T) {
