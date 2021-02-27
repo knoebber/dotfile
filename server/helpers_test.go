@@ -72,6 +72,8 @@ func sendTestRequest(router *mux.Router, route string, method string) *httptest.
 
 func assertNotFound(t *testing.T, router *mux.Router, route string, method string) {
 	resp := sendTestRequest(router, route, method)
+	body := resp.Body.String()
+	assert.NotEmpty(t, body)
 	assert.Equal(t, http.StatusNotFound, resp.Code)
 }
 
@@ -79,7 +81,15 @@ func assertOK(t *testing.T, router *mux.Router, route string, method string) {
 	resp := sendTestRequest(router, route, method)
 	body := resp.Body.String()
 	assert.NotContains(t, body, "flash-error")
+	assert.NotEmpty(t, body)
 	assert.Equal(t, http.StatusOK, resp.Code)
+}
+
+func assertInternalError(t *testing.T, router *mux.Router, route string, method string) {
+	resp := sendTestRequest(router, route, method)
+	body := resp.Body.String()
+	assert.NotEmpty(t, body)
+	assert.Equal(t, http.StatusInternalServerError, resp.Code)
 }
 
 func createTestUser(t *testing.T) *db.UserRecord {
@@ -104,10 +114,17 @@ func createTestTempFile(t *testing.T, userID int64, content string) {
 
 }
 
-func createTestFile(t *testing.T, userID int64) {
-	createTestTempFile(t, userID, "content!")
+func createTestFile(t *testing.T, u *db.UserRecord) *db.FileView {
+	createTestTempFile(t, u.ID, "content!")
 
-	if err := db.InitOrCommit(userID, testAlias, ""); err != nil {
+	if err := db.InitOrCommit(u.ID, testAlias, ""); err != nil {
 		t.Fatalf("creating test file: %s", err)
 	}
+
+	f, err := db.UncompressFile(db.Connection, u.Username, testAlias)
+	if err != nil {
+		t.Fatalf("retrieving test file: %s", err)
+	}
+
+	return f
 }

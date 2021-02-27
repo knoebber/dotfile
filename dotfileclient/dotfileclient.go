@@ -75,7 +75,7 @@ func (c *Client) List(path bool) ([]string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("getting file list: %v", resp.Status)
+		return nil, fmt.Errorf("getting file list: %s", readBodyErrorMessage(resp))
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
@@ -97,7 +97,7 @@ func (c *Client) TrackingDataBytes(alias string) ([]byte, error) {
 		return nil, nil
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("fetching remote tracked file %q: %s", alias, resp.Status)
+		return nil, fmt.Errorf("fetching remote tracked file %q: %s", alias, readBodyErrorMessage(resp))
 	}
 
 	return ioutil.ReadAll(resp.Body)
@@ -132,7 +132,7 @@ func (c *Client) revision(alias, hash string) ([]byte, error) {
 	fmt.Println("GET", url)
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("fetching file content: %s", resp.Status)
+		return nil, fmt.Errorf("fetching file content: %s", readBodyErrorMessage(resp))
 	}
 
 	return ioutil.ReadAll(resp.Body)
@@ -147,7 +147,7 @@ func (c *Client) Content(alias string) ([]byte, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("fetching file content: %s", resp.Status)
+		return nil, fmt.Errorf("fetching file content: %s", readBodyErrorMessage(resp))
 	}
 
 	return ioutil.ReadAll(resp.Body)
@@ -239,13 +239,21 @@ func (c *Client) UploadRevisions(alias string, data *dotfile.TrackingData, revis
 	if err != nil {
 		return errors.Wrapf(err, "uploading revisions to %q for %q %q", c.Remote, c.Username, alias)
 	}
-	if err := resp.Body.Close(); err != nil {
-		return fmt.Errorf("closing response body after push: %w", err)
-	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("uploading file revisions: %s", resp.Status)
+		return fmt.Errorf("uploading file revisions: %s", readBodyErrorMessage(resp))
 	}
 
 	return nil
+}
+
+// Expects that server sets the response body with plain text on non 200's.
+func readBodyErrorMessage(resp *http.Response) string {
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("failed to read error from response body:", err.Error())
+	}
+
+	return string(content)
 }

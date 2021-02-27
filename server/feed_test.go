@@ -9,8 +9,7 @@ func TestFileFeed(t *testing.T) {
 	router := setupTestRouter(t, createRSSFeed(Config{}))
 
 	t.Run("ok", func(t *testing.T) {
-		u := createTestUser(t)
-		createTestFile(t, u.ID)
+		createTestFile(t, createTestUser(t))
 		assertOK(t, router, testFilePath, http.MethodGet)
 	})
 }

@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/knoebber/dotfile/db"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,8 +15,7 @@ func TestFileHandler(t *testing.T) {
 		assertNotFound(t, router, testFilePath, http.MethodGet)
 	})
 
-	u := createTestUser(t)
-	createTestFile(t, u.ID)
+	createTestFile(t, createTestUser(t))
 
 	t.Run("ok", func(t *testing.T) {
 		assertOK(t, router, testFilePath, http.MethodGet)
@@ -46,7 +46,7 @@ func TestNewTempFile(t *testing.T) {
 func TestEditFile(t *testing.T) {
 	setupTestDB(t)
 	w, r, p := setupTestPage(t)
-	createTestFile(t, p.Session.UserID)
+	createTestFile(t, &db.UserRecord{Username: p.Session.Username, ID: p.Session.UserID})
 	p.Vars["alias"] = testAlias
 
 	t.Run("error when content empty", func(t *testing.T) {
@@ -84,7 +84,7 @@ func TestLoadCommitConfirm(t *testing.T) {
 	setupTestDB(t)
 
 	w, r, p := setupTestPage(t)
-	createTestFile(t, p.Session.UserID)
+	createTestFile(t, &db.UserRecord{Username: p.Session.Username, ID: p.Session.UserID})
 	createTestTempFile(t, p.Session.UserID, "load commit confirm content")
 
 	t.Run("ok", func(t *testing.T) {

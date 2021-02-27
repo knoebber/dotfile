@@ -12,8 +12,7 @@ func TestCommitsHandler(t *testing.T) {
 	})
 
 	t.Run("ok", func(t *testing.T) {
-		u := createTestUser(t)
-		createTestFile(t, u.ID)
+		createTestFile(t, createTestUser(t))
 		assertOK(t, router, testFilePath, http.MethodGet)
 	})
 }
