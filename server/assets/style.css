@@ -103,7 +103,6 @@ pre {
     padding: 10px;
     margin-top: 0;
     overflow: auto;
-    max-height: 60vh;
     border: solid 1px var(--paragraph);
 }
 
