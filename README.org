@@ -74,7 +74,7 @@ dotfile log bashrc
 
 Revert its uncommitted changes:
 #+BEGIN_SRC bash
-dotfile checkout bashrc
+dotfile checkout -f bashrc
 #+END_SRC
 
 Push to a remote server:

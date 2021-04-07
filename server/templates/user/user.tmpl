@@ -1,9 +1,10 @@
+{{- $owned := .Owned -}}
 <main>
   <h1><a href="/{{ .Vars.username }}">{{ .Vars.username }}</a></h1>
-  {{- if .Owned }}
-  <p><a href="/new_file">Add a new file</a></p>
-  {{- end }}
   {{- if .Data.files }}
+  {{- if $owned }}
+  <p><a href="/new_file">New file</a></p>
+  {{- end }}
   <div class="table-wrapper">
     <table>
       <thead>
@@ -30,6 +31,20 @@
     </table>
   </div>
   {{- else }}
+  {{- if $owned }}
+  <p>
+    To get started either create a <a href="/new_file">new file</a> online,
+    or use the CLI to upload local files.
+  </p>
+  <p><strong>How to upload a file:</strong></p>
+  <ol>
+    <li><a href="/docs/cli.org#install">Install the CLI</a></li>
+    <li><a href="/settings/cli">Setup the CLI</a></li>
+    <li><code>dotfile init ~/.bashrc</code></li>
+    <li><code>dotfile push bashrc</code></li>
+  </ol>
+  {{- else }}
   <p>No files uploaded</p>
+  {{- end }}
   {{- end }}
 </main>

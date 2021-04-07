@@ -39,5 +39,5 @@
   {{- end }}
   {{- end }}
 </div>
-<pre class="file-content"><code>{{ .Data.content }}</code></pre>
+<pre class="file-content" {{ if $hash }}style="max-height: 60vh;"{{ end }}><code>{{ .Data.content }}</code></pre>
 {{- end }}

@@ -88,7 +88,8 @@ func handlePasswordReset(w http.ResponseWriter, r *http.Request, p *Page) (done 
 }
 
 func login(w http.ResponseWriter, r *http.Request, p *Page, secure bool) (done bool) {
-	s, err := db.UserLogin(db.Connection, r.Form.Get("username"), r.Form.Get("password"), r.RemoteAddr)
+	username := r.Form.Get("username")
+	s, err := db.UserLogin(db.Connection, username, r.Form.Get("password"), r.RemoteAddr)
 	if err != nil {
 		// Print the real error and show the user a generic catch all.
 		log.Print(err)
@@ -102,7 +103,7 @@ func login(w http.ResponseWriter, r *http.Request, p *Page, secure bool) (done b
 		HttpOnly: true,
 	})
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, "/"+username, http.StatusSeeOther)
 	return true
 }
 
