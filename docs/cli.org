@@ -119,7 +119,7 @@ This allows the file to be installed to the same relative location regardless of
 
 The absolute path is saved when the file is outside of the home directory.
 * Show
-Show a file.
+Show a file's content.
 #+BEGIN_SRC bash
 dotfile show <alias>
 #+END_SRC

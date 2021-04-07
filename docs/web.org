@@ -21,9 +21,8 @@ curl https://dotfilehub.com/knoebber/bashrc > ~/.bashrc
 ** Create
 Creating a file online is the same as pushing a file with the CLI.
 
-To create a file, login and navigate to your username. Click the "Add
-a new file" link at the top. Enter an alias, a path, and the files
-content.
+To create a file, login and navigate to your username. Click the "new
+file" link at the top. Enter an alias, a path, and the files content.
 
 The alias must contain only letters, numbers, and underscores. When
 alias is omitted it will be generated from the path.
