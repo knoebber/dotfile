@@ -40,7 +40,7 @@ func TestDotfilehubIntegration(t *testing.T) {
 		}
 	}()
 
-	user, err := db.CreateUser(db.Connection, dotfilehubUsername, dotfilehubPassword)
+	user, err := db.CreateUser(db.Connection, dotfilehubUsername, "", dotfilehubPassword)
 	failIf(t, err)
 
 	client := dotfileclient.New("http://"+dotfilehubAddr, dotfilehubUsername, user.CLIToken)

@@ -40,11 +40,16 @@ func setupTestRouter(t *testing.T, handler http.HandlerFunc) *mux.Router {
 }
 
 func setupTestPage(t *testing.T) (http.ResponseWriter, *http.Request, *Page) {
+	if err := loadTemplates(); err != nil {
+		t.Fatalf("loading templates: %v", err)
+	}
+
 	p := new(Page)
 	u := createTestUser(t)
 	p.Session = &db.UserSession{
 		UserID:   u.ID,
 		Username: u.Username,
+		CLIToken: u.CLIToken,
 	}
 	p.Vars = make(map[string]string)
 	p.Data = make(map[string]interface{})
@@ -93,7 +98,7 @@ func assertInternalError(t *testing.T, router *mux.Router, route string, method 
 }
 
 func createTestUser(t *testing.T) *db.UserRecord {
-	u, err := db.CreateUser(db.Connection, testUsername, testPassword)
+	u, err := db.CreateUser(db.Connection, testUsername, testEmail, testPassword)
 	if err != nil {
 		t.Fatalf("creating test user: %s", err)
 	}
