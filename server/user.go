@@ -8,32 +8,20 @@ import (
 )
 
 func handleEmail(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	newEmail := r.Form.Get("email")
-	if err := db.UpdateEmail(db.Connection, p.userID(), newEmail); err != nil {
+	if err := db.UpdateEmail(db.Connection, p.userID(), r.Form.Get("email")); err != nil {
 		return p.setError(w, err)
 	}
-	p.Session.Email = &newEmail
 
 	p.flashSuccess("Updated email")
 	return
 }
 
 func handleTokenForm(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	if token := r.Form.Get("token"); token != "" {
-		if err := db.RotateCLIToken(db.Connection, p.Session.UserID, token); err != nil {
-			return p.setError(w, err)
-		}
-
-		p.flashSuccess("Generated new token")
-		return
-	}
-
-	password := r.Form.Get("password")
-	if err := db.CheckPassword(db.Connection, p.Username(), password); err != nil {
+	if err := db.RotateCLIToken(db.Connection, p.Session.UserID, r.Form.Get("token")); err != nil {
 		return p.setError(w, err)
 	}
 
-	p.Data["authenticated"] = true
+	p.flashSuccess("Generated new token")
 	return
 }
 
@@ -72,23 +60,18 @@ func handleDeleteUser(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 }
 
 func handleTheme(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	newTheme := db.UserTheme(r.Form.Get("theme"))
-
-	if err := db.UpdateTheme(db.Connection, p.userID(), newTheme); err != nil {
+	if err := db.UpdateTheme(db.Connection, p.userID(), db.UserTheme(r.Form.Get("theme"))); err != nil {
 		return p.setError(w, err)
 	}
-	p.Session.Theme = newTheme
 
 	return
 }
 
 func handleTimezone(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
-	newTimezone := r.Form.Get("timezone")
-	if err := db.UpdateTimezone(db.Connection, p.Session.UserID, newTimezone); err != nil {
+	if err := db.UpdateTimezone(db.Connection, p.Session.UserID, r.Form.Get("timezone")); err != nil {
 		return p.setError(w, err)
 	}
 
-	p.Session.Timezone = &newTimezone
 	p.flashSuccess("Updated timezone")
 	return
 }
@@ -96,7 +79,7 @@ func handleTimezone(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 func loadUserCLI(config Config) pageBuilder {
 	return func(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		p.Data["remote"] = config.URL(r)
-		return
+		return reloadSession(w, r, p)
 	}
 }
 
@@ -105,7 +88,8 @@ func loadThemes(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		db.UserThemeLight,
 		db.UserThemeDark,
 	}
-	return
+
+	return reloadSession(w, r, p)
 }
 
 func loadUserFiles(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
@@ -127,6 +111,21 @@ func loadUserFiles(w http.ResponseWriter, r *http.Request, p *Page) (done bool) 
 	return
 }
 
+// Reload the session data after a post request so that user sees updated values.
+func reloadSession(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
+	var err error
+	if r.Method != http.MethodPost {
+		return
+	}
+
+	p.Session, err = db.Session(db.Connection, p.session())
+	if err != nil {
+		return p.setError(w, err)
+	}
+
+	return
+}
+
 func userHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "user.tmpl",
@@ -138,7 +137,6 @@ func settingsHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "user_settings.tmpl",
 		title:        settingsTitle,
-		handleForm:   handleEmail,
 		protected:    true,
 	})
 }
@@ -167,6 +165,7 @@ func emailHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "email.tmpl",
 		title:        "Set Email",
+		loadData:     reloadSession,
 		handleForm:   handleEmail,
 		protected:    true,
 	})
@@ -176,6 +175,7 @@ func timezoneHandler() http.HandlerFunc {
 	return createHandler(&pageDescription{
 		templateName: "timezone.tmpl",
 		title:        "Set Timezone",
+		loadData:     reloadSession,
 		handleForm:   handleTimezone,
 		protected:    true,
 	})

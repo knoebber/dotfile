@@ -1,18 +1,10 @@
 <main>
   {{- template "settings_header" . }}
-  {{- if not .Data.authenticated -}}
-  <form method="post">
-    <label for="password">Password:</label>
-    <input id="password" name="password" type="password" required="required"/>
-    <button>Submit</button>
-  </form>
-  {{ else }}
-    <pre><code>dotfile config username {{ .Username }}</code></pre>
-    <pre><code>dotfile config token {{ .CLIToken }}</code></pre>
-    <pre><code>dotfile config remote {{ .Data.remote }}</code></pre>
+  <pre><code>dotfile config username {{ .Username }}</code></pre>
+  <pre><code>dotfile config token {{ .CLIToken }}</code></pre>
+  <pre><code>dotfile config remote {{ .Data.remote }}</code></pre>
   <form method="post" class="inline">
-    <input type="hidden" name="token" value="{{ .Data.token }}"/>
+    <input type="hidden" name="token" value="{{ .CLIToken }}"/>
     <button class="success">Rotate Token</button>
   </form>
-  {{ end -}}
 </main>

@@ -23,10 +23,10 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("ok", func(t *testing.T) {
-		_, err := CreateUser(Connection, "user1", testPassword)
+		_, err := CreateUser(Connection, "user1", "", testPassword)
 		assert.NoError(t, err)
 
-		_, err = CreateUser(Connection, "user2", testPassword)
+		_, err = CreateUser(Connection, "user2", "test@example.com", testPassword)
 		assert.NoError(t, err)
 	})
 }

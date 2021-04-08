@@ -220,7 +220,7 @@ WHERE username = ?`, passwordHash, username)
 }
 
 // CreateUser inserts a new user into the users table.
-func CreateUser(e Executor, username, password string) (*UserRecord, error) {
+func CreateUser(e Executor, username, email, password string) (*UserRecord, error) {
 	passwordHash, err := hashPassword(password)
 	if err != nil {
 		return nil, err
@@ -233,6 +233,7 @@ func CreateUser(e Executor, username, password string) (*UserRecord, error) {
 
 	u := &UserRecord{
 		Username:     username,
+		Email:        email,
 		PasswordHash: passwordHash,
 		CLIToken:     cliToken,
 	}

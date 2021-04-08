@@ -110,6 +110,7 @@ func login(w http.ResponseWriter, r *http.Request, p *Page, secure bool) (done b
 func handleSignup(secure bool) pageBuilder {
 	return func(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		username := r.Form.Get("username")
+		email := r.Form.Get("email")
 		password := r.Form.Get("password")
 		confirm := r.Form.Get("confirm")
 
@@ -117,7 +118,7 @@ func handleSignup(secure bool) pageBuilder {
 			return p.setError(w, usererror.Invalid("Passwords do not match."))
 		}
 
-		_, err := db.CreateUser(db.Connection, username, password)
+		_, err := db.CreateUser(db.Connection, username, email, password)
 		if err != nil {
 			return p.setError(w, err)
 		}
