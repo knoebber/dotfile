@@ -6,7 +6,7 @@ and should be usable with basic browsers.
 The index page is a form that does a global search. It finds files
 that have aliases or paths that match any part of the query. Results
 can be ordered by clicking the links on the table header. This is also
-available as an [[https://dotfilehub.com/feed.rss][RSS feed]].
+available as a [[https://dotfilehub.com/feed.rss][RSS feed]].
 * Files
 ** View
 All files are globally viewable at the path =/{username}/{alias}=.
@@ -49,9 +49,9 @@ Note that changing the alias or path can cause CLI operations that
 use the API to throw errors.
 * User Settings
 ** Setup CLI
-Select "Setup CLI" and enter your password. Then enter the commands
-into a shell. The token can be rotated at anytime - this ends all CLI
-write access until it's reconfigured with the new token.
+Select "Setup CLI" and enter the commands into a shell. The token can
+be rotated at anytime - this ends all CLI write access until it's
+reconfigured with the new token.
 ** Set Timezone
 :PROPERTIES:
 :custom_id: set-timezone
