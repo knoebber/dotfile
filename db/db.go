@@ -14,9 +14,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	// Driver for sql
+	"github.com/go-playground/validator/v10"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
-	"gopkg.in/go-playground/validator.v9"
 )
 
 const (
