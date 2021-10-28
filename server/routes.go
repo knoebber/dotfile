@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+	"io/fs"
 	"net/http"
 	"strings"
 
@@ -10,8 +12,10 @@ import (
 )
 
 func setupRoutes(r *mux.Router, config Config) error {
+	if err := assetRoutes(r); err != nil {
+		return err
+	}
 	staticRoutes(r)
-	assetRoutes(r)
 	apiRoutes(r)
 	dotfileRoutes(r, config)
 	return createReservedUsernames(r)
@@ -27,11 +31,21 @@ func staticRoutes(r *mux.Router) {
 	r.NotFoundHandler = createStaticHandler("Not Found", "404.html")
 }
 
-func assetRoutes(r *mux.Router) {
-	assets := http.FileSystem(http.Dir("assets/"))
-	r.Path("/style.css").Handler(http.FileServer(assets))
-	r.Path("/favicon.ico").Handler(http.FileServer(assets))
-	r.Path("/robots.txt").Handler(http.FileServer(assets))
+func assetRoutes(r *mux.Router) error {
+	root, err := fs.Sub(fs.FS(serverContent), "assets")
+	if err != nil {
+		return fmt.Errorf("failed to get root directory for embedded assets: %w", err)
+	}
+	fileserver := http.FileServer(http.FS(root))
+
+	serveFile := func(w http.ResponseWriter, r *http.Request) {
+		fileserver.ServeHTTP(w, r)
+	}
+
+	r.HandleFunc("/style.css", serveFile)
+	r.HandleFunc("/favicon.ico", serveFile)
+	r.HandleFunc("/robots.txt", serveFile)
+	return nil
 }
 
 func apiRoutes(r *mux.Router) {

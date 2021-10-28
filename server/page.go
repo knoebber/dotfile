@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -243,7 +242,7 @@ func (p *Page) writeFromHTML(w io.Writer) error {
 
 	baseClone.Funcs(template.FuncMap{
 		"content": func() (template.HTML, error) {
-			html, err := ioutil.ReadFile(filepath.Join("html", p.htmlFile))
+			html, err := serverContent.ReadFile(filepath.Join("html", p.htmlFile))
 			if err != nil {
 				return "", err
 			}
@@ -296,7 +295,7 @@ func loadTemplates() (err error) {
 	baseTemplate, err = template.
 		New("base").
 		Funcs(defaultContentFunction).
-		ParseFiles("templates/base.tmpl")
+		ParseFS(serverContent, "templates/base.tmpl")
 
 	if err != nil {
 		return
@@ -310,7 +309,7 @@ func loadTemplates() (err error) {
 	pageTemplates, err = template.
 		New("pages").
 		Funcs(pageFunctions).
-		ParseGlob("templates/*/*.tmpl")
+		ParseFS(serverContent, "templates/*/*.tmpl")
 	return
 
 }

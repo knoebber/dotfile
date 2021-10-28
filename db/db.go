@@ -12,6 +12,7 @@ import (
 	"github.com/knoebber/dotfile/dotfile"
 	"github.com/knoebber/dotfile/usererror"
 	"golang.org/x/crypto/bcrypt"
+
 	// Driver for sql
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
