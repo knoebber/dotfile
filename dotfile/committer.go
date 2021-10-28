@@ -2,10 +2,9 @@ package dotfile
 
 import (
 	"bytes"
-	"fmt"
 	"time"
 
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 )
 
 const initialCommitMessage = "Initial commit"
@@ -47,7 +46,7 @@ func NewCommit(c Committer, message string) error {
 		return err
 	}
 	if exists {
-		return usererror.Invalid(fmt.Sprintf("Commit %q already exists", hash))
+		return usererror.Format("Commit %q already exists", hash)
 	}
 
 	newCommit := &Commit{

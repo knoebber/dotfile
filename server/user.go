@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/knoebber/dotfile/db"
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 )
 
 func handleEmail(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
@@ -32,7 +32,7 @@ func handlePassword(w http.ResponseWriter, r *http.Request, p *Page) (done bool)
 	confirm := r.Form.Get("confirm")
 
 	if newPass != confirm {
-		return p.setError(w, usererror.Invalid("Confirm does not match."))
+		return p.setError(w, usererror.New("Confirm does not match."))
 	}
 
 	if err := db.UpdatePassword(db.Connection, p.Username(), currentPass, newPass); err != nil {
@@ -48,7 +48,7 @@ func handleDeleteUser(w http.ResponseWriter, r *http.Request, p *Page) (done boo
 	password := r.Form.Get("password")
 
 	if username != p.Session.Username {
-		return p.setError(w, usererror.Invalid("Username does not match"))
+		return p.setError(w, usererror.New("Username does not match"))
 	}
 
 	if err := db.DeleteUser(username, password); err != nil {

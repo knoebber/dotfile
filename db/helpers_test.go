@@ -2,13 +2,12 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/knoebber/dotfile/dotfile"
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -30,8 +29,7 @@ const (
 )
 
 func assertUsererror(t *testing.T, err error) {
-	var usererr *usererror.Error
-	if !errors.As(err, &usererr) {
+	if uErr := usererror.Convert(err); uErr == nil {
 		t.Errorf("expected error to be usererror, received %s", err)
 	}
 }

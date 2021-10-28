@@ -1,10 +1,11 @@
 package server
 
 import (
-	"github.com/knoebber/dotfile/db"
-	"github.com/knoebber/dotfile/usererror"
-	"github.com/pkg/errors"
 	"net/http"
+
+	"github.com/knoebber/dotfile/db"
+	"github.com/knoebber/usererror"
+	"github.com/pkg/errors"
 )
 
 func updateFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
@@ -49,7 +50,7 @@ func deleteFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	username := p.Vars["username"]
 	alias := p.Vars["alias"]
 	if alias != deleteConfirm {
-		return p.setError(w, usererror.Invalid("Alias does not match"))
+		return p.setError(w, usererror.New("Alias does not match"))
 	}
 
 	tx, err := db.Connection.Begin()

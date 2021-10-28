@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -100,7 +100,7 @@ func SetConfig(path, key, value string) error {
 	}
 
 	if _, ok := cfg[key]; !ok {
-		return usererror.Invalid(fmt.Sprintf("%q is not a valid config key", key))
+		return usererror.Format("%q is not a valid config key", key)
 	}
 
 	cfg[key] = &value

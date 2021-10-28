@@ -6,6 +6,7 @@ require (
 	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.4
+	github.com/knoebber/usererror v0.1.0
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/niklasfasching/go-org v1.3.2
 	github.com/pkg/errors v0.9.1

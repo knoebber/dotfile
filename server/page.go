@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/knoebber/dotfile/db"
 	"github.com/knoebber/dotfile/dotfile"
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -135,8 +135,6 @@ func (p *Page) flashSuccess(msg string) {
 }
 
 func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
-	var usererr *usererror.Error
-
 	if db.NotFound(err) {
 		log.Printf("resource not found: %s", err)
 		w.WriteHeader(http.StatusNotFound)
@@ -148,9 +146,9 @@ func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
 		return true
 	}
 
-	if errors.As(err, &usererr) {
-		log.Printf("flashing %s error: %s", usererr.Reason, err)
-		p.ErrorMessage = usererr.Message
+	if uErr := usererror.Convert(err); uErr != nil {
+		log.Printf("flashing usererror: %s", err)
+		p.ErrorMessage = uErr.Message
 	} else {
 		log.Print("flashing fallback from unexpected error: ", err)
 		p.ErrorMessage = "Unexpected error - if this continues please contact an admin."

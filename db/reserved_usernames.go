@@ -5,9 +5,10 @@ import (
 	"time"
 
 	"database/sql"
-	"github.com/knoebber/dotfile/usererror"
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/knoebber/usererror"
+	"github.com/pkg/errors"
 )
 
 // ReservedUsernameRecord models the reserved_usernames table.
@@ -41,7 +42,7 @@ func checkUsernameAllowed(e Executor, username string) error {
 	}
 
 	if count > 0 {
-		return usererror.Invalid(fmt.Sprintf("Username %q is reserved.", username))
+		return usererror.Format("Username %q is reserved.", username)
 	}
 
 	return nil

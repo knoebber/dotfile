@@ -6,13 +6,14 @@ import (
 	"compress/zlib"
 	"crypto/sha1"
 	"fmt"
-	"github.com/knoebber/dotfile/usererror"
-	"github.com/pkg/errors"
 	"io"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/knoebber/usererror"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -23,7 +24,7 @@ var (
 	validAliasRegex = regexp.MustCompile(`^[a-z0-9-_]+$`)
 
 	// ErrNoChanges is returned when a diff operation finds no changes.
-	ErrNoChanges = usererror.Invalid("No changes")
+	ErrNoChanges = usererror.New("No changes")
 )
 
 // TrackingData is the data that dotfile uses to track files.
@@ -118,7 +119,7 @@ func Alias(alias, path string) (string, error) {
 // CheckAlias checks whether the alias is a valid format.
 func CheckAlias(alias string) error {
 	if !validAliasRegex.Match([]byte(alias)) {
-		return usererror.Invalid(fmt.Sprintf("%q has non allowed characters", alias))
+		return usererror.New(fmt.Sprintf("%q has non allowed characters", alias))
 	}
 
 	return nil
@@ -128,11 +129,11 @@ func CheckAlias(alias string) error {
 func CheckPath(path string) error {
 	l := len(path)
 	if l == 0 {
-		return usererror.Invalid("File path cannot be empty")
+		return usererror.New("File path cannot be empty")
 	}
 
 	if path[l-1] == filepath.Separator {
-		return usererror.Invalid("File path cannot be directory")
+		return usererror.New("File path cannot be directory")
 	}
 
 	if len(path) > 2 && path[:2] == "~/" {
@@ -140,7 +141,7 @@ func CheckPath(path string) error {
 	}
 
 	if !filepath.IsAbs(path) {
-		return usererror.Invalid("File path must start with ~/ or be absolute")
+		return usererror.New("File path must start with ~/ or be absolute")
 	}
 
 	return nil

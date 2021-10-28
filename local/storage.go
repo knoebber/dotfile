@@ -10,7 +10,7 @@ import (
 
 	"github.com/knoebber/dotfile/dotfile"
 	"github.com/knoebber/dotfile/dotfileclient"
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -262,7 +262,7 @@ func (s *Storage) Pull(client *dotfileclient.Client) error {
 		}
 
 		if !clean {
-			return usererror.Invalid("file has uncommitted changes")
+			return usererror.New("file has uncommitted changes")
 		}
 	}
 
@@ -286,7 +286,7 @@ func (s *Storage) Pull(client *dotfileclient.Client) error {
 
 	// If the pulled file is new and a file with the remotes path already exists.
 	if exists(path) && !hasSavedData {
-		return usererror.Invalid(remoteData.Path +
+		return usererror.New(remoteData.Path +
 			" already exists and is not tracked by dotfile (remove the file or initialize it before pulling)")
 	}
 
@@ -339,7 +339,7 @@ func (s *Storage) Rename(newAlias string) error {
 
 	newDir := filepath.Join(s.Dir, newAlias)
 	if exists(newDir) {
-		return usererror.Invalid(fmt.Sprintf("%q already exists", newAlias))
+		return usererror.New(fmt.Sprintf("%q already exists", newAlias))
 	}
 
 	err := os.Rename(filepath.Join(s.Dir, s.Alias), newDir)

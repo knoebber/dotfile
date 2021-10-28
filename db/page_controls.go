@@ -2,11 +2,12 @@ package db
 
 import (
 	"fmt"
-	"github.com/knoebber/dotfile/usererror"
 	"math"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/knoebber/usererror"
 )
 
 const (
@@ -46,12 +47,12 @@ func (p *PageControls) Set() error {
 	if orderBy == "" {
 		p.orderBy = 1
 	} else if p.orderBy, _ = strconv.Atoi(orderBy); p.orderBy < 1 {
-		return usererror.Invalid(`Invalid query: "ob" (order by) must be positive integer.`)
+		return usererror.New(`Invalid query: "ob" (order by) must be positive integer.`)
 	}
 
 	p.order = strings.ToLower(p.Values.Get("o"))
 	if !(p.order == "" || p.order == "desc" || p.order == "asc") {
-		return usererror.Invalid(`Invalid query: "o" (order) must be one of: "", "asc", "desc".`)
+		return usererror.New(`Invalid query: "o" (order) must be one of: "", "asc", "desc".`)
 	}
 
 	limit := p.Values.Get("l")
@@ -60,7 +61,7 @@ func (p *PageControls) Set() error {
 	} else {
 		p.limit, _ = strconv.Atoi(limit)
 		if p.limit < 1 || p.limit > MaxLimit {
-			return usererror.Invalid(fmt.Sprintf(`Invalid query: "l" (limit) must be positive integer less than %d.`, MaxLimit))
+			return usererror.Format(`Invalid query: "l" (limit) must be positive integer less than %d.`, MaxLimit)
 		}
 	}
 
@@ -70,7 +71,7 @@ func (p *PageControls) Set() error {
 	} else {
 		p.page, _ = strconv.Atoi(page)
 		if p.page < 1 {
-			return usererror.Invalid(`Invalid query: "p" (page) must be positive integer.`)
+			return usererror.New(`Invalid query: "p" (page) must be positive integer.`)
 		}
 	}
 	return nil

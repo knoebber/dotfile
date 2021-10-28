@@ -14,7 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/knoebber/dotfile/db"
 	"github.com/knoebber/dotfile/dotfile"
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -175,9 +175,8 @@ func push(mr *multipart.Reader, userID int64, alias string) error {
 		}
 	} else {
 		if ft.Path != fileData.Path {
-			return db.Rollback(tx, usererror.Invalid(fmt.Sprintf(
-				"local path %q does not match remote path %q",
-				ft.Path, fileData.Path)))
+			uErr := usererror.Format("local path %q does not match remote path %q", ft.Path, fileData.Path)
+			return db.Rollback(tx, uErr)
 		}
 	}
 

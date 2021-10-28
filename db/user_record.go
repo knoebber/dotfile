@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"database/sql"
-	"github.com/knoebber/dotfile/usererror"
+
+	"github.com/knoebber/usererror"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -83,7 +84,7 @@ func (u *UserRecord) check(e Executor) error {
 	}
 
 	if exists {
-		return usererror.Duplicate("Username", u.Username)
+		return usererror.Format("Username %q already exists", u.Username)
 	}
 
 	if u.Email != "" {
@@ -104,7 +105,7 @@ func checkUniqueEmail(e Executor, email string) error {
 	}
 
 	if count > 0 {
-		return usererror.Duplicate("Email", email)
+		return usererror.Format("Email %q already exists", email)
 	}
 
 	return nil
@@ -186,7 +187,7 @@ WHERE password_reset_token = ?`, token).
 		return "", errors.Wrap(err, "counting users for password reset")
 	}
 	if count == 0 {
-		return "", usererror.Invalid("Token not found")
+		return "", usererror.New("Token not found")
 	}
 	if count > 1 {
 		return "", fmt.Errorf("token %q has %d matches", token, count)
@@ -271,7 +272,7 @@ func UpdateEmail(e Executor, userID int64, email string) error {
 func UpdateTimezone(e Executor, userID int64, timezone string) error {
 	if _, err := time.LoadLocation(timezone); err != nil {
 		log.Printf("error updating timezone: %v", err)
-		return usererror.Invalid(fmt.Sprintf("Timezone %q not found", timezone))
+		return usererror.Format("Timezone %q not found", timezone)
 	}
 
 	_, err := e.Exec("UPDATE users SET timezone = ? WHERE id = ?", timezone, userID)
@@ -299,7 +300,7 @@ WHERE id = ? AND cli_token = ?`, newToken, userID, currentToken)
 	}
 
 	if affected == 0 {
-		return usererror.Invalid("User token mismatch")
+		return usererror.New("User token mismatch")
 	}
 
 	return err
@@ -310,7 +311,7 @@ WHERE id = ? AND cli_token = ?`, newToken, userID, currentToken)
 func CheckPassword(e Executor, username, password string) error {
 	err := compareUserPassword(e, username, password)
 	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-		return usererror.Invalid("Password does not match.")
+		return usererror.New("Password does not match.")
 	} else if err != nil {
 		return err
 	}

@@ -1,9 +1,8 @@
 package cli
 
 import (
-	"fmt"
 	"github.com/knoebber/dotfile/dotfile"
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -28,7 +27,7 @@ func (c *checkoutCommand) run(*kingpin.ParseContext) error {
 			return err
 		}
 		if !clean {
-			return usererror.Invalid(fmt.Sprintf(`"%s" has uncommitted changes, use -f to override`, c.alias))
+			return usererror.Format("%q has uncommitted changes, use -f to override", c.alias)
 		}
 	}
 
