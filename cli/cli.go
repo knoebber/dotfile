@@ -62,7 +62,7 @@ func setConfig(app *kingpin.Application) error {
 	// Used for tab completion in commands that have an alias argument.
 	flags.defaultAliasList = local.ListAliases(defaultStorageDir)
 
-	app.Version("1.0.4")
+	app.Version("1.0.5")
 
 	app.Flag("storage-dir", "The directory where dotfile data is stored").
 		Default(defaultStorageDir).
