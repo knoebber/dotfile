@@ -23,7 +23,6 @@ package local
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -95,7 +94,7 @@ func writeCommit(contents []byte, storageDir string, alias, hash string) error {
 	// Example: ~/.local/share/dotfile/bash_profile/8f94c7720a648af9cf9dab33e7f297d28b8bf7cd
 	commitPath := filepath.Join(commitDir, hash)
 
-	if err := ioutil.WriteFile(commitPath, contents, 0644); err != nil {
+	if err := os.WriteFile(commitPath, contents, 0644); err != nil {
 		return errors.Wrap(err, "writing revision")
 	}
 

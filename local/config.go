@@ -3,7 +3,6 @@ package local
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -34,7 +33,7 @@ func createDefaultConfig(path string) ([]byte, error) {
 		return nil, errors.Wrap(err, "marshalling new user config file")
 	}
 
-	if err = ioutil.WriteFile(path, bytes, 0644); err != nil {
+	if err = os.WriteFile(path, bytes, 0644); err != nil {
 		return nil, errors.Wrap(err, "saving new user config file")
 	}
 
@@ -46,7 +45,7 @@ func configBytes(path string) ([]byte, error) {
 		return createDefaultConfig(path)
 	}
 
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, errors.Wrap(err, "reading config bytes")
 	}
@@ -111,7 +110,7 @@ func SetConfig(path, key, value string) error {
 		return errors.Wrap(err, "marshalling updated config map")
 	}
 
-	if err = ioutil.WriteFile(path, bytes, 0644); err != nil {
+	if err = os.WriteFile(path, bytes, 0644); err != nil {
 		return errors.Wrap(err, "saving updated config file")
 	}
 

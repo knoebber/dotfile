@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,7 +38,7 @@ func (s *Storage) hasSavedData() bool {
 
 // JSON returns the tracked files json.
 func (s *Storage) JSON() ([]byte, error) {
-	jsonContent, err := ioutil.ReadFile(s.jsonPath())
+	jsonContent, err := os.ReadFile(s.jsonPath())
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, ErrNotTracked
 	} else if err != nil {
@@ -85,7 +84,7 @@ func (s *Storage) save() error {
 	}
 
 	// Example: ~/.local/share/dotfile/bash_profile.json
-	if err := ioutil.WriteFile(s.jsonPath(), content, 0644); err != nil {
+	if err := os.WriteFile(s.jsonPath(), content, 0644); err != nil {
 		return errors.Wrap(err, "saving tracking data")
 	}
 
@@ -110,7 +109,7 @@ func (s *Storage) HasCommit(hash string) (exists bool, err error) {
 func (s *Storage) Revision(hash string) ([]byte, error) {
 	revisionPath := filepath.Join(s.Dir, s.Alias, hash)
 
-	content, err := ioutil.ReadFile(revisionPath)
+	content, err := os.ReadFile(revisionPath)
 	if err != nil {
 		return nil, errors.Wrapf(err, "reading revision %q", hash)
 	}
@@ -126,7 +125,7 @@ func (s *Storage) DirtyContent() ([]byte, error) {
 		return nil, err
 	}
 
-	result, err := ioutil.ReadFile(path)
+	result, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
 		return nil, nil
 	}
@@ -166,7 +165,7 @@ func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(path, buff.Bytes(), 0644)
+	err = os.WriteFile(path, buff.Bytes(), 0644)
 	if err != nil {
 		return errors.Wrapf(err, "reverting file %q", s.Alias)
 	}

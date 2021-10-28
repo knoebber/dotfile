@@ -1,7 +1,6 @@
 package local
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -74,7 +73,7 @@ func setupTestFile(t *testing.T) *Storage {
 }
 
 func writeTestFile(t *testing.T, contents []byte) {
-	if err := ioutil.WriteFile(testTrackedFile, contents, 0644); err != nil {
+	if err := os.WriteFile(testTrackedFile, contents, 0644); err != nil {
 		t.Fatalf("setting up %s: %v", testTrackedFile, err)
 	}
 }

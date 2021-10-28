@@ -2,9 +2,6 @@ package local
 
 import (
 	"bytes"
-	"github.com/knoebber/dotfile/dotfileclient"
-	"github.com/pkg/errors"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,6 +9,8 @@ import (
 	"time"
 
 	"github.com/knoebber/dotfile/dotfile"
+	"github.com/knoebber/dotfile/dotfileclient"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -52,7 +51,7 @@ func TestStorage_SetTrackingData(t *testing.T) {
 	t.Run("error on invalid json", func(t *testing.T) {
 		s := testStorage()
 		_ = os.Mkdir(testDir, 0755)
-		_ = ioutil.WriteFile(s.jsonPath(), []byte("invalid json"), 0644)
+		_ = os.WriteFile(s.jsonPath(), []byte("invalid json"), 0644)
 		assert.Error(t, s.SetTrackingData())
 	})
 }
@@ -99,7 +98,7 @@ func TestStorage_Revision(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		s := setupTestFile(t)
 		_ = os.Mkdir(filepath.Join(testDir, testAlias), 0755)
-		_ = ioutil.WriteFile(filepath.Join(testDir, testAlias, testHash), []byte(testContent), 0644)
+		_ = os.WriteFile(filepath.Join(testDir, testAlias, testHash), []byte(testContent), 0644)
 		contents, err := s.Revision(testHash)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, contents)
@@ -212,7 +211,7 @@ func TestStorage_Pull(t *testing.T) {
 	t.Run("error on attempt to load invalid json", func(t *testing.T) {
 		setupTestFile(t)
 
-		if err := ioutil.WriteFile(testDir+testAlias+".json", []byte("invalid json"), 0644); err != nil {
+		if err := os.WriteFile(testDir+testAlias+".json", []byte("invalid json"), 0644); err != nil {
 			t.Fatalf("writing test json")
 		}
 		assert.Error(t, s.Pull(client))

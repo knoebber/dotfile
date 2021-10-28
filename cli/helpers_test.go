@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -58,7 +57,7 @@ func clearTestStorage(t *testing.T) {
 }
 
 func writeTestFile(t *testing.T, contents []byte) {
-	if err := ioutil.WriteFile(trackedFile, contents, 0644); err != nil {
+	if err := os.WriteFile(trackedFile, contents, 0644); err != nil {
 		t.Fatalf("setting up %s: %v", trackedFile, err)
 	}
 }
