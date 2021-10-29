@@ -3,11 +3,10 @@ package local
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -34,7 +33,7 @@ func createDefaultConfig(path string) ([]byte, error) {
 		return nil, errors.Wrap(err, "marshalling new user config file")
 	}
 
-	if err = ioutil.WriteFile(path, bytes, 0644); err != nil {
+	if err = os.WriteFile(path, bytes, 0644); err != nil {
 		return nil, errors.Wrap(err, "saving new user config file")
 	}
 
@@ -46,7 +45,7 @@ func configBytes(path string) ([]byte, error) {
 		return createDefaultConfig(path)
 	}
 
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, errors.Wrap(err, "reading config bytes")
 	}
@@ -101,7 +100,7 @@ func SetConfig(path, key, value string) error {
 	}
 
 	if _, ok := cfg[key]; !ok {
-		return usererror.Invalid(fmt.Sprintf("%q is not a valid config key", key))
+		return usererror.Format("%q is not a valid config key", key)
 	}
 
 	cfg[key] = &value
@@ -111,7 +110,7 @@ func SetConfig(path, key, value string) error {
 		return errors.Wrap(err, "marshalling updated config map")
 	}
 
-	if err = ioutil.WriteFile(path, bytes, 0644); err != nil {
+	if err = os.WriteFile(path, bytes, 0644); err != nil {
 		return errors.Wrap(err, "saving updated config file")
 	}
 

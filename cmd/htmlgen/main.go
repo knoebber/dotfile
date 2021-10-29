@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -45,7 +44,7 @@ func convert(inDir, outDir string) error {
 }
 
 func render(inPath, outPath string) error {
-	bs, err := ioutil.ReadFile(inPath)
+	bs, err := os.ReadFile(inPath)
 	if err != nil {
 		return err
 	}
@@ -59,7 +58,7 @@ func render(inPath, outPath string) error {
 
 	output = "<main>\n" + output + "</main>\n"
 
-	if err := ioutil.WriteFile(outPath, []byte(output), 0644); err != nil {
+	if err := os.WriteFile(outPath, []byte(output), 0644); err != nil {
 		return err
 	}
 	fmt.Println("Wrote", outPath)

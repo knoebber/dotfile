@@ -2,9 +2,8 @@ package dotfile
 
 import (
 	"bytes"
-	"fmt"
 
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 )
 
 // Reverter is the interface that wraps methods needed for reverting a tracked file.
@@ -21,7 +20,7 @@ func Checkout(r Reverter, hash string) error {
 		return err
 	}
 	if !exists {
-		return usererror.Invalid(fmt.Sprintf("Revision %q not found", hash))
+		return usererror.Format("Revision %q not found", hash)
 	}
 
 	uncompressed, err := UncompressRevision(r, hash)

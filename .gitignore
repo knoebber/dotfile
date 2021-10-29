@@ -17,3 +17,8 @@ coverage.txt
 testdata/
 *.json
 
+# Generated html files
+server/html/README.html
+server/html/acknowledgments.html
+server/html/cli.html
+server/html/web.html

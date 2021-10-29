@@ -18,19 +18,10 @@ dotfile:
 htmlgen:
 	go build -o bin/htmlgen cmd/htmlgen/main.go
 
-bin/assets:
-	cp -r server/assets bin/assets
+htmldocs: htmlgen
+	bin/htmlgen -out server/html && bin/htmlgen -in docs/ -out server/html
 
-bin/templates:
-	cp -r server/templates bin/templates
-
-bin/html:
-	cp -r server/html bin/html
-
-htmldocs: htmlgen bin/html
-	bin/htmlgen -out bin/html && bin/htmlgen -in docs/ -out bin/html
-
-dotfilehub: clean bin/templates bin/assets htmldocs
+dotfilehub: htmldocs
 	go build -o bin/dotfilehub cmd/dotfilehub/main.go
 
 clean:

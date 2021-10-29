@@ -2,6 +2,7 @@
 package server
 
 import (
+	"embed"
 	"net/http"
 	"os"
 	"time"
@@ -13,6 +14,11 @@ import (
 )
 
 const timeout = 10 * time.Second
+
+//go:embed assets
+//go:embed html
+//go:embed templates/base.tmpl templates/auth/* templates/file/* templates/user/*
+var serverContent embed.FS
 
 // Config configures the server.
 type Config struct {

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
@@ -100,7 +100,7 @@ func (c *Client) TrackingDataBytes(alias string) ([]byte, error) {
 		return nil, fmt.Errorf("fetching remote tracked file %q: %s", alias, readBodyErrorMessage(resp))
 	}
 
-	return ioutil.ReadAll(resp.Body)
+	return io.ReadAll(resp.Body)
 }
 
 // TrackingData returns the file tracking data for alias on remote.
@@ -135,7 +135,7 @@ func (c *Client) revision(alias, hash string) ([]byte, error) {
 		return nil, fmt.Errorf("fetching file content: %s", readBodyErrorMessage(resp))
 	}
 
-	return ioutil.ReadAll(resp.Body)
+	return io.ReadAll(resp.Body)
 }
 
 // Content fetches the current content of alias.
@@ -150,7 +150,7 @@ func (c *Client) Content(alias string) ([]byte, error) {
 		return nil, fmt.Errorf("fetching file content: %s", readBodyErrorMessage(resp))
 	}
 
-	return ioutil.ReadAll(resp.Body)
+	return io.ReadAll(resp.Body)
 }
 
 // Revisions fetches all of the revisions for alias in the hashes argument.
@@ -250,7 +250,7 @@ func (c *Client) UploadRevisions(alias string, data *dotfile.TrackingData, revis
 
 // Expects that server sets the response body with plain text on non 200's.
 func readBodyErrorMessage(resp *http.Response) string {
-	content, err := ioutil.ReadAll(resp.Body)
+	content, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("failed to read error from response body:", err.Error())
 	}

@@ -10,12 +10,13 @@ import (
 	"time"
 
 	"github.com/knoebber/dotfile/dotfile"
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 	"golang.org/x/crypto/bcrypt"
+
 	// Driver for sql
+	"github.com/go-playground/validator/v10"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
-	"gopkg.in/go-playground/validator.v9"
 )
 
 const (
@@ -56,7 +57,7 @@ type checker interface {
 func validateStringSizes(strings ...string) error {
 	for _, s := range strings {
 		if len(s) > maxStringSize {
-			return usererror.Invalid(fmt.Sprintf(
+			return usererror.New(fmt.Sprintf(
 				"The maximum string length is %d characters", maxStringSize))
 		}
 	}
@@ -84,7 +85,7 @@ func createTables(e Executor) error {
 func insert(e Executor, i inserter) (id int64, err error) {
 	if err = validate.Struct(i); err != nil {
 		log.Print(err)
-		return 0, usererror.Invalid("Values are missing or improperly formatted.")
+		return 0, usererror.New("Values are missing or improperly formatted.")
 	}
 
 	if c, ok := i.(checker); ok {
@@ -144,11 +145,11 @@ func formatTime(t time.Time, timezone *string) string {
 
 func checkSize(content []byte, name string) error {
 	if len(content) == 0 {
-		return usererror.Invalid(fmt.Sprintf("%s is empty", name))
+		return usererror.New(fmt.Sprintf("%s is empty", name))
 	}
 
 	if len(content) > maxBlobSizeBytes {
-		return usererror.Invalid(fmt.Sprintf("%s is too large (max=%dKB)", name, maxBlobSizeBytes/1000))
+		return usererror.New(fmt.Sprintf("%s is too large (max=%dKB)", name, maxBlobSizeBytes/1000))
 	}
 	return nil
 
@@ -172,7 +173,7 @@ func checkFile(alias, path string) error {
 func hashPassword(password string) ([]byte, error) {
 
 	if len(password) < minPasswordLength {
-		return nil, usererror.Invalid(fmt.Sprintf("Password must be at least %d characters.", minPasswordLength))
+		return nil, usererror.Format("Password must be at least %d characters.", minPasswordLength)
 	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)

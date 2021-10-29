@@ -3,8 +3,8 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/smtp"
+	"os"
 
 	"github.com/pkg/errors"
 )
@@ -21,7 +21,7 @@ type SMTPConfig struct {
 func smtpConfig(path string) (*SMTPConfig, error) {
 	config := new(SMTPConfig)
 
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, errors.Wrap(err, "reading smtp config")
 	}

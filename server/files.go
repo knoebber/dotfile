@@ -7,7 +7,7 @@ import (
 
 	"github.com/knoebber/dotfile/db"
 	"github.com/knoebber/dotfile/dotfile"
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 )
 
 // Handles submitting the new file form.
@@ -85,7 +85,7 @@ func forkFile(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 	loggedInUserID := p.userID()
 
 	if loggedInUserID < 1 {
-		return p.setError(w, usererror.Invalid("Must be logged in to fork file."))
+		return p.setError(w, usererror.New("Must be logged in to fork file."))
 	}
 
 	if err := db.ForkFile(username, alias, hash, loggedInUserID); err != nil {

@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/knoebber/dotfile/db"
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 )
 
 const passwordResetSubject = "Dotfilehub Password Reset"
@@ -28,7 +28,7 @@ func handleLogin(secure bool) pageBuilder {
 func handleAccountRecovery(config Config) pageBuilder {
 	return func(w http.ResponseWriter, r *http.Request, p *Page) (done bool) {
 		if config.SMTP == nil {
-			return p.setError(w, usererror.Invalid("This server isn't configured for SMTP."))
+			return p.setError(w, usererror.New("This server isn't configured for SMTP."))
 		}
 		email := r.Form.Get("email")
 
@@ -74,7 +74,7 @@ func handlePasswordReset(w http.ResponseWriter, r *http.Request, p *Page) (done 
 	confirm := r.Form.Get("confirm")
 
 	if password != confirm {
-		return p.setError(w, usererror.Invalid("Passwords do not match."))
+		return p.setError(w, usererror.New("Passwords do not match."))
 	}
 
 	username, err := db.ResetPassword(db.Connection, token, password)
@@ -93,7 +93,7 @@ func login(w http.ResponseWriter, r *http.Request, p *Page, secure bool) (done b
 	if err != nil {
 		// Print the real error and show the user a generic catch all.
 		log.Print(err)
-		return p.setError(w, usererror.Invalid("Username or password is incorrect."))
+		return p.setError(w, usererror.New("Username or password is incorrect."))
 	}
 
 	http.SetCookie(w, &http.Cookie{
@@ -115,7 +115,7 @@ func handleSignup(secure bool) pageBuilder {
 		confirm := r.Form.Get("confirm")
 
 		if password != confirm {
-			return p.setError(w, usererror.Invalid("Passwords do not match."))
+			return p.setError(w, usererror.New("Passwords do not match."))
 		}
 
 		_, err := db.CreateUser(db.Connection, username, email, password)

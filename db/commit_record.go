@@ -2,9 +2,8 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -42,8 +41,7 @@ func (c *CommitRecord) check(e Executor) error {
 	var count int
 
 	if len(c.Message) > maxCommitMessageSize {
-		return usererror.Invalid(fmt.Sprintf(
-			"The maximum commit message length is %d characters", maxCommitMessageSize))
+		return usererror.Format("The maximum commit message length is %d characters", maxCommitMessageSize)
 
 	}
 
@@ -52,7 +50,7 @@ func (c *CommitRecord) check(e Executor) error {
 		return err
 	}
 	if exists {
-		return usererror.Duplicate("File hash", c.Hash)
+		return usererror.Format("File hash %q already exists", c.Hash)
 	}
 
 	if err := checkSize(c.Revision, "Commit "+c.Hash); err != nil {
@@ -66,7 +64,7 @@ func (c *CommitRecord) check(e Executor) error {
 	}
 
 	if count > maxCommitsPerFile {
-		return usererror.Invalid("File has maximum amount of commits")
+		return usererror.New("File has maximum amount of commits")
 	}
 	return nil
 }

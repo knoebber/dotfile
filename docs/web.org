@@ -111,14 +111,13 @@ and CLI token as the password.
 :PROPERTIES:
 :custom_id: self-host
 :END:
-Clone the repository and build the binary. The build step copies all
-of the required assets into the =/bin= directory.
+Clone the repository and build the binary. All assets are embedded
+into the =dotfilehub= binary so it can be moved anywhere after.
 #+BEGIN_SRC bash
 git clone https://github.com/knoebber/dotfile
 cd dotfile
 make dotfilehub
-cd bin
-./dotfilehub
+./bin/dotfilehub
 #+END_SRC
 The server is configured through the following optional flags:
 ** -addr

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -13,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/knoebber/dotfile/db"
 	"github.com/knoebber/dotfile/dotfile"
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -136,8 +135,6 @@ func (p *Page) flashSuccess(msg string) {
 }
 
 func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
-	var usererr *usererror.Error
-
 	if db.NotFound(err) {
 		log.Printf("resource not found: %s", err)
 		w.WriteHeader(http.StatusNotFound)
@@ -149,9 +146,9 @@ func (p *Page) setError(w http.ResponseWriter, err error) (done bool) {
 		return true
 	}
 
-	if errors.As(err, &usererr) {
-		log.Printf("flashing %s error: %s", usererr.Reason, err)
-		p.ErrorMessage = usererr.Message
+	if uErr := usererror.Convert(err); uErr != nil {
+		log.Printf("flashing usererror: %s", err)
+		p.ErrorMessage = uErr.Message
 	} else {
 		log.Print("flashing fallback from unexpected error: ", err)
 		p.ErrorMessage = "Unexpected error - if this continues please contact an admin."
@@ -243,7 +240,7 @@ func (p *Page) writeFromHTML(w io.Writer) error {
 
 	baseClone.Funcs(template.FuncMap{
 		"content": func() (template.HTML, error) {
-			html, err := ioutil.ReadFile(filepath.Join("html", p.htmlFile))
+			html, err := serverContent.ReadFile(filepath.Join("html", p.htmlFile))
 			if err != nil {
 				return "", err
 			}
@@ -296,7 +293,7 @@ func loadTemplates() (err error) {
 	baseTemplate, err = template.
 		New("base").
 		Funcs(defaultContentFunction).
-		ParseFiles("templates/base.tmpl")
+		ParseFS(serverContent, "templates/base.tmpl")
 
 	if err != nil {
 		return
@@ -310,7 +307,7 @@ func loadTemplates() (err error) {
 	pageTemplates, err = template.
 		New("pages").
 		Funcs(pageFunctions).
-		ParseGlob("templates/*/*.tmpl")
+		ParseFS(serverContent, "templates/*/*.tmpl")
 	return
 
 }

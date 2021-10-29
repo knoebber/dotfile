@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/knoebber/dotfile/dotfile"
 	"github.com/knoebber/dotfile/dotfileclient"
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -39,7 +38,7 @@ func (s *Storage) hasSavedData() bool {
 
 // JSON returns the tracked files json.
 func (s *Storage) JSON() ([]byte, error) {
-	jsonContent, err := ioutil.ReadFile(s.jsonPath())
+	jsonContent, err := os.ReadFile(s.jsonPath())
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, ErrNotTracked
 	} else if err != nil {
@@ -85,7 +84,7 @@ func (s *Storage) save() error {
 	}
 
 	// Example: ~/.local/share/dotfile/bash_profile.json
-	if err := ioutil.WriteFile(s.jsonPath(), content, 0644); err != nil {
+	if err := os.WriteFile(s.jsonPath(), content, 0644); err != nil {
 		return errors.Wrap(err, "saving tracking data")
 	}
 
@@ -110,7 +109,7 @@ func (s *Storage) HasCommit(hash string) (exists bool, err error) {
 func (s *Storage) Revision(hash string) ([]byte, error) {
 	revisionPath := filepath.Join(s.Dir, s.Alias, hash)
 
-	content, err := ioutil.ReadFile(revisionPath)
+	content, err := os.ReadFile(revisionPath)
 	if err != nil {
 		return nil, errors.Wrapf(err, "reading revision %q", hash)
 	}
@@ -126,7 +125,7 @@ func (s *Storage) DirtyContent() ([]byte, error) {
 		return nil, err
 	}
 
-	result, err := ioutil.ReadFile(path)
+	result, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
 		return nil, nil
 	}
@@ -166,7 +165,7 @@ func (s *Storage) Revert(buff *bytes.Buffer, hash string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(path, buff.Bytes(), 0644)
+	err = os.WriteFile(path, buff.Bytes(), 0644)
 	if err != nil {
 		return errors.Wrapf(err, "reverting file %q", s.Alias)
 	}
@@ -263,7 +262,7 @@ func (s *Storage) Pull(client *dotfileclient.Client) error {
 		}
 
 		if !clean {
-			return usererror.Invalid("file has uncommitted changes")
+			return usererror.New("file has uncommitted changes")
 		}
 	}
 
@@ -287,7 +286,7 @@ func (s *Storage) Pull(client *dotfileclient.Client) error {
 
 	// If the pulled file is new and a file with the remotes path already exists.
 	if exists(path) && !hasSavedData {
-		return usererror.Invalid(remoteData.Path +
+		return usererror.New(remoteData.Path +
 			" already exists and is not tracked by dotfile (remove the file or initialize it before pulling)")
 	}
 
@@ -340,7 +339,7 @@ func (s *Storage) Rename(newAlias string) error {
 
 	newDir := filepath.Join(s.Dir, newAlias)
 	if exists(newDir) {
-		return usererror.Invalid(fmt.Sprintf("%q already exists", newAlias))
+		return usererror.New(fmt.Sprintf("%q already exists", newAlias))
 	}
 
 	err := os.Rename(filepath.Join(s.Dir, s.Alias), newDir)

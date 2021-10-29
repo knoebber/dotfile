@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/knoebber/dotfile/db"
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -68,7 +68,7 @@ func TestValidateAPIUser(t *testing.T) {
 func TestAPIError(t *testing.T) {
 	t.Run("user error triggers 400", func(t *testing.T) {
 		var w httptest.ResponseRecorder
-		usererr := usererror.Invalid("test invalid")
+		usererr := usererror.New("test invalid")
 		apiError(&w, usererr)
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})

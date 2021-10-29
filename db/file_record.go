@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/knoebber/dotfile/dotfile"
-	"github.com/knoebber/dotfile/usererror"
+	"github.com/knoebber/usererror"
 	"github.com/pkg/errors"
 )
 
@@ -58,7 +58,7 @@ func (f *FileRecord) check(e Executor) error {
 	}
 
 	if count > maxFilesPerUser {
-		return usererror.Invalid("Maximum amount of files reached")
+		return usererror.New("Maximum amount of files reached")
 	}
 
 	return nil
@@ -314,7 +314,7 @@ AND (alias = ? OR path = ?)`, userID, alias, path).
 		return errors.Wrapf(err, "checking if file %q exists for user %d", alias, userID)
 	}
 	if count > 0 {
-		return usererror.Duplicate("File", alias)
+		return usererror.Format("File %q already exists", alias)
 	}
 
 	return nil

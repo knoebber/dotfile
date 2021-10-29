@@ -1,10 +1,10 @@
 package local
 
 import (
-	"github.com/stretchr/testify/assert"
-	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDefaultConfigPath(t *testing.T) {
@@ -23,7 +23,7 @@ func TestReadConfig(t *testing.T) {
 
 	t.Run("error when json is invalid", func(t *testing.T) {
 		_ = os.Remove(testConfigPath)
-		if err := ioutil.WriteFile(testConfigPath, []byte("bad json"), 0644); err != nil {
+		if err := os.WriteFile(testConfigPath, []byte("bad json"), 0644); err != nil {
 			t.Fatalf("setting up %s: %v", testTrackedFile, err)
 		}
 
@@ -50,7 +50,7 @@ func TestSetConfig(t *testing.T) {
 	})
 
 	t.Run("error when json is invalid", func(t *testing.T) {
-		if err := ioutil.WriteFile(testConfigPath, []byte("bad json"), 0644); err != nil {
+		if err := os.WriteFile(testConfigPath, []byte("bad json"), 0644); err != nil {
 			t.Fatalf("setting up %s: %v", testTrackedFile, err)
 		}
 
