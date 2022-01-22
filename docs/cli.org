@@ -6,9 +6,9 @@
 Dotfile should work on most unix systems. [[https://golang.org][Golang]] is required to build Dotfile.
 
 
-*Install with go get*
+*Install with Go*
 #+BEGIN_SRC bash
-GO111MODULE=on go get github.com/knoebber/dotfile/cmd/dotfile@latest
+go install github.com/knoebber/dotfile/cmd/dotfile@latest
 #+END_SRC
 
 *Install with make*
