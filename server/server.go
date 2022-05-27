@@ -47,7 +47,6 @@ func (c Config) URL(r *http.Request) string {
 }
 
 // New returns a dotfilehub web server.
-// Expects an assets folder in the same directory from where the binary is ran.
 func New(config Config) (*http.Server, error) {
 	var err error
 
