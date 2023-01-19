@@ -19,7 +19,7 @@ dotfilehub: htmldocs
 dotfilehub_image:
 	docker build . --tag dotfilehub
 
-run_dotfilehub_image:
+run_dotfilehub_image: dotfilehub_image
 	docker container run -p=8080:8080 --mount type=bind,source=${HOME}/.dotfilehub.db,target=/data/dotfilehub.db dotfilehub
 
 deploy: test
