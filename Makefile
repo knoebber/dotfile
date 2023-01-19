@@ -24,7 +24,13 @@ htmldocs: htmlgen
 dotfilehub: htmldocs
 	go build -o bin/dotfilehub cmd/dotfilehub/main.go
 
+dotfilehub_image:
+	docker build . --tag dotfilehub
+
+run_dotfilehub_image:
+	docker container run -p=8080:8080 --mount type=bind,source=${HOME}/.dotfilehub.db,target=/data/dotfilehub.db dotfilehub
+
 clean:
 	rm -rf bin/*
 
-.PHONY: dotfile dotfilehub
+.PHONY: test deep_test ci_test dotfile htmlgen htmldocs dotfilehub dotfilehub_container run_dotfilehub_container
