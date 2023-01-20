@@ -1,5 +1,6 @@
 # flyctl launch added from .gitignore
 # Test binary, build with `go test -c`
+*.db
 .git/
 **/*.test
 **/todo.txt
