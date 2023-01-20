@@ -5,6 +5,8 @@ todo.txt
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+*.db
+
 coverage.txt
 
 # Emacs temp files

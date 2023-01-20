@@ -150,3 +150,9 @@ path to a JSON file. The file must contain the following keys:
 }
 #+END_SRC
 The client will use PLAIN authentication.
+
+** Example
+
+dotfilehub.com is currently hosted with [[https://fly.io][fly.io]], for an example
+=Dockerfile= and =fly.toml=, see the top level of
+https://github.com/knoebber/dotfile

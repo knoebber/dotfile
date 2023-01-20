@@ -1,0 +1,35 @@
+# flyctl launch added from .gitignore
+# Test binary, build with `go test -c`
+*.db
+.git/
+**/*.test
+**/todo.txt
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+**/*.out
+
+**/coverage.txt
+
+# Emacs temp files
+**/*~
+**/\#*\#
+
+# Vim temp files
+**/*.swp
+
+**/testdata
+**/*.json
+
+# Generated html files
+**/server/html/README.html
+**/server/html/acknowledgments.html
+**/server/html/cli.html
+**/server/html/web.html
+
+# flyctl launch added from bin/.gitignore
+# Ignore everything in this directory
+bin/**/*
+
+# Except this file
+!bin/**/.gitignore
+fly.toml
