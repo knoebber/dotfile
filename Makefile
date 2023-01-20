@@ -1,3 +1,4 @@
+CURRENT_DIR = $(shell pwd)
 GO_TEST_FLAGS := -v -cover -count=1 -race
 GO_TEST_TARGET := ./...
 
@@ -20,7 +21,10 @@ dotfilehub_image:
 	docker build . --tag dotfilehub
 
 run_dotfilehub_image: dotfilehub_image
-	docker container run -p=8080:8080 --mount type=bind,source=${HOME}/.dotfilehub.db,target=/data/dotfilehub.db dotfilehub
+	docker container run -p=8080:8080\
+		--mount type=bind,source=${HOME}/.dotfilehub.db,target=/data/dotfilehub.db\
+		--mount type=bind,source=$(CURRENT_DIR)/server/smtp.sample.json,target=/data/smtp.json\
+		dotfilehub
 
 deploy: test
 	fly deploy

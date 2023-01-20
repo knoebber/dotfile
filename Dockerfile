@@ -15,7 +15,7 @@ RUN make dotfilehub
 # start a new build stage so that the final image will only contain the compiled binary
 FROM ${RUNNER_IMAGE}
 
-RUN apt-get update -y && apt-get install -y libstdc++6 openssl libncurses5 locales \
+RUN apt-get update -y && apt-get install -y libstdc++6 openssl libncurses5 locales ca-certificates \
   && apt-get clean && rm -f /var/lib/apt/lists/*_*
 
 # Set the locale
@@ -36,6 +36,7 @@ CMD [\
     "/app/bin/dotfilehub",\
     "-addr=:8080",\
     "-db=/data/dotfilehub.db",\
+    "-smtp-config-path=/data/smtp.json",\
     "-host=dotfilehub.com",\
     "-secure",\
     "-proxyheaders"\
