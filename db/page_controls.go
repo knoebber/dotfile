@@ -12,7 +12,7 @@ import (
 
 const (
 	// DefaultLimit is the default limit for paginated queries.
-	DefaultLimit = 25
+	DefaultLimit = 100
 	// MaxLimit is the max limit for paginated queries.
 	MaxLimit = 500
 )
