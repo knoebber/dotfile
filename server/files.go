@@ -192,7 +192,7 @@ func loadCommitConfirm(w http.ResponseWriter, r *http.Request, p *Page) (done bo
 	p.Data["alias"] = f.Alias
 	p.Data["path"] = f.Path
 
-	diff, err := dotfile.DiffPrettyHTML(&db.FileContent{
+	diff, err := getHtmlDiff(&db.FileContent{
 		Connection: db.Connection,
 		Username:   p.Username(),
 		UserID:     p.userID(),

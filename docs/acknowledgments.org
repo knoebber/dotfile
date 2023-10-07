@@ -11,6 +11,5 @@
 + [[https://github.com/gorilla/handlers][gorilla/handlers]] - middleware for logging with reverse proxy
 + [[https://github.com/alecthomas/kingpin][kingpin]] - command line parsing
 + [[https://github.com/mattn/go-sqlite3][go-sqlite3]] - go sqlite driver
-+ [[https://github.com/sergi/go-diff][go-diff]] - diffing
 + [[https://github.com/niklasfasching/go-org][go-org]] - convert org to html
 + [[https://github.com/stretchr/testify][testify]] - test assertions

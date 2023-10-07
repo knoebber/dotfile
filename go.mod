@@ -11,7 +11,6 @@ require (
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/niklasfasching/go-org v1.3.2
 	github.com/pkg/errors v0.9.1
-	github.com/sergi/go-diff v1.2.0
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/crypto v0.7.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
@@ -25,6 +24,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.2 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
+	github.com/hexops/gotextdiff v1.0.3 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/net v0.8.0 // indirect

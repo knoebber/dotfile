@@ -10,15 +10,16 @@
 // ~/.config/dotfile/emacs/8f94c7720a648af9cf9dab33e7f297d28b8bf7cd
 //
 // The emacs.json file would look something like this:
-// {
-//   "path": "~/.emacs.d/init.el",
-//   "revision": "8f94c7720a648af9cf9dab33e7f297d28b8bf7cd"
-//   "commits": [{
-//     "hash": "8f94c7720a648af9cf9dab33e7f297d28b8bf7cd",
-//     "timestamp": 1558896290,
-//     "message": "Initial commit"
-//   }]
-// }
+//
+//	{
+//	  "path": "~/.emacs.d/init.el",
+//	  "revision": "8f94c7720a648af9cf9dab33e7f297d28b8bf7cd"
+//	  "commits": [{
+//	    "hash": "8f94c7720a648af9cf9dab33e7f297d28b8bf7cd",
+//	    "timestamp": 1558896290,
+//	    "message": "Initial commit"
+//	  }]
+//	}
 package local
 
 import (

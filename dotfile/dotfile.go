@@ -101,9 +101,10 @@ func MergeTrackingData(old, new *TrackingData) (merged *TrackingData, newHashes 
 
 // Alias creates an alias when the passed in alias is empty.
 // It works by removing leading dots and file extensions from the path.
-// Examples: ~/.vimrc: vimrc
-//           ~/.config/i3/config: config
-//           ~/.config/alacritty/alacritty.yml: alacritty
+// Examples:
+//      ~/.vimrc: vimrc
+//	~/.config/i3/config: config
+//	~/.config/alacritty/alacritty.yml: alacritty
 func Alias(alias, path string) (string, error) {
 	if alias != "" {
 		return strings.ToLower(alias), nil
